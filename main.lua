@@ -635,7 +635,10 @@ function hoangtuveu()
             CombatController.Attack(monName)
         end
     end)
-	FunctionsHandler.Saber:RegisterMethod('Refresh', function()
+	FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
+    FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
+
+    FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
         local step
@@ -735,12 +738,65 @@ function hoangtuveu()
         if Lighting.Sky.MoonTextureId ~= 'http://www.roblox.com/asset/?id=970914431' then return end
         return Lighting.ClockTime > 18 or Lighting.ClockTime < 5
     end
+
+    -- [ ĐÃ FIX: TRẢ LẠI CHEST FARM TÌM FIST OF DARKNESS (CÚP SEA 2) ĐỂ GỌI RÂU ĐEN ]
+    FunctionsHandler.ChestFarm:RegisterMethod("Refresh", function()
+        if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or ScriptStorage.PlayerData.Level < 2300 then return end
+        if SeaIndex == 2 and not ScriptStorage.Backpack['Dark Fragment'] then
+            if ScriptStorage.Backpack["Fist of Darkness"] or ScriptStorage.Tools["Fist of Darkness"] then
+                return "spawn_darkbeard"
+            end
+            if workspace.Enemies:FindFirstChild("Darkbeard") then return nil end -- Râu đen có rồi thì nhường cho AutoHopBoss đấm
+            return "farm_chest"
+        end
+    end)
+    FunctionsHandler.ChestFarm:RegisterMethod("Start", function(step)
+        if step == "spawn_darkbeard" then
+            SetTask("MainTask", "Soul Guitar | Tìm thấy Fist of Darkness! Đang gọi Râu Đen...")
+            local arena = CFrame.new(3780, 22.5, -3494) 
+            if CaculateDistance(arena) > 15 then
+                TweenController.Create(arena)
+            else
+                FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Fist of Darkness")
+                TweenController.Create(arena * CFrame.new(0, -5, 0)) 
+            end
+        elseif step == "farm_chest" then
+            SetTask("MainTask", "Soul Guitar | Sea 2: Nhặt rương tìm Fist of Darkness gọi Râu Đen...")
+            local chest = workspace:FindFirstChild("Chest1") or workspace:FindFirstChild("Chest2") or workspace:FindFirstChild("Chest3")
+            if chest then
+                if CaculateDistance(chest.CFrame) > 15 then
+                    TweenController.Create(chest.CFrame)
+                else
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, chest, 0)
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, chest, 1)
+                    task.wait(0.5)
+                end
+            else
+                SetTask("MainTask", "Soul Guitar | Hết rương, đang Hop Server...")
+                task.wait(1) Hop()
+            end
+        end
+    end)
+
     FunctionsHandler.SoulGuitar:RegisterMethod("Refresh", function()
-        if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or not ScriptStorage.Backpack['Dark Fragment'] or ScriptStorage.PlayerData.Level < 2300 then return end
+        if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or ScriptStorage.PlayerData.Level < 2300 then return end
+        
+        -- Thiếu Dark Frag thì phải check biển
+        if not ScriptStorage.Backpack['Dark Fragment'] then
+            if SeaIndex ~= 2 then return "travel_sea2" end
+            return nil -- Nhường sân cho ChestFarm ở trên chạy
+        end
+        
+        -- Đã có Dark Frag, check Ectoplasm
         local ecto = (ScriptStorage.Backpack['Ectoplasm'] or {Count = 0})["Count"]
-        local bones = (ScriptStorage.Backpack["Bones"] or {Count = 0})['Count']
-        if ecto < 250 then return 1 end
-        if SeaIndex ~= 3 then return end
+        if ecto < 250 then 
+            if SeaIndex ~= 2 then return "travel_sea2" end
+            return "farm_ecto" 
+        end 
+        
+        -- Đủ cả 2, về Sea 3 làm Quest
+        if SeaIndex ~= 3 then return "travel_sea3" end 
+        
         SoulGuitarProcess = Remotes.CommF_:InvokeServer("GuitarPuzzleProgress", 'Check')
         if not SoulGuitarProcess then
             Remotes.CommF_:InvokeServer("gravestoneEvent", 2)
@@ -752,27 +808,26 @@ function hoangtuveu()
         elseif not SoulGuitarProcess.Ghost then return 4
         elseif not SoulGuitarProcess.Trophies then return 5
         elseif not SoulGuitarProcess.Pipes then return 6
-        elseif bones >= 500 and not ScriptStorage.Backpack["Skull Guitar"] then return 8 end
+        elseif (ScriptStorage.Backpack["Bones"] or {Count = 0})['Count'] >= 500 then return 8 end
     end)
     FunctionsHandler.SoulGuitar:RegisterMethod('Start', function(step)
-        if step == 7 then
+        if step == "travel_sea2" then
+            SetTask("MainTask", "Soul Guitar | Về Sea 2 để tìm Dark Fragment / Ectoplasm")
+            Remotes.CommF_:InvokeServer("TravelDressrosa")
+        elseif step == "travel_sea3" then
+            SetTask("MainTask", "Soul Guitar | Về Sea 3 để giải đố nhận súng")
+            Remotes.CommF_:InvokeServer("TravelZou")
+        elseif step == "farm_ecto" then
+            SetTask("MainTask", "Soul Guitar | Cursed Ship: Farm Ectoplasm (" .. ((ScriptStorage.Backpack['Ectoplasm'] or {Count=0}).Count) .. "/250)")
+            CombatController.Attack({"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"})
+        elseif step == 7 then
             SetTask("MainTask", 'Soul Guitar | Activating Gravestone Event')
             if CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 then TweenController.Create(CFrame.new(-8654.0, 140, 6167)) else SoulGuitarProcess = Remotes.CommF_:InvokeServer("gravestoneEvent", 2, true) end
-        elseif step == 1 then
-            if SeaIndex ~= 2 then
-                SetTask("MainTask", 'Soul Guitar | Travel to Sea 2 for Ectoplasm')
-                return Remotes.CommF_:InvokeServer("TravelDressrosa")
-            else
-                SetTask("MainTask", "Soul Guitar | Farming Ectoplasm")
-                CombatController.Attack({"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"})
-            end
         elseif step == 2 then
             SetTask("MainTask", 'Soul Guitar | Zombie Puzzle')
             local zombieList = {}
             for _, ent in pairs(workspace.Enemies:GetChildren()) do if ent.Name == "Living Zombie" then table.insert(zombieList, ent) end end
-            if #zombieList < 6 then
-                TweenController.Create(CFrame.new(-9473, 142, 5567))
-            else
+            if #zombieList < 6 then TweenController.Create(CFrame.new(-9473, 142, 5567)) else
                 if workspace.Enemies:FindFirstChild("Living Zombie") then CombatController.Attack('Living Zombie') end
             end
         elseif step == 3 then
@@ -817,37 +872,18 @@ function hoangtuveu()
         end
     end)
 
-    -- [ ĐÃ XÓA TẠP NIỆM: BOT SẼ NÓI CHUYỆN VỚI CRYPT MASTER RỒI MỚI VÀO PHÒNG ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
-        if ScriptStorage.PlayerData.Level < 2200 then return end
-        if bp["Cursed Dual Katana"] or not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return end
+        if ScriptStorage.PlayerData.Level < 2200 or bp["Cursed Dual Katana"] then return end
         if SeaIndex ~= 3 then return end
-        
+        if not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return {"mastery"} end
+
         local prog = Remotes.CommF_:InvokeServer("CDKQuest", 'Progress')
-        -- Nếu chưa bắt đầu quest thì tới nói chuyện ổng
         if type(prog) ~= "table" then return {"talk_crypt_master"} end
-        
-        -- Tiến trình chuẩn của 6 viên đá
         if prog.Good == 3 and prog.Evil == 3 then return {"boss"} end
-
-        -- Làm 3 thử thách cuộn Tushita (Good) trước
-        if type(prog.Good) == "number" and prog.Good < 3 then
-            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("GoodScroll")
-            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt", true) then return {"burn"} end
-            local stepNum = prog.Good == 0 and 1 or prog.Good
-            return {"Good", stepNum}
-        end
-
-        -- Xong Tushita thì làm 3 thử thách cuộn Yama (Evil)
-        if type(prog.Evil) == "number" and prog.Evil < 3 then
-            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("EvilScroll")
-            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt", true) then return {"burn 2"} end
-            local stepNum = prog.Evil == 0 and 1 or prog.Evil
-            return {"Evil", stepNum}
-        end
-        
+        if type(prog.Good) == "number" and prog.Good < 3 then return {"Good", prog.Good + 1} end
+        if type(prog.Evil) == "number" and prog.Evil < 3 then return {"Evil", prog.Evil + 1} end
         return {"boss"}
     end)
 
@@ -893,21 +929,27 @@ function hoangtuveu()
 
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
         if type(step) == "table" then
-            if step[1] == "talk_crypt_master" then
+            if step[1] == "mastery" then
+                local bp = ScriptStorage.Backpack
+                if bp.Tushita and (bp.Tushita.Mastery or 0) < 350 then
+                    SetTask("MainTask", "CDK | Farm Mastery Tushita (" .. (bp.Tushita.Mastery or 0) .. "/350)")
+                    FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Tushita')
+                elseif bp.Yama and (bp.Yama.Mastery or 0) < 350 then
+                    SetTask("MainTask", "CDK | Farm Mastery Yama (" .. (bp.Yama.Mastery or 0) .. "/350)")
+                    FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Yama')
+                end
+                local bone_pos = CFrame.new(-9473, 142, 5567)
+                if CaculateDistance(bone_pos) > 1000 then TweenController.Create(bone_pos) else
+                    CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
+                end
+            elseif step[1] == "talk_crypt_master" then
                 SetTask("MainTask", "CDK Quest | Nhận phép mở cửa từ Crypt Master...")
                 local masterNpc = ScriptStorage.NPCs["Crypt Master"] or workspace.NPCs:FindFirstChild("Crypt Master")
                 if masterNpc then
                     local dest = masterNpc:GetModelCFrame()
-                    if CaculateDistance(dest) > 10 then
-                        TweenController.Create(dest)
-                    else
+                    if CaculateDistance(dest) > 10 then TweenController.Create(dest) else
                         local p = masterNpc:FindFirstChildOfClass("ProximityPrompt", true)
-                        if p then 
-                            p.HoldDuration = 0
-                            fireproximityprompt(p) 
-                            task.wait(1)
-                        end
-                        -- Báo server mở cửa!
+                        if p then p.HoldDuration = 0 fireproximityprompt(p) task.wait(1) end
                         Remotes.CommF_:InvokeServer("CDKQuest", "Npc")
                     end
                 end
@@ -917,16 +959,9 @@ function hoangtuveu()
                 local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(scrollName)
                 if scroll then 
                     local targetPos = (scroll:IsA("Model") and scroll:GetModelCFrame() or scroll.CFrame)
-                    
-                    if CaculateDistance(targetPos) > 10 then
-                        TweenController.Create(targetPos * CFrame.new(0, 2, 4)) 
-                    else
+                    if CaculateDistance(targetPos) > 10 then TweenController.Create(targetPos * CFrame.new(0, 2, 4)) else
                         local prompt = scroll:FindFirstChildOfClass("ProximityPrompt", true)
-                        if prompt then
-                            prompt.HoldDuration = 0
-                            fireproximityprompt(prompt)
-                            task.wait(1.5) 
-                        end
+                        if prompt then prompt.HoldDuration = 0 fireproximityprompt(prompt) task.wait(1.5) end
                     end
                 end
             elseif step[1] == "boss" then
@@ -938,64 +973,36 @@ function hoangtuveu()
                 else
                     local ped = workspace.Map.Turtle.Cursed:FindFirstChild("Pedestal")
                     if ped then
-                        if CaculateDistance(ped.CFrame) < 15 then
-                            fireclickdetector(ped.ClickDetector)
-                        else
-                            TweenController.Create(ped.CFrame)
-                        end
+                        if CaculateDistance(ped.CFrame) < 15 then fireclickdetector(ped.ClickDetector) else TweenController.Create(ped.CFrame) end
                     end
                 end
             elseif step[1] == "Good" then
                 Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', 'Good')
-                
                 if step[2] == 1 then 
                     SetTask("MainTask", "CDK | Tushita 1: Tương tác Boat Dealer...")
                     _G.CDK_DealerIndex = _G.CDK_DealerIndex or 1
-                    
                     local dealers = {}
                     for _, v in pairs(workspace.NPCs:GetChildren()) do
-                        if string.find(v.Name, "Boat Dealer") or string.find(v.Name, "Luxury Boat Dealer") then
-                            table.insert(dealers, v)
-                        end
+                        if string.find(v.Name, "Boat Dealer") or string.find(v.Name, "Luxury Boat Dealer") then table.insert(dealers, v) end
                     end
-
                     if _G.CDK_DealerIndex > 3 then
                         SetTask("MainTask", "CDK | Xong 3 ông, chờ Game load...")
-                        task.wait(2)
-                        _G.CDK_DealerIndex = 1
+                        task.wait(2) _G.CDK_DealerIndex = 1
                     elseif dealers[_G.CDK_DealerIndex] then
                         local targetNPC = dealers[_G.CDK_DealerIndex]
                         local dest = targetNPC:GetModelCFrame()
-                        
-                        if CaculateDistance(dest) > 10 then
-                            TweenController.Create(dest)
-                            SetTask("MainTask", "CDK | Bay tới NPC " .. _G.CDK_DealerIndex .. "/3")
-                        else
+                        if CaculateDistance(dest) > 10 then TweenController.Create(dest) else
                             local p = targetNPC:FindFirstChildOfClass("ProximityPrompt", true)
-                            if p then
-                                p.HoldDuration = 0
-                                fireproximityprompt(p)
-                                task.wait(2) 
-                                _G.CDK_DealerIndex = _G.CDK_DealerIndex + 1
-                            else
-                                _G.CDK_DealerIndex = _G.CDK_DealerIndex + 1 
-                            end
+                            if p then p.HoldDuration = 0 fireproximityprompt(p) task.wait(2) _G.CDK_DealerIndex = _G.CDK_DealerIndex + 1 else _G.CDK_DealerIndex = _G.CDK_DealerIndex + 1 end
                         end
-                    else
-                        _G.CDK_DealerIndex = 1
-                    end
-
+                    else _G.CDK_DealerIndex = 1 end
                 elseif step[2] == 2 then 
                     SetTask("MainTask", "CDK | Tushita 2: Đợi Pirate Raid ở Lâu Đài...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
                     local castlePos = CFrame.new(-5556, 314, -2988)
-                    if CaculateDistance(castlePos) > 50 then
-                        TweenController.Create(castlePos)
-                    else
+                    if CaculateDistance(castlePos) > 50 then TweenController.Create(castlePos) else
                         for _, mon in pairs(GetMonAsSortedRange()) do
-                            if string.find(mon.Name, "Pirate") or string.find(mon.Name, "Diablo") then
-                                CombatController.Attack(mon.Name)
-                            end
+                            if string.find(mon.Name, "Pirate") or string.find(mon.Name, "Diablo") then CombatController.Attack(mon.Name) end
                         end
                     end
                 elseif step[2] == 3 then 
@@ -1006,7 +1013,6 @@ function hoangtuveu()
                 end
             elseif step[1] == "Evil" then
                 Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', 'Evil')
-                
                 if step[2] == 1 then 
                     SetTask("MainTask", "CDK | Yama 1: Đứng yên chịu đòn...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "PainAndSuffering")
@@ -1021,14 +1027,46 @@ function hoangtuveu()
                     SetTask("MainTask", "CDK | Yama 3: Triệu hồi Reaper...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "FearTheReaper")
                     local reaper = workspace.Enemies:FindFirstChild("Soul Reaper")
-                    if reaper then
-                        TweenController.Create(reaper.HumanoidRootPart.CFrame)
-                    else
+                    if reaper then TweenController.Create(reaper.HumanoidRootPart.CFrame) else
                         if CaculateDistance(CFrame.new(-9473, 142, 5567)) > 50 then TweenController.Create(CFrame.new(-9473, 142, 5567)) end
                     end
                     FunctionsHandler.CursedDualKatana.Methods.DoDimension:Call("Hell")
                 end
             end
+        end
+    end)
+
+    FunctionsHandler.Godhuman:RegisterMethod("Refresh", function()
+        if ScriptStorage.Backpack["Godhuman"] then return end
+        local req = {
+            {"Black Leg", "BuyBlackLeg", 400}, {"Electro", "BuyElectro", 400}, 
+            {"Fishman Karate", "BuyFishmanKarate", 400}, {"Dragon Claw", "BuyDragonClaw", 400},
+            {"Superhuman", "BuySuperhuman", 400}, {"Death Step", "BuyDeathStep", 400}, 
+            {"Sharkman Karate", "BuySharkmanKarate", 400}, {"Electric Claw", "BuyElectricClaw", 400}, 
+            {"Dragon Talon", "BuyDragonTalon", 400}
+        }
+        for _, v in ipairs(req) do
+            local melee = ScriptStorage.Backpack[v[1]]
+            if not melee then return {"buy", v[1], v[2]} end
+            if (melee.Mastery or 0) < v[3] then return {"farm", v[1]} end
+        end
+        return {"godhuman"}
+    end)
+    FunctionsHandler.Godhuman:RegisterMethod("Start", function(step)
+        if step[1] == "buy" then
+            SetTask("MainTask", "Godhuman | Đang mua võ: " .. step[2])
+            Remotes.CommF_:InvokeServer(step[3])
+            task.wait(1)
+        elseif step[1] == "farm" then
+            SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " lên 400")
+            FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call(step[2])
+            local bone_pos = CFrame.new(-9473, 142, 5567)
+            if CaculateDistance(bone_pos) > 1000 then TweenController.Create(bone_pos) else
+                CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
+            end
+        elseif step[1] == "godhuman" then
+            SetTask("MainTask", "Godhuman | Mua Godhuman tại Cổ Thụ!")
+            Remotes.CommF_:InvokeServer("BuyGodhuman")
         end
     end)
 
@@ -1056,8 +1094,7 @@ function hoangtuveu()
             local hit = false
             for _, mon in pairs(GetMonAsSortedRange()) do
                 if mon and mon:FindFirstChild("HumanoidRootPart") and mon.Humanoid.Health > 0 and CaculateDistance(mon.HumanoidRootPart.Position) < 1000 then
-                    hit = true
-                    CombatController.Attack(mon.Name)
+                    hit = true CombatController.Attack(mon.Name)
                 end
             end
             if not hit then TweenController.Create(data.Position + Vector3.new(0, 100, 0)) end
@@ -1073,24 +1110,6 @@ function hoangtuveu()
             if ScriptStorage.Tools['Special Microchip'] and summon_spot and summon_spot:FindFirstChild("RaidSummon2") then
                 FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Special Microchip')
                 fireclickdetector(summon_spot.RaidSummon2.Button.Main.ClickDetector)
-            end
-        end
-    end)
-
-    FunctionsHandler.Wenlocktoad:RegisterMethod("Refresh", function()
-        if ScriptStorage.PlayerData.RaceLevel ~= 2 or ScriptStorage.PlayerData.Level < 1000 or ScriptStorage.PlayerData.Beli < 2000000 or SeaIndex ~= 2 then return end
-        if Remotes.CommF_:InvokeServer("Wenlocktoad", "1") == -2 then ScriptStorage.PlayerData.RaceLevel = 3 return false end
-        return true
-    end)
-    FunctionsHandler.Wenlocktoad:RegisterMethod("Start", function()
-        SetTask('MainTask', "Up Tộc V3 | Nhiệm vụ Arowe")
-        local arowe = ScriptStorage.NPCs["Arowe"]
-        if arowe then
-            TweenController.Create(arowe:GetModelCFrame())
-            if CaculateDistance(arowe) < 15 then
-                Remotes.CommF_:InvokeServer("Wenlocktoad", "1")
-                task.wait(0.5) Remotes.CommF_:InvokeServer("Wenlocktoad", "2")
-                task.wait(0.5) Remotes.CommF_:InvokeServer("Wenlocktoad", "3")
             end
         end
     end)
@@ -1168,7 +1187,30 @@ function hoangtuveu()
     pcall(function() Storage.Data = game:GetService("HttpService"):JSONDecode(readfile(k_file_path) or '{}') end)
     task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
 
-    -- VÒNG LẶP CHÍNH
+    task.spawn(function()
+        while task.wait(5) do
+            if not _G.Stop then
+                pcall(function()
+                    local tick = Remotes.CommF_:InvokeServer("Cousin", "GetTick")
+                    if type(tick) == "number" and tick == 0 then
+                        Remotes.CommF_:InvokeServer("Cousin", "Buy")
+                    end
+                end)
+                pcall(function()
+                    if SeaIndex == 3 then
+                        local bones = (ScriptStorage.Backpack["Bones"] or {Count = 0}).Count
+                        if bones >= 50 then
+                            Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- [ CẬP NHẬT: ƯU TIÊN SG TÌM NẮM ĐẤM -> GODHUMAN -> CDK ]
+    TasksOrder = {"AutoHopBoss", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "Tushita", "Yama", "RaidController", "Wenlocktoad", "LevelFarm"}
+    
     ParsingTimes = 0
     function RefreshTasksData()
         if _G.Stop then return end
@@ -1181,16 +1223,8 @@ function hoangtuveu()
                 ParsingTimes = ParsingTimes + 1
                 if status and ParsingTimes > 100 then
                     SetText('DebugLine', "Module: " .. taskName)
-                    
-                    local success, err = pcall(function()
-                        handler.Methods.Start:Call(status)
-                    end)
-                    
-                    if not success then
-                        SetText('MainTextLabel', "<font color='#FF0000'>LỖI CODE Ở " .. taskName .. ": " .. tostring(err) .. "</font>")
-                        task.wait(3) 
-                    end
-                    
+                    local success, err = pcall(function() handler.Methods.Start:Call(status) end)
+                    if not success then SetText('MainTextLabel', "<font color='#FF0000'>LỖI: " .. tostring(err) .. "</font>") task.wait(3) end
                     taskHandled = true
                     return
                 end
@@ -1200,9 +1234,7 @@ function hoangtuveu()
         if not taskHandled and ScriptStorage.PlayerData.Level >= 2800 and SeaIndex == 3 and ParsingTimes > 100 then
             SetTask('MainTask', "Hệ Thống | Rảnh rỗi: Đứng rình Boss tại Mansion!")
             local mansion_pos = CFrame.new(-12464, 332, -7254)
-            if CaculateDistance(mansion_pos) > 30 and not MonResult then 
-                TweenController.Create(mansion_pos) 
-            end
+            if CaculateDistance(mansion_pos) > 30 and not MonResult then TweenController.Create(mansion_pos) end
         end
     end
 
@@ -1211,11 +1243,7 @@ function hoangtuveu()
     
     repeat 
         task.wait(0.5) 
-        pcall(function()
-            for _, a_v in pairs(h.Data:GetChildren()) do 
-                ScriptStorage.PlayerData[a_v.Name] = a_v.Value 
-            end
-        end)
+        pcall(function() for _, a_v in pairs(h.Data:GetChildren()) do ScriptStorage.PlayerData[a_v.Name] = a_v.Value end end)
     until ScriptStorage.PlayerData.Level ~= nil
     
     SetText('MainTextLabel', "HoangPhucHub: Đã có Level, xuất chiến!")
