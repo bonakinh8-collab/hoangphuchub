@@ -635,16 +635,19 @@ function hoangtuveu()
             CombatController.Attack(monName)
         end
     end)
-	-- [ VÁ NÃO CHỐNG CRASH CHO TOÀN BỘ HỆ THỐNG (FIX F9 VĨNH VIỄN) ]
-    local SafeModules = {"Saber", "Yama", "Tushita", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "RaidController", "Wenlocktoad", "AutoHopBoss"}
-    for _, mod in pairs(SafeModules) do
-        FunctionsHandler[mod] = FunctionsHandler[mod] or {Initalized = true, Methods = {}}
-        FunctionsHandler[mod].Methods = FunctionsHandler[mod].Methods or {}
-        if type(FunctionsHandler[mod].RegisterMethod) ~= "function" then
-            FunctionsHandler[mod].RegisterMethod = function(self, name, func) self.Methods[name] = {Call = func} end
-            FunctionsHandler[mod].Get = function(self, key) return self[key] end
-            FunctionsHandler[mod].Set = function(self, key, val) self[key] = val end
-        end
+	-- [ KHỞI TẠO NÃO BỘ CHỐNG CRASH CHO CÁC MODULE MỚI ]
+    if not FunctionsHandler.ChestFarm or not FunctionsHandler.ChestFarm.RegisterMethod then
+        FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
+        function FunctionsHandler.ChestFarm:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
+        function FunctionsHandler.ChestFarm:Get(key) return self[key] end
+        function FunctionsHandler.ChestFarm:Set(key, val) self[key] = val end
+    end
+
+    if not FunctionsHandler.Godhuman or not FunctionsHandler.Godhuman.RegisterMethod then
+        FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
+        function FunctionsHandler.Godhuman:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
+        function FunctionsHandler.Godhuman:Get(key) return self[key] end
+        function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
     end
 
     FunctionsHandler.Saber:RegisterMethod('Refresh', function()
@@ -784,20 +787,16 @@ function hoangtuveu()
 
     FunctionsHandler.SoulGuitar:RegisterMethod("Refresh", function()
         if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or ScriptStorage.PlayerData.Level < 2300 then return end
-        
         if not ScriptStorage.Backpack['Dark Fragment'] then
             if SeaIndex ~= 2 then return "travel_sea2" end
             return nil 
         end
-        
         local ecto = (ScriptStorage.Backpack['Ectoplasm'] or {Count = 0})["Count"]
         if ecto < 250 then 
             if SeaIndex ~= 2 then return "travel_sea2" end
             return "farm_ecto" 
         end 
-        
         if SeaIndex ~= 3 then return "travel_sea3" end 
-        
         SoulGuitarProcess = Remotes.CommF_:InvokeServer("GuitarPuzzleProgress", 'Check')
         if not SoulGuitarProcess then
             Remotes.CommF_:InvokeServer("gravestoneEvent", 2)
@@ -937,7 +936,6 @@ function hoangtuveu()
 
         return {"godhuman_buy"}
     end)
-
     FunctionsHandler.Godhuman:RegisterMethod("Start", function(step)
         if step[1] == "equip_and_check" then
             SetTask("MainTask", "Godhuman | Đang gọi võ " .. step[2] .. " để check Mastery...")
@@ -988,7 +986,6 @@ function hoangtuveu()
         if type(prog.Evil) == "number" and prog.Evil < 3 then return {"Evil", prog.Evil + 1} end
         return {"boss"}
     end)
-
     FunctionsHandler.CursedDualKatana:RegisterMethod("GetHazeMon", function()
         local hazeList = {}
         for _, obj in pairs(game.Players.LocalPlayer.QuestHaze:GetChildren()) do 
@@ -997,7 +994,6 @@ function hoangtuveu()
         table.sort(hazeList, function(a, b) return CaculateDistance(a:GetAttribute('Position')) < CaculateDistance(b:GetAttribute('Position')) end)
         return tostring(hazeList[1])
     end)
-
     FunctionsHandler.CursedDualKatana:RegisterMethod("DoDimension", function(dim_name)
         local map_name = string.gsub(dim_name, ' ', "")
         local start_t = os.time()
@@ -1028,7 +1024,6 @@ function hoangtuveu()
         until PortalBrick == 'Olive' or PortalBrick == "Cloudy grey"
         Hop()
     end)
-
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
         if type(step) == "table" then
             if step[1] == "mastery" then
@@ -1290,16 +1285,14 @@ function hoangtuveu()
                 pcall(function()
                     if SeaIndex == 3 then
                         local bones = (ScriptStorage.Backpack["Bones"] or {Count = 0}).Count
-                        if bones >= 50 then
-                            Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
-                        end
+                        if bones >= 50 then Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1) end
                     end
                 end)
             end
         end
     end)
 
-    -- [ VÒNG LẶP TIM MẠCH (HEARTBEAT): ÉP KIẾM, HÚT QUÁI, TỰ HAKI 60 LẦN/GIÂY ]
+    -- [ VÒNG LẶP BẠO CHÚA (HEARTBEAT): ÉP VŨ KHÍ, TỰ HAKI, HÚT QUÁI 60 LẦN/GIÂY ]
     task.spawn(function()
         local rs = game:GetService("RunService")
         rs.Heartbeat:Connect(function()
@@ -1309,38 +1302,29 @@ function hoangtuveu()
                 local char = game.Players.LocalPlayer.Character
                 if not char or not char:FindFirstChild("Humanoid") then return end
 
-                -- Luôn bật Haki khi đang Farm
+                -- 1. BẬT HAKI
                 if string.find(mainText, "Farm") or string.find(mainText, "Cày") then
                     if not char:FindFirstChild("HasBuso") then
                         game.ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
                     end
                 end
 
-                -- Trấn lột CombatController, ép tay cầm Kiếm Tushita/Yama
+                -- 2. TÌM VŨ KHÍ CẦN ÉP
+                local wepToEquip = nil
                 if string.find(mainText, "CDK | Farm Mastery") then
-                    local wepName = string.find(mainText, "Tushita") and "Tushita" or "Yama"
-                    local wep = game.Players.LocalPlayer.Backpack:FindFirstChild(wepName)
-                    if wep then char.Humanoid:EquipTool(wep) end
-                    
-                    -- Hút toàn bộ quái lại 1 điểm (Bring Mob)
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        for _, v in pairs(workspace.Enemies:GetChildren()) do
-                            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                                if (v.HumanoidRootPart.Position - hrp.Position).Magnitude < 350 then
-                                    v.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -5)
-                                    v.HumanoidRootPart.Size = Vector3.new(60, 60, 60)
-                                    v.HumanoidRootPart.CanCollide = false
-                                    v.Humanoid.WalkSpeed = 0
-                                    v.Humanoid.JumpPower = 0
-                                end
-                            end
-                        end
-                    end
+                    wepToEquip = string.find(mainText, "Tushita") and "Tushita" or "Yama"
+                elseif string.find(mainText, "Godhuman | Cày thông thạo:") then
+                    wepToEquip = string.match(mainText, "thạo: (.-) %(")
                 end
 
-                -- Gom quái cho Godhuman
-                if string.find(mainText, "Godhuman | Cày") then
+                if wepToEquip then
+                    -- ÉP CẦM TRÊN TAY
+                    if not char:FindFirstChild(wepToEquip) then
+                        local wep = game.Players.LocalPlayer.Backpack:FindFirstChild(wepToEquip)
+                        if wep then char.Humanoid:EquipTool(wep) end
+                    end
+                    
+                    -- HÚT QUÁI VÀ PHÓNG TO HITBOX
                     local hrp = char:FindFirstChild("HumanoidRootPart")
                     if hrp then
                         for _, v in pairs(workspace.Enemies:GetChildren()) do
