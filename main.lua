@@ -817,7 +817,7 @@ function hoangtuveu()
         end
     end)
 
-    -- [ CẬP NHẬT: LOGIC TỰ ĐỌC THƯ CDK SAU KHI PHÁ CỬA ]
+    -- [ ĐÃ FIX LỖI KẸT TƯƠNG TÁC CUỘN THƯ ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
@@ -825,30 +825,31 @@ function hoangtuveu()
         if bp["Cursed Dual Katana"] or not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return end
         if SeaIndex ~= 3 then return end
         
-        local prog = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
-        if not prog or prog == 'uwu' then return {"talk_crypt_master"} end
-        
+        local prog = Remotes.CommF_:InvokeServer("CDKQuest", 'Progress')
+        if type(prog) ~= "table" then return {"talk_crypt_master"} end
         if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return {"break"} end
         
-        -- Nếu cửa đã vỡ nhưng chưa nhận Trial nào -> Ra lệnh tự động đọc thư!
-        if not prog.Opened then
-            if type(prog.Good) == "number" and prog.Good <= 3 then return {"burn"} end
-            if type(prog.Evil) == "number" and prog.Evil <= 3 then return {"burn 2"} end
-            return {"boss"} -- Làm xong hết thì gọi Boss cuối
+        if prog.Good == 4 and prog.Evil == 4 then return {"boss"} end
+
+        -- Kiểm tra Cuộn Thiện (Tushita)
+        if type(prog.Good) == "number" and prog.Good < 4 then
+            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("GoodScroll")
+            -- Nếu cuộn giấy chưa cháy (còn nút bấm tương tác) -> Phải đọc nó!
+            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt") then return {"burn"} end
+            -- Nếu cuộn giấy đã cháy -> Nhiệm vụ đang chạy -> Tiến hành làm nhiệm vụ!
+            local stepNum = prog.Good == 0 and 1 or prog.Good
+            return {"Good", stepNum}
+        end
+
+        -- Kiểm tra Cuộn Ác (Yama)
+        if type(prog.Evil) == "number" and prog.Evil < 4 then
+            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("EvilScroll")
+            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt") then return {"burn 2"} end
+            local stepNum = prog.Evil == 0 and 1 or prog.Evil
+            return {"Evil", stepNum}
         end
         
-        local mapType = {Good = 'Tushita', Evil = 'Yama'}
-        if prog.Opened then
-            for side, val in pairs(prog) do
-                if side ~= 'Opened' and side ~= "Finished" and val < 3 then
-                    ScriptStorage.CdkCache = {side, val + 1}
-                    if not ScriptStorage.Tools[mapType[side]] then Remotes.CommF_:InvokeServer('LoadItem', mapType[side]) end
-                    Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', side)
-                    return {side, val + 1}
-                end
-            end
-        end
-        return ScriptStorage.CdkCache
+        return {"boss"}
     end)
 
     FunctionsHandler.CursedDualKatana:RegisterMethod("GetHazeMon", function()
@@ -914,11 +915,23 @@ function hoangtuveu()
                     task.delay(3, function() pcall(function() door:Destroy() end) end)
                 end
             elseif step[1] == "burn" or step[1] == "burn 2" then
-                SetTask("MainTask", "CDK Quest | Tương tác với cuộn " .. (step[1] == "burn" and "Thiện (Tushita)" or "Ác (Yama)"))
-                local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(step[1] == "burn" and "GoodScroll" or "EvilScroll")
+                -- [ FIX Ở ĐÂY: Dừng lại và Ép tương tác với cuộn thư ]
+                local scrollName = step[1] == "burn" and "GoodScroll" or "EvilScroll"
+                SetTask("MainTask", "CDK Quest | Tương tác với " .. scrollName)
+                local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(scrollName)
                 if scroll then 
-                    TweenController.Create(scroll.CFrame) 
-                    fireproximityprompt(scroll:FindFirstChildOfClass("ProximityPrompt")) 
+                    if CaculateDistance(scroll.CFrame) > 10 then
+                        TweenController.Create(scroll.CFrame) 
+                    else
+                        local prompt = scroll:FindFirstChildOfClass("ProximityPrompt")
+                        if prompt then
+                            -- Ép HoldDuration = 0 để chạm phát ăn luôn
+                            prompt.HoldDuration = 0
+                            fireproximityprompt(prompt)
+                            -- Chờ 1.5 giây để Server cập nhật trạng thái nhiệm vụ, tránh spam
+                            task.wait(1.5) 
+                        end
+                    end
                 end
             elseif step[1] == "boss" then
                 SetTask("MainTask", "CDK Quest | Tiêu diệt Cursed Skeleton Boss để lấy CDK!")
