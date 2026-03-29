@@ -17,165 +17,344 @@ function hoangtuveu()
     local InitTime = os.time()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
     local W = {Instances = {}}
-    local K, a = true, false
-    
+    local K = true
+    local a = false
     local h_gui = Instance.new('ScreenGui')
+    local X = Instance.new('TextLabel')
+    local w = Instance.new("UIStroke")
+    local w2 = Instance.new('UIStroke')
+    local w3 = Instance.new("TextLabel")
+    local w4 = Instance.new("ImageButton")
+    local D = Instance.new("Frame")
+    local y = Instance.new("UIStroke")
+    local L = Instance.new("TextLabel")
+    local b = {}
     h_gui.Name = "HoangPhucHub"
     h_gui.Parent = game:GetService('CoreGui')
+    h_gui.Enabled = true
+    h_gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     h_gui.IgnoreGuiInset = true
 
     if Config.Configuration.blackscreen then game:GetService('Lighting').ExposureCompensation = -math.huge
     else game:GetService('Lighting').ExposureCompensation = 0 end
 
-    local X = Instance.new('TextLabel')
     X.Name = 'NameHub'
     X.Parent = h_gui
     X.AnchorPoint = Vector2.new(0.5, 0.5)
     X.Position = UDim2.new(0.5, 0, 0.3, 0)
     X.Size = UDim2.new(1, 0, 0, 80)
-    X.BackgroundTransparency = 1
+    X.BackgroundTransparency = 0.999
+    X.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    X.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    X.BorderSizePixel = 0
     X.Font = Enum.Font.FredokaOne
     X.Text = "HoangPhucHub"
-    X.TextColor3 = Color3.fromRGB(9, 255, 248)
-    X.TextSize = 50
     local C = Instance.new("UIStroke")
     C.Parent = X
+    C.Color = Color3.fromRGB(0, 0, 0)
     C.Thickness = 1
-
-    local D = Instance.new("Frame")
+    X.TextColor3 = Color3.fromRGB(9, 255, 248)
+    X.TextSize = 50
     D.Name = 'ToggleContainer'
     D.Parent = h_gui
     D.AnchorPoint = Vector2.new(1, 0)
-    D.Position = UDim2.new(1, -20, 0, 20)
+    D.Position = UDim2.new(1, -20.0, 0, 20)
     D.Size = UDim2.new(0, 50, 0, 50)
     D.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     D.BackgroundTransparency = 0.2
+    D.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    D.BorderSizePixel = 0
+    D.ClipsDescendants = true
     local C2 = Instance.new('UICorner')
     C2.CornerRadius = UDim.new(1, 0)
     C2.Parent = D
-    local y = Instance.new("UIStroke")
     y.Parent = D
     y.Color = Color3.fromRGB(9, 255, 248)
     y.Thickness = 2
-    local w4 = Instance.new("ImageButton")
     w4.Name = 'ToggleButton'
     w4.Parent = D
+    w4.AnchorPoint = Vector2.new(0.5, 0.5)
+    w4.Position = UDim2.new(0.5, 0, 0.5, 0)
     w4.Size = UDim2.new(1, 0, 1, 0)
     w4.BackgroundTransparency = 1
-
-    local function CreateLabelInfo(p, o)
+    w4.BorderSizePixel = 0
+    L.Name = "ToggleIcon"
+    L.Parent = D
+    L.AnchorPoint = Vector2.new(0.5, 0.5)
+    L.Position = UDim2.new(0.5, 0, 0.5, 0)
+    L.Size = UDim2.new(0.7, 0, 0.7, 0)
+    L.BackgroundTransparency = 1
+    L.BorderSizePixel = 0
+    L.Font = Enum.Font.GothamBold
+    L.Text = ""
+    L.TextColor3 = Color3.fromRGB(255, 255, 255)
+    L.TextSize = 24
+    L.TextScaled = true
+    local function CreateLabelInfo(p, o, z)
+        local z_st = Instance.new("UIStroke")
         local v = Instance.new('TextLabel')
+        v.Name = "hmph ><"
         v.Parent = h_gui
         v.AnchorPoint = Vector2.new(0.5, 0.5)
         v.Position = o
         v.Size = UDim2.new(0, 200, 0, 30)
-        v.BackgroundTransparency = 1
+        v.BackgroundTransparency = 0.999
+        v.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        v.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        v.BorderSizePixel = 0
         v.Font = Enum.Font.FredokaOne
         v.Text = p
         v.TextColor3 = Color3.fromRGB(255, 255, 255)
         v.TextSize = 13
         v.RichText = true
-        local z_st = Instance.new("UIStroke")
         z_st.Parent = v
+        z_st.Color = Color3.fromRGB(0, 0, 0)
         z_st.Thickness = 1
         return v
     end
-
     MainTextLabel = CreateLabelInfo(" ", UDim2.new(0.5, 0, 0.4, 0))
     W.Instances.MainTextLabel = MainTextLabel
     for p, o in pairs(J) do W.Instances[o] = CreateLabelInfo("...", UDim2.new(0.5, 0, 0.45 + (.05 * p), 0)) end
-
-    function SetText(J_s, C_s)
-        local p_l = W.Instances[J_s]
-        if not p_l or p_l.Text == C_s then return end
-        p_l.Text = C_s
+    local J_blur = {}
+    function J_blur:Create()
+        local C_frm = Instance.new('Frame')
+        C_frm.Name = "BlurFrame"
+        C_frm.Parent = h_gui
+        C_frm.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        C_frm.BackgroundTransparency = 1
+        C_frm.BorderSizePixel = 0
+        C_frm.Size = UDim2.new(1, 0, 1, 0)
+        C_frm.Position = UDim2.new(0, 0, 0, 0)
+        C_frm.ZIndex = 0
+        self.blurFrame = C_frm
+        self.blurIntensity = 0
+        return self
     end
-
+    function J_blur:SetIntensity(C_v)
+        C_v = math.clamp(C_v, 0, 0.95)
+        self.blurIntensity = C_v
+        local p_tw = game:GetService('TweenService')
+        local o_ti = TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
+        local z_tw = p_tw:Create(self.blurFrame, o_ti, {BackgroundTransparency = 1 - C_v})
+        z_tw:Play()
+        if not self.blurEffect then
+            self.blurEffect = Instance.new("BlurEffect")
+            self.blurEffect.Name = 'CustomBlur'
+            self.blurEffect.Parent = game.Lighting
+            self.blurEffect.Enabled = true
+        end
+        local z_tw2 = p_tw:Create(self.blurEffect, o_ti, {Size = C_v * 30})
+        z_tw2:Play()
+        for z_i, z_v in pairs(b) do
+            if z_v and z_v.Parent then
+                local v_tw = p_tw:Create(z_v, o_ti, {BackgroundTransparency = z_v._originalTransparency + (C_v * 0.5)})
+                v_tw:Play()
+            end
+        end
+    end
+    function J_blur:RegisterUI(C_u)
+        if C_u and C_u:IsA('GuiObject') then
+            C_u._originalTransparency = C_u.BackgroundTransparency
+            table.insert(b, C_u)
+        end
+    end
+    local b_blur_sys = J_blur:Create()
+    function SetText(J_s, C_s)
+        task.spawn(function()
+            local p_l = W.Instances[J_s]
+            if not p_l then return end
+            if not K then p_l.Text = C_s return end
+            if p_l.Text == C_s then return end
+            local J_t = game:GetService("TweenService")
+            local o_t = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local z_t = J_t:Create(p_l, o_t, {TextTransparency = 1, TextStrokeTransparency = 1})
+            z_t:Play()
+            z_t.Completed:Wait()
+            p_l.Text = C_s
+            local C_t = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            local o_t2 = J_t:Create(p_l, C_t, {TextTransparency = 0, TextStrokeTransparency = 0})
+            o_t2:Play()
+        end)
+    end
+    function ToggleUI(J_t)
+        a = J_t or not a
+        local J_lis = {X, MainTextLabel}
+        for X_i, X_v in pairs(W.Instances) do table.insert(J_lis, X_v) end
+        local X_tw = game:GetService("TweenService")
+        local C_ti = TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut)
+        if a then
+            L.Text = ""
+            local p_r = X_tw:Create(L, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Rotation = 360})
+            p_r:Play()
+            p_r.Completed:Connect(function() L.Rotation = 0 end)
+            for p_i, p_v in pairs(J_lis) do
+                p_v.TextTransparency = 1
+                local o_tw = X_tw:Create(p_v, C_ti, {TextTransparency = 0})
+                if p_v:FindFirstChildOfClass('UIStroke') then
+                    p_v:FindFirstChildOfClass('UIStroke').Transparency = 1
+                    local z_tw = X_tw:Create(p_v:FindFirstChildOfClass('UIStroke'), C_ti, {Transparency = 0})
+                    z_tw:Play()
+                end
+                o_tw:Play()
+            end
+            b_blur_sys:SetIntensity(0.4)
+        else
+            L.Text = ''
+            local p_s = X_tw:Create(L, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Size = UDim2.new(0.3, 0, 0.3, 0)})
+            p_s:Play()
+            p_s.Completed:Connect(function()
+                local p_g = X_tw:Create(L, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0.7, 0, 0.7, 0)})
+                p_g:Play()
+            end)
+            for p_i, p_v in pairs(J_lis) do
+                local J_tw = X_tw:Create(p_v, C_ti, {TextTransparency = 1})
+                if p_v:FindFirstChildOfClass('UIStroke') then
+                    local o_tw = X_tw:Create(p_v:FindFirstChildOfClass("UIStroke"), C_ti, {Transparency = 1})
+                    o_tw:Play()
+                end
+                J_tw:Play()
+            end
+            b_blur_sys:SetIntensity(0)
+        end
+        K = a
+    end
+    function W.RegisterForBlur(J_b) b_blur_sys:RegisterUI(J_b) end
+    w4.MouseButton1Click:Connect(function() ToggleUI() end)
+    w4.MouseEnter:Connect(function()
+        local J_t = game:GetService('TweenService')
+        local X_f = function()
+            local C_s = J_t:Create(D, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 55, 0, 55)})
+            local p_c = J_t:Create(y, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Color = Color3.fromRGB(0, 255, 255), Thickness = 3})
+            C_s:Play()
+            p_c:Play()
+        end
+        X_f()
+    end)
+    w4.MouseLeave:Connect(function()
+        local J_t = game:GetService('TweenService')
+        local X_ti = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local w_s = J_t:Create(D, X_ti, {Size = UDim2.new(0, 50, 0, 50)})
+        local D_c = J_t:Create(y, X_ti, {Color = Color3.fromRGB(9, 255, 248), Thickness = 2})
+        w_s:Play()
+        D_c:Play()
+    end)
+    function W.ToggleInterface(J_v)
+        a = J_v
+        local a_t = game:GetService('TweenService')
+        local a_ti = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        if J_v then
+            h_gui.Enabled = false
+            L.Text = ""
+            b_blur_sys:SetIntensity(0.4)
+        else
+            L.Text = ""
+            b_blur_sys:SetIntensity(0)
+        end
+        K = J_v
+    end
+    ToggleUI(true)
     W.SetText = SetText
-
+    W.ToggleUI = ToggleUI
+    W.BlurManager = b_blur_sys
     if not isfile("fluent.lua") then
         writefile('fluent.lua', game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))
     end
     local J_fl = loadstring(readfile('fluent.lua'))()
+    local K_an = Instance.new('Animation')
+    K_an.AnimationId = 'http://www.roblox.com/asset/?id=1elutruahuabuahd'
     getgenv().alert = function(a_t, h_t)
         pcall(function() J_fl:Notify({Title = a_t or '', Content = h_t or '', Duration = 5}) end)
     end
-    alert("HoangPhucHub", "Bản FULL VIP - Đã nhúng CDK Auto Phá Cửa!")
+    alert("HoangPhucHub", "Phiên bản Hoàn Mỹ - Fixed Mọi Lỗi")
 
-    OldSessionTime = isfile('.tdif-' .. h.Name) and tonumber(readfile(".tdif-" .. h.Name)) or 0
+    FunctionsHandler = {Initalized = false}
+    setmetatable(FunctionsHandler, {__index = function(h_f, X_f)
+        local QueryResult = rawget(h_f, X_f)
+        if not QueryResult then
+            local newHandler = {
+                Initalized = false,
+                Register = function(w_f)
+                    if w_f == false then return end
+                    local Result = {CacheListener = {}, RealCache = {}, Methods = {}, Constants = {}, Events = {}, Initalized = true}
+                    function Result.RegisterMethod(w_m, D_m, y_m)
+                        w_m.Methods[D_m] = {Name = D_m, Callback = y_m, Call = function(w_c, ...) return w_c.Callback(...) end, Events = {}}
+                        return true
+                    end
+                    setmetatable(Result.Constants, {__newindex = function() assert(false, 'cannot change constant value!') end})
+                    function Result.Set(h_s, w_s, D_s) h_s.CacheListener[w_s] = D_s return D_s end
+                    function Result.Get(h_g, w_g) return h_g.Constants[w_g] or h_g.RealCache[w_g] end
+                    function Result.AddVariableChangeListener(h_v, w_v, D_v) h_v.Events[w_v] = D_v end
+                    Result.CacheListener.__parent = Result
+                    setmetatable(Result.CacheListener, {__newindex = function(h_cl, w_cl, D_cl)
+                        _ = h_cl.__parent.Events[w_cl] and h_cl.__parent.Events[w_cl](w_cl, D_cl)
+                        h_cl.__parent.RealCache[w_cl] = D_cl
+                    end})
+                    FunctionsHandler[X_f] = Result
+                end
+            }
+            return newHandler
+        end
+        return QueryResult
+    end})
+
+    FunctionsHandler.LocalPlayerController:Register()
+    FunctionsHandler.ExpRedeem:Register()
+    FunctionsHandler.LevelFarm:Register()
+    FunctionsHandler.Saber:Register()
+    FunctionsHandler.Yama:Register()
+    FunctionsHandler.Tushita:Register()
+    FunctionsHandler.CursedDualKatana:Register()
+    FunctionsHandler.SoulGuitar:Register()
+    FunctionsHandler.Wenlocktoad:Register()
+    FunctionsHandler.RaidController:Register()
+    FunctionsHandler.AutoHopBoss:Register()
+    FunctionsHandler.MeleesController:Register()
+    FunctionsHandler.SpecialBossesTask:Register()
+    FunctionsHandler.BossesTask:Register()
+    FunctionsHandler.CollectDrops:Register()
+    FunctionsHandler.UtillyItemsActivitation:Register()
+    FunctionsHandler.SecondSeaPuzzle:Register()
+    FunctionsHandler.ColosseumPuzzle:Register()
+    FunctionsHandler.ThirdSeaPuzzle:Register()
+    FunctionsHandler.PirateRaid:Register()
+	OldSessionTime = isfile('.tdif-' .. h.Name) and tonumber(readfile(".tdif-" .. h.Name)) or 0
     repeat task.wait() game.ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", Config.Team) until h.Character
     repeat wait() until h.Character
-    
+
     spawn(function()
-        game:GetService("Players").LocalPlayer.PlayerScripts:WaitForChild('NewIslandLOD', 9999):Destroy()
-        game:GetService("Players").LocalPlayer.PlayerScripts:WaitForChild('IslandLOD', 9999):Destroy()
+        pcall(function()
+            h.PlayerScripts:WaitForChild('NewIslandLOD', 9999):Destroy()
+            h.PlayerScripts:WaitForChild('IslandLOD', 9999):Destroy()
+        end)
     end)
 
     StartTick = tick()
-    SetText('MainTextLabel', 'Initalizing Script..')
-
-    ScriptStorage = {IsInitalized = false, PlayerData = {}, Melees = {}, CurrentMeleeData = {}, Enemies = {}, Tools = {}, Backpack = {}, IgnoreStoreFruits = {}, Connections = {LocalPlayer = {}}, Tasks = {}, Tracebacks = {}, Interface = W, NPCs = {}, Map = {}}
-    LocalPlayer = h
-    Character = h.Character
-    Humanoid = Character:WaitForChild('Humanoid')
-    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-    PlayerGui = LocalPlayer:WaitForChild('PlayerGui', 10)
-    Lighting = game:GetService('Lighting')
-    Services = {}
-    setmetatable(Services, {__index = function(J_s, J_k) return game:GetService(J_k) end})
-    setmetatable(ScriptStorage.Enemies, {__index = function(J_s, J_k) return Services.Workspace.Enemies:FindFirstChild(J_k) or Services.ReplicatedStorage:FindFirstChild(J_k) end})
-    setmetatable(ScriptStorage.Map, {__index = function(J_s, J_k) return Services.Workspace.Map:FindFirstChild(J_k) or Services.Workspace:FindFirstChild(J_k) end})
-    setmetatable(ScriptStorage.Tools, {__index = function(J_s, J_k) return LocalPlayer.Character:FindFirstChild(J_k) or LocalPlayer.Backpack:FindFirstChild(J_k) end})
+    ScriptStorage = {IsInitalized = false, PlayerData = {}, Melees = {}, CurrentMeleeData = {}, Enemies = {}, Tools = {}, Backpack = {}, IgnoreStoreFruits = {}, Connections = {LocalPlayer = {}}, Task = {}, Tracebacks = {}, Interface = W, NPCs = {}, Map = {}}
+    setmetatable(ScriptStorage.Enemies, {__index = function(J_s, J_k) return workspace.Enemies:FindFirstChild(J_k) or game.ReplicatedStorage:FindFirstChild(J_k) end})
+    setmetatable(ScriptStorage.Map, {__index = function(J_s, J_k) return workspace.Map:FindFirstChild(J_k) or workspace:FindFirstChild(J_k) end})
+    setmetatable(ScriptStorage.Tools, {__index = function(J_s, J_k) return h.Character:FindFirstChild(J_k) or h.Backpack:FindFirstChild(J_k) end})
     setmetatable(ScriptStorage.NPCs, {__index = function(J_s, J_k) if not J_k then return end; return workspace.NPCs:FindFirstChild(J_k) or game.ReplicatedStorage.NPCs:FindFirstChild(J_k) end})
-
-    TasksOrder = {"CursedDualKatana", "SoulGuitar", "Tushita", "Yama", "AutoHopBoss", "RaidController", "Wenlocktoad", "LevelFarm"}
-    MaxLevel = 2800
-
-    function SetTask(J_t, W_m)
-        if ScriptStorage.Tasks[J_t] == W_m then return end
-        local a_m = {MainTask = "Task1", SubTask = 'Task2'}
-        if a_m[J_t] then if SetText then SetText(a_m[J_t], J_t .. ' : ' .. W_m) end end
-        ScriptStorage.Tasks[J_t] = W_m
-    end
 
     Remotes = {}
     local J_rem = {}
-    BindedMeleeNPCNames = {BlackLeg = 'Dark Step Teacher', Electro = "Mad Scientist", FishmanKarate = "Water Kung-fu Teacher", DeathStep = "Phoeyu, the Reformed", SharkmanKarate = 'Sharkman Teacher', DragonTalon = "Uzoth", ElectricClaw = 'Previous Hero', Godhuman = "Ancient Monk"}
     setmetatable(Remotes, {__index = function(W_r, W_k)
-        if W_k ~= 'CommF_' then return Services.ReplicatedStorage.Remotes[W_k] end
-        local W_f = {InvokeServer = function(a_i, ...)
-            local a_a, h_a = ...
-            if string.find(a_a, "Buy") == 1 and not h_a then
-                local h_a2 = string.gsub(a_a, 'Buy', "")
-                if BindedMeleeNPCNames then
-                    if table.find(J_rem, h_a2) then
-                        local a_n = ScriptStorage.NPCs[BindedMeleeNPCNames[h_a2]]
-                        if a_n then
-                            local h_w = a_n.WorldPivot
-                            if CaculateDistance(h_w) > 10 then
-                                repeat
-                                    wait(1)
-                                    if TweenController then TweenController.Create(h_w.Position) end
-                                until CaculateDistance(h_w) < 10
-                                task.wait(3)
-                                Services.ReplicatedStorage.Remotes.CommF_:InvokeServer(...)
-                            end
-                        end
-                    end
-                end
-            end
-            return Services.ReplicatedStorage.Remotes.CommF_:InvokeServer(...)
-        end}
-        return W_f
+        if W_k ~= 'CommF_' then return game.ReplicatedStorage.Remotes[W_k] end
+        return {InvokeServer = function(a_i, ...) return game.ReplicatedStorage.Remotes.CommF_:InvokeServer(...) end}
     end})
 
+    function ConvertTo(W_t, a_v) return W_t.new(a_v.X, a_v.Y, a_v.Z) end
     function CaculateDistance(W_c, a_c)
-        if not W_c then return 99999 end
-        a_c = a_c or game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-        local h_v, X_v = Vector3.new(W_c.X, W_c.Y, W_c.Z), Vector3.new(a_c.X, a_c.Y, a_c.Z)
+        if not W_c then return 0 end
+        a_c = a_c or h.Character.HumanoidRootPart.CFrame
+        local h_v, X_v = ConvertTo(Vector3, W_c), ConvertTo(Vector3, a_c)
         return (h_v - X_v).magnitude
     end
-    function ConvertTo(W_t, a_v) return W_t.new(a_v.X, a_v.Y, a_v.Z) end
+    function Split(J_s, W_d)
+        if W_d == nil then W_d = "%s" end
+        local a_t = {}
+        for h_p in string.gmatch(J_s, '([^' .. W_d .. ']+)') do table.insert(a_t, h_p) end
+        return a_t
+    end
     function DispTime(W_s, a_b)
         W_s = tonumber(W_s)
         if not W_s then return "[err]" end
@@ -187,84 +366,95 @@ function hoangtuveu()
         return (h_d .. 'day, ' .. X_h .. "hrs.")
     end
 
-    local W_ang = 30
-    lastChange = tick()
-    function RoundVector3Down(W_v) return Vector3.new(math.floor(W_v.X / 10) * 10, math.floor(W_v.Y / 10) * 10, math.floor(W_v.Z / 10) * 10) end
-    CaculateCircreDirection = function(a_c)
-        if W_ang > 50000 then W_ang = 60 end
-        W_ang = W_ang + ((tick() - lastChange) > .4 and 80 or 0)
-        if tick() - lastChange > .4 then lastChange = tick() end
-        local h_p = a_c + Vector3.new(math.cos(math.rad(W_ang)) * 40, 0, math.sin(math.rad(W_ang)) * 40)
-        return CFrame.new(RoundVector3Down(h_p.p))
-    end
-	function GetMonAsSortedRange()
-        local W_m = {}
-        table.foreach(Services.Workspace.Enemies:GetChildren(), function(a_i, a_v)
-            if a_v and a_v:FindFirstChild('Humanoid') and a_v:FindFirstChild("HumanoidRootPart") and a_v.Humanoid.Health > 0 then
-                table.insert(W_m, a_v)
-            end
-        end)
-        table.foreach(game.ReplicatedStorage:GetChildren(), function(a_i, a_v)
-            if a_v and a_v:FindFirstChild('Humanoid') and a_v:FindFirstChild("HumanoidRootPart") and a_v.Humanoid.Health > 0 then
-                table.insert(W_m, a_v)
-            end
-        end)
-        table.sort(W_m, function(a_1, h_1) return CaculateDistance(a_1.HumanoidRootPart.CFrame) < CaculateDistance(h_1.HumanoidRootPart.CFrame) end)
-        return W_m
+    function SetTask(J_t, W_m)
+        local a_m = {MainTask = "Task1", SubTask = 'Task2'}
+        if a_m[J_t] then SetText(a_m[J_t], J_t .. ' : ' .. W_m) end
     end
 
-    local J_q = {CurrentLevel = 2, DoubleQuest = true, CurrentQuests = {}, BlacklistedQuestIds = {BartiloQuest = 1, CitizenQuest = 1, Trainees = 1, MarineQuest = 1, ImpelQuest = 1}}
-    J_q.Quests = require(game.ReplicatedStorage.Quests)
-    function J_q.Set(W_s, a_k, h_v) W_s[a_k] = h_v end
-    function J_q.RefreshQuest(W_s)
+    placeId = game.PlaceId
+    if placeId == 85211729168715 or placeId == 2753915549 then SeaIndex = 1
+    elseif placeId == 79091703265657 or placeId == 4442272183 then SeaIndex = 2
+    elseif placeId == 100117331123089 or placeId == 7449423635 then SeaIndex = 3 end
+
+    SeaIndexes = {"Main", "Dressrosa", "Zou"}
+    MaxLevel = 2800
+    TasksOrder = {"AutoHopBoss", "SpecialBossesTask", "SoulGuitar", "CursedDualKatana", "Tushita", "Yama", "RaidController", "Wenlocktoad", "ExpRedeem", "LevelFarm"}
+    GodhumanMaterials = {['Fish Tail'] = {20, 3, {"Fishman Raider", "Fishman Captain"}, {'DeepForestIsland3', 1, 1775, 'Turtle Adventure Quest Giver'}}, ['Dragon Scale'] = {10, 3, {"Dragon Crew Warrior", "Dragon Crew Archer"}, {'DragonCrewQuest', 1, 1575, 'Dragon Crew Quest Giver'}}, ["Magma Ore"] = {20, 2, {'Magma Ninja'}, {"FireSideQuest", 1, 1100, "Fire Quest Giver"}}, ["Mystic Droplet"] = {10, 2, {'Sea Soldier', 'Water Fighter'}, {'ForgottenQuest', 2, 1425, 'Forgotten Quest Giver'}}}
+
+    function AddPoint()
+        local W_p = {}
+        local a_s
+        for _, h_v in pairs(h.Data.Stats:GetChildren()) do
+            if h_v and h_v:FindFirstChild('Level') then W_p[h_v.Name] = h_v.Level.Value end
+        end
+        if W_p.Defense < MaxLevel and (W_p.Defense < (ScriptStorage.PlayerData.Level / 80) or MaxLevel - W_p.Melee < 100) then a_s = 'Defense'
+        elseif W_p.Melee < MaxLevel then a_s = "Melee"
+        else a_s = 'Sword' end
+        Remotes.CommF_:InvokeServer("AddPoint", a_s, 999)
+    end
+
+    function RefreshPlayerData()
+        for _, a_v in pairs(h.Data:GetChildren()) do pcall(function() ScriptStorage.PlayerData[a_v.Name] = a_v.Value end) end
+        local a_s = ""
+        local W_c = {Level = "#00FF48", Beli = "#FF7800", Fragments = "#6C00FF"}
+        for h_k, X_v in pairs(ScriptStorage.PlayerData) do
+            local w_c = W_c[h_k]
+            if w_c then a_s = a_s .. '<font color="' .. w_c .. '">' .. h_k .. "</font>: " .. X_v .. ' ' end
+        end
+        SetText('Currencies', a_s)
+    end
+
+    function RefreshInventory()
+        ScriptStorage.Backpack2 = {}
+        for _, W_v in pairs(Remotes.CommF_:InvokeServer('getInventory')) do ScriptStorage.Backpack2[W_v.Name] = W_v end
+        ScriptStorage.Backpack = ScriptStorage.Backpack2
+    end
+
+    J_quest = {CurrentLevel = 2, DoubleQuest = true, CurrentQuests = {}, BlacklistedQuestIds = {BartiloQuest = 1, CitizenQuest = 1, Trainees = 1, MarineQuest = 1, ImpelQuest = 1}}
+    J_quest.Quests = require(game.ReplicatedStorage.Quests)
+    function J_quest:RefreshQuest()
         while not ScriptStorage.PlayerData.Level do task.wait(1) end
-        local a_l = 0
-        local h_q
-        for X_i, w_v in pairs(J_q.Quests) do
-            if not J_q.BlacklistedQuestIds[X_i] then
+        local a_l, h_q = 0, nil
+        for X_i, w_v in pairs(self.Quests) do
+            if not self.BlacklistedQuestIds[X_i] then
                 if (w_v[1].LevelReq >= a_l and w_v[1].LevelReq <= ScriptStorage.PlayerData.Level) then
                     a_l = w_v[1].LevelReq
                     h_q = w_v
-                    W_s.CurrentQuestId = X_i
+                    self.CurrentQuestId = X_i
                     if ScriptStorage.PlayerData.Level >= 1500 and SeaIndex == 2 and X_i == 'ForgottenQuest' then break end
                 end
             end
         end
         local a_la = h_q[#h_q]
-        for X_i, X_v in pairs(a_la.Task) do if X_v == 1 then table.remove(h_q, #h_q) end end
+        for _, X_v in pairs(a_la.Task) do if X_v == 1 then table.remove(h_q, #h_q) end end
         for a_n, X_c in pairs(require(game.ReplicatedStorage.GuideModule).Data.NPCList) do
-            for w_i, w_l in pairs(X_c.Levels) do if w_l == h_q[#h_q].LevelReq then W_s.CurrentNpc = a_n.CFrame end end
+            for _, w_l in pairs(X_c.Levels) do if w_l == h_q[#h_q].LevelReq then self.CurrentNpc = a_n.CFrame end end
         end
-        W_s.CurrentQuests = h_q
+        self.CurrentQuests = h_q
     end
-    function J_q.GetCurrentQuest(W_s)
-        local a_i = W_s.CurrentQuests[W_s.CurrentLevel] and W_s.CurrentQuests[W_s.CurrentLevel].LevelReq <= ScriptStorage.PlayerData.Level and W_s.CurrentLevel or 1
-        for h_n in pairs(W_s.CurrentQuests[a_i].Task) do return h_n, W_s.CurrentNpc, W_s.CurrentQuestId, a_i, W_s.CurrentQuests[a_i].Name end
+    function J_quest:GetCurrentQuest()
+        local a_i = self.CurrentQuests[self.CurrentLevel] and self.CurrentQuests[self.CurrentLevel].LevelReq <= ScriptStorage.PlayerData.Level and self.CurrentLevel or 1
+        for h_n in pairs(self.CurrentQuests[a_i].Task) do return h_n, self.CurrentNpc, self.CurrentQuestId, a_i, self.CurrentQuests[a_i].Name end
     end
-    function J_q.AbandonQuest() Remotes.CommF_:InvokeServer("AbandonQuest") end
-    function J_q.GetCurrentClaimQuest(W_s)
-        local W_t = game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible and game.Players.LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text:gsub("%s*Defeat%s*(%d*)%s*(.-)%s*%b()", '%2')
-        return (type(W_t) == "string" and string.gsub(W_t, "Military ", "Mil. ") or W_t), game.Players.LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text
+    function J_quest:AbandonQuest() Remotes.CommF_:InvokeServer("AbandonQuest") end
+    function J_quest:GetCurrentClaimQuest()
+        local visible = h.PlayerGui.Main.Quest.Visible
+        if not visible then return nil, nil end
+        local W_t = h.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text:gsub("%s*Defeat%s*(%d*)%s*(.-)%s*%b()", '%2')
+        return (type(W_t) == "string" and string.gsub(W_t, "Military ", "Mil. ") or W_t), h.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text
     end
-    function J_q.StartQuest(W_i, a_l)
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer('ColorsDealer', "2")
+    function J_quest:StartQuest(W_i, a_l)
+        game.ReplicatedStorage.Remotes.CommF_:InvokeServer('ColorsDealer', "2")
         return Remotes.CommF_:InvokeServer("StartQuest", W_i, a_l)
     end
 
-    ScriptStorage.MobRegions = {}
-    for W_i, W_v in pairs(game:GetService("ReplicatedStorage").FortBuilderReplicatedSpawnPositionsFolder:GetChildren()) do
-        ScriptStorage.MobRegions[tostring(W_v)] = ScriptStorage.MobRegions[tostring(W_v)] or {}
-        table.insert(ScriptStorage.MobRegions[tostring(W_v)], W_v.CFrame)
-    end
-
     TweenController = {}
-    local TweenDebounce = false
     function TweenController.Create(W_p)
         if not W_p or TweenDebounce then return end
         local a_c = typeof(W_p) ~= 'CFrame' and CFrame.new(W_p.X, W_p.Y, W_p.Z) or W_p
         if TweenInstance then pcall(function() TweenInstance:Cancel() end) end
-        for W_i, W_v in ipairs(game.Players.LocalPlayer.Character:GetDescendants()) do if W_v:IsA("BasePart") then W_v.CanCollide = false end end
-        local W_he = game.Players.LocalPlayer.Character:WaitForChild("Head")
+        for _, v in ipairs(h.Character:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
+        local W_he = h.Character:WaitForChild("Head")
         if not W_he:FindFirstChild("eltrul") then
             local h_b = Instance.new('BodyVelocity')
             h_b.Name = "eltrul"
@@ -272,30 +462,34 @@ function hoangtuveu()
             h_b.Velocity = Vector3.zero
             h_b.Parent = W_he
         end
-        a_c = CFrame.new(a_c.Position)
-        local W_d = CaculateDistance(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame, a_c)
-        local h_c = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(h_c.x, a_c.y, h_c.z)
-        TweenInstance = Services.TweenService:Create(game.Players.LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(W_d / 350, Enum.EasingStyle.Linear), {CFrame = a_c})
+        local W_d = CaculateDistance(h.Character.HumanoidRootPart.CFrame, a_c)
+        TweenInstance = game:GetService("TweenService"):Create(h.Character.HumanoidRootPart, TweenInfo.new(W_d / 350, Enum.EasingStyle.Linear), {CFrame = a_c})
         TweenInstance:Play()
     end
 
-    local h_attack_lib = {}
-    function GetAllBladeHits()
-        local bladehits = {}
-        for _, X_e in pairs(workspace.Enemies:GetChildren()) do
-            if X_e:FindFirstChild('Humanoid') and X_e:FindFirstChild('HumanoidRootPart') and X_e.Humanoid.Health > 0 and (X_e.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude <= 65 then
-                table.insert(bladehits, X_e)
+    function GetMonAsSortedRange()
+        local W_m = {}
+        for _, a_v in pairs(workspace.Enemies:GetChildren()) do
+            if a_v and a_v:FindFirstChild('Humanoid') and a_v:FindFirstChild("HumanoidRootPart") and a_v.Humanoid.Health > 0 then
+                table.insert(W_m, a_v)
             end
         end
-        return bladehits
+        table.sort(W_m, function(a_1, h_1) return CaculateDistance(a_1.HumanoidRootPart.CFrame) < CaculateDistance(h_1.HumanoidRootPart.CFrame) end)
+        return W_m
     end
-    local net_mod = (Services.ReplicatedStorage.Modules.Net)
+
+    local h_attack_lib = {}
+    local net_mod = game.ReplicatedStorage.Modules.Net
     local reg_at = require(net_mod):RemoteEvent("RegisterAttack", true)
     local reg_hit = require(net_mod):RemoteEvent("RegisterHit", true)
 
     function h_attack_lib:Attack()
-        local X_targets = GetAllBladeHits()
+        local X_targets = {}
+        for _, X_e in pairs(workspace.Enemies:GetChildren()) do
+            if X_e:FindFirstChild('Humanoid') and X_e:FindFirstChild('HumanoidRootPart') and X_e.Humanoid.Health > 0 and (X_e.HumanoidRootPart.Position - h.Character.HumanoidRootPart.Position).Magnitude <= 65 then
+                table.insert(X_targets, X_e)
+            end
+        end
         if #X_targets == 0 then return end
         local y_data = {[1] = nil, [2] = {}, [4] = "078da5141"}
         for _, L in pairs(X_targets) do
@@ -311,216 +505,143 @@ function hoangtuveu()
             if _G.FastAttack == os.time() then pcall(function() h_attack_lib:Attack() end) end 
         end
     end)
-    W.Attack = function(h_dmy) pcall(function() _G.FastAttack = os.time() end) end
+    function W.Attack(h_dmy) pcall(function() _G.FastAttack = os.time() end) end
 
     CombatController = {GRAB = true, GRAB_DISTANCE = 350, CurrentIndex = 1}
-    LastFound = os.time()
-    
-    function CombatController.Grab(h_target)
-        pcall(sethiddenproperty, game.Players.LocalPlayer, 'SimulationRadius', math.huge)
-        if not CombatController.GRAB or GrabDebounce == os.time() then return end
-        GrabDebounce = os.time()
-        local X_vec, w_count = Vector3.zero, 0
-        local D_list = {}
-        for _, y_mon in pairs(Services.Workspace.Enemies:GetChildren()) do
-            if y_mon.Name == h_target and y_mon:FindFirstChild('Humanoid') and y_mon:FindFirstChild("HumanoidRootPart") and y_mon.Humanoid.Health > 0 then
-                w_count = w_count + 1
-                X_vec = X_vec + y_mon.HumanoidRootPart.Position
-                table.insert(D_list, y_mon)
-            end
-        end
-        if w_count > 0 then
-            X_vec = CFrame.new(X_vec / w_count)
-            table.foreach(D_list, function(_, h_ent)
-                local w_root = h_ent:FindFirstChild("HumanoidRootPart")
-                if w_root then
-                    h_ent.HumanoidRootPart.CFrame = X_vec
-                    if not w_root:FindFirstChild('FarmingVelocity') then
-                        local D_vel = Instance.new('BodyVelocity')
-                        D_vel.Name = 'FarmingVelocity'
-                        D_vel.MaxForce = Vector3.new(4000, 4000, 4000)
-                        D_vel.Velocity = Vector3.new(0,0,0)
-                        D_vel.Parent = w_root
-                    end
-                end
-            end)
-        end
-    end
-
     function CombatController.Search(h_search_list)
         local X_arr = {}
+        local w_found = false
         for _, D_mon in pairs(GetMonAsSortedRange()) do
             if table.find(h_search_list, D_mon.Name) and D_mon:FindFirstChild("Humanoid") and D_mon.Humanoid.Health > 0 then
+                w_found = true
                 table.insert(X_arr, D_mon)
             end
         end
-        if #X_arr > 0 then return X_arr[1] end
+        if w_found then return X_arr[1] end
         for _, X_name in pairs(h_search_list) do
             local h_res = game.ReplicatedStorage:FindFirstChild(X_name)
             if h_res then return h_res end
         end
     end
 
-    function CombatController.Attack(h_at)
-        pcall(sethiddenproperty, game.Players.LocalPlayer, 'SimulationRadius', math.huge)
+    function CombatController.Attack(h_at, X_at, w_at)
+        pcall(sethiddenproperty, h, 'SimulationRadius', math.huge)
         h_at = type(h_at) == "string" and {h_at} or (h_at or {})
         for _, L_name in pairs(h_at) do
             MonResult = CombatController.Search(h_at)
             if MonResult then
-                LastFound = os.time()
                 local h_val = 0
                 while task.wait() do
                     if _G.Stop then return end
                     local C_hum = MonResult:FindFirstChild('Humanoid')
                     local p_root = MonResult:FindFirstChild('HumanoidRootPart')
                     if not C_hum or C_hum.Health <= 0 then break end
-                    TweenController.Create(CaculateCircreDirection(p_root.CFrame) + Vector3.new(0, 35, 0))
+                    TweenController.Create(p_root.CFrame + Vector3.new(0, 35, 0))
                     if CaculateDistance(p_root.Position + Vector3.new(0, 35, 0)) < 150 then
-                        CombatController.Grab(L_name or '')
                         FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call(ScriptStorage.ForceToUseSword and 'Sword' or "Melee")
                         W.Attack(MonResult)
                         h_val = h_val + 1
                     end
                     if h_val > 30 and MonResult.Name ~= "Core" then break end
                 end
-            else
-                if (os.time() - LastFound) > 200 then game.Players.LocalPlayer:Kick('Rejoining..') return end
-                local h_reg = ScriptStorage.MobRegions[L_name]
-                if not h_reg then
-                    local X_e = Services.Workspace.Enemies:FindFirstChild(L_name) or game.ReplicatedStorage:FindFirstChild(L_name)
-                    h_reg = X_e and {X_e:GetPrimaryPartCFrame().p}
-                end
-                if h_reg and h_reg[1] then TweenController.Create(h_reg[1] + Vector3.new(0, 35, 35)) end
             end
         end
     end
 
-    FunctionsHandler = {Initalized = false}
-    setmetatable(FunctionsHandler, {__index = function(h_f, X_f)
-        local QueryResult = rawget(h_f, X_f)
-        if not QueryResult then
-            return {
-                Register = function(w_f)
-                    if w_f == false then return end
-                    local Result = {CacheListener = {}, RealCache = {}, Methods = {}, Constants = {}, Events = {}, Initalized = true}
-                    function Result.RegisterMethod(w_m, D_m, y_m)
-                        w_m.Methods[D_m] = {Name = D_m, Callback = y_m, Call = function(w_c, ...) return w_c.Callback(...) end, Events = {}}
-                        return true
-                    end
-                    function Result.Set(h_s, w_s, D_s) h_s.CacheListener[w_s] = D_s return D_s end
-                    function Result.Get(h_g, w_g) return h_g.Constants[w_g] or h_g.RealCache[w_g] end
-                    FunctionsHandler[X_f] = Result
-                end, Initalized = false
-            }
-        end
-        return QueryResult
-    end})
-
-    FunctionsHandler.LocalPlayerController:Register()
-    FunctionsHandler.LevelFarm:Register()
-    FunctionsHandler.Saber:Register()
-    FunctionsHandler.Yama:Register()
-    FunctionsHandler.Tushita:Register()
-    FunctionsHandler.CursedDualKatana:Register()
-    FunctionsHandler.SoulGuitar:Register()
-    FunctionsHandler.RaidController:Register()
-    FunctionsHandler.AutoHopBoss:Register()
-    FunctionsHandler.Wenlocktoad:Register()
-    FunctionsHandler.ExpRedeem:Register()
-
     FunctionsHandler.LocalPlayerController:RegisterMethod("EquipTool", function(toolName)
-        if not Humanoid then return end
-        for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
+        if not h.Character:FindFirstChild('Humanoid') then return end
+        for _, item in pairs(h.Backpack:GetChildren()) do
             if item:IsA('Tool') and (item.Name == tostring(toolName) or item.ToolTip == toolName) then
-                LocalPlayer.Character:WaitForChild('Humanoid'):EquipTool(item)
+                h.Character.Humanoid:EquipTool(item)
             end
         end
     end)
-	FunctionsHandler.LevelFarm:RegisterMethod("Refresh", function()
-        local lvl = ScriptStorage.PlayerData.Level
-        if lvl >= MaxLevel then return false end
-        if lvl < 50 then return 1
-        elseif lvl < 70 then return 2
-        else return 4 end
-    end)
-    FunctionsHandler.LevelFarm:RegisterMethod("Start", function(floor)
-        local currentLevel = ScriptStorage.PlayerData.Level
-        if os.time() - (LastTravel or 0) > 60 then
-            LastTravel = os.time()
-            if currentLevel >= 1500 and SeaIndex == 2 then
-                if not Services.Workspace.Map.IceCastle.Hall.LibraryDoor:FindFirstChild('PhoeyuDoor') then
-                    SetTask('MainTask', 'Sea Travel | Teleporting to Third Sea') 
-                    Remotes.CommF_:InvokeServer("TravelZou")
-                    return
-                end
-            elseif currentLevel >= 700 and SeaIndex == 1 then
-                SetTask('MainTask', 'Sea Travel | Teleporting to Second Sea') 
-                Remotes.CommF_:InvokeServer("TravelDressrosa")
-                return
-            end
-        end
-        if floor == 4 then
-            local monName, npcPos, questId, qIndex, questTitle = J_q:GetCurrentQuest()
-            local claimQuest, _ = J_q:GetCurrentClaimQuest()
-            if claimQuest then
-                if claimQuest ~= questTitle then 
-                    J_q:AbandonQuest() 
-                end
-            else
-                if not npcPos then 
-                    J_q:RefreshQuest() 
-                    return 
-                end
-                TweenController.Create(npcPos + Vector3.new(0, 5, 3))
-                SetTask("MainTask", "Level Farming | " .. monName .. " | Claiming Quest")
-                if CaculateDistance(npcPos) > 10 then return end
-                task.wait(1)
-                J_q:StartQuest(questId, qIndex)
-                task.wait(1)
-            end
-            SetTask('MainTask', 'Level Farming | ' .. monName .. " | Defeating Enemies")
-            CombatController.Attack(monName)
-        end
-    end)
+
     FunctionsHandler.ExpRedeem:RegisterMethod("Refresh", function() return ScriptStorage.PlayerData.Level < MaxLevel and getsenv(game.ReplicatedStorage.GuideModule)._G.ServerData.ExpBoost == 0 and not Storage:Get("IsCodesRanOut") end)
     FunctionsHandler.ExpRedeem:RegisterMethod("Start", function()
-        local codes = {'BANEXPLOIT', 'NOMOREHACKS', "WildDares", 'BossBuild', 'GetPranked', 'EARN_FRUITS', "Sub2UncleKizaru", 'FIGHT4FRUIT', "kittgaming", 'TRIPLEABUSE', "Sub2CaptainMaui", 'Sub2Fer999', "Enyu_is_Pro", "Magicbus", "JCWK", 'Starcodeheo', 'Bluxxy', 'SUB2GAMERROBOT_EXP1', 'Sub2NoobMaster123', 'Sub2Daigrock', "Axiore", "TantaiGaming", 'StrawHatMaine', 'Sub2OfficialNoobie', "TheGreatAce", "SEATROLLIN", "24NOADMIN", 'ADMIN_TROLL', 'NEWTROLL', 'SECRET_ADMIN', "staffbattle", "NOEXPLOIT", "NOOB2ADMIN", "CODESLIDE", "fruitconcepts"}
+        local codes = {'BANEXPLOIT', "WildDares", 'BossBuild', 'GetPranked', 'EARN_FRUITS', "Sub2UncleKizaru", 'FIGHT4FRUIT', "kittgaming", "Sub2CaptainMaui", 'Sub2Fer999', "Enyu_is_Pro", "Magicbus", "JCWK", 'Starcodeheo', 'Bluxxy'}
         for _, code in pairs(codes) do
             SetTask("MainTask", 'Code Redemption | ' .. code .. ' | Redeeming...')
-            local res = (Remotes.CommF_:InvokeServer("Redeem", code))
+            local res = (game.ReplicatedStorage.Remotes.Redeem:InvokeServer(code))
             task.wait()
             if getsenv(game.ReplicatedStorage.GuideModule)._G.ServerData.ExpBoost > 0 then return end
         end
         Storage:Set("IsCodesRanOut", 1)
-        Storage:Save()
     end)
-    FunctionsHandler.Saber:RegisterMethod('Refresh', function()
+
+    FunctionsHandler.LevelFarm:RegisterMethod("Refresh", function()
+        local lvl = ScriptStorage.PlayerData.Level
+        if lvl < 50 then return 1 elseif lvl < 70 then return 2 else return 4 end
+    end)
+
+    FunctionsHandler.LevelFarm:RegisterMethod("Start", function(floor)
+        if SeaIndex == 3 and (ScriptStorage.Backpack.Bones or {Count = 0}).Count >= 50 then
+            if os.time() > (BonesCooldown or 0) then
+                local status, _, _, timeStr = Remotes.CommF_:InvokeServer("Bones", 'Check')
+                if tonumber(status or 1) == 0 then
+                    local splitTime = Split(timeStr, ":")
+                    BonesCooldown = os.time() + (((tonumber(splitTime[1]) * 60) + tonumber(splitTime[2])) * 60)
+                else 
+                    Remotes.CommF_:InvokeServer('Bones', 'Buy', 1, 1) 
+                end
+            end
+        end
+
+        local currentLevel = ScriptStorage.PlayerData.Level
+        if os.time() - (LastTravel or 0) > 60 then
+            LastTravel = os.time()
+            if currentLevel >= 1500 and SeaIndex == 2 and not workspace.Map.IceCastle.Hall.LibraryDoor:FindFirstChild('PhoeyuDoor') then
+                SetTask('MainTask', 'Sea Travel | Teleporting to Third Sea') 
+                Remotes.CommF_:InvokeServer("TravelZou")
+            elseif currentLevel >= 700 and SeaIndex == 1 then
+                SetTask('MainTask', 'Sea Travel | Teleporting to Second Sea') 
+                Remotes.CommF_:InvokeServer("TravelDressrosa")
+            end
+        end
+
+        if floor == 1 then CombatController.Attack("Sky Bandit")
+        elseif floor == 2 then CombatController.Attack('God\'s Guard')
+        elseif floor == 4 then
+            local monName, npcPos, questId, qIndex, questTitle = J_quest:GetCurrentQuest()
+            local claimQuest, _ = J_quest:GetCurrentClaimQuest()
+            if claimQuest then
+                if claimQuest ~= questTitle then J_quest:AbandonQuest() end
+            else
+                if not npcPos then J_quest:RefreshQuest() return end
+                TweenController.Create(npcPos + Vector3.new(0, 5, 3))
+                SetTask("MainTask", "Level Farming | Claiming Quest: " .. monName)
+                if CaculateDistance(npcPos) < 10 then
+                    task.wait(1)
+                    J_quest:StartQuest(questId, qIndex)
+                    task.wait(1)
+                end
+                return
+            end
+            SetTask('MainTask', 'Level Farming | Đang cày: ' .. monName)
+            CombatController.Attack(monName)
+        end
+    end)
+	FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
         local step
-        if prog and prog.Plates then
-            for _, plateStat in pairs(prog.Plates) do 
-                if plateStat == false then step = 1 end 
-            end
-            if not step then
-                if not prog.UsedTorch then step = 2 
-                elseif not prog.UsedCup then step = 3 
-                elseif not prog.TalkedSon then step = 4 
-                elseif not prog.KilledMob then step = 5 
-                elseif not prog.UsedRelic then step = 6 
-                elseif not prog.KilledShanks then step = 7 
-                end
-            end
-        else step = 1 end
+        for _, plateStat in pairs(prog.Plates) do if plateStat == false then step = 1 end end
+        if not step then
+            if not prog.UsedTorch then step = 2 
+            elseif not prog.UsedCup then step = 3 
+            elseif not prog.TalkedSon then step = 4 
+            elseif not prog.KilledMob then step = 5 
+            elseif not prog.UsedRelic then step = 6 
+            elseif not prog.KilledShanks then step = 7 end
+        end
         FunctionsHandler.Saber:Set("CurrentProgressLevel", step)
         return step
     end)
     FunctionsHandler.Saber:RegisterMethod('GetQuestplates', function()
         local cached = FunctionsHandler.Saber:Get("QuestplatesCache")
         if cached then return cached end
-        local jungle = Services.Workspace.Map.Jungle
         local plateList = {}
-        table.foreach(jungle.QuestPlates:GetChildren(), function(_, v) 
+        table.foreach(workspace.Map.Jungle.QuestPlates:GetChildren(), function(_, v) 
             if v:FindFirstChild("Button") then table.insert(plateList, v) end 
         end)
         FunctionsHandler.Saber:Set('QuestplatesCache', plateList)
@@ -531,10 +652,7 @@ function hoangtuveu()
         if step == 1 then
             for i, p in pairs(FunctionsHandler.Saber.Methods.GetQuestplates:Call()) do
                 SetTask('MainTask', "Saber Quest | Touching Plate " .. i .. "/5")
-                while CaculateDistance(p.Button.CFrame) > 20 do 
-                    task.wait()
-                    TweenController.Create(p.Button.CFrame) 
-                end
+                while CaculateDistance(p.Button.CFrame) > 20 do task.wait() TweenController.Create(p.Button.CFrame) end
                 task.wait(1)
             end
         elseif step == 2 then 
@@ -548,7 +666,7 @@ function hoangtuveu()
             if ScriptStorage.Tools.Cup then 
                 FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Cup')
                 task.wait(1)
-                Remotes.CommF_:InvokeServer("ProQuestProgress", 'FillCup', LocalPlayer.Character.Cup) 
+                Remotes.CommF_:InvokeServer("ProQuestProgress", 'FillCup', h.Character.Cup) 
             end
             Remotes.CommF_:InvokeServer("ProQuestProgress", 'SickMan')
         elseif step == 5 then
@@ -559,6 +677,7 @@ function hoangtuveu()
             CombatController.Attack("Saber Expert") 
         end
     end)
+
     FunctionsHandler.Yama:RegisterMethod('Refresh', function()
         if SeaIndex ~= 3 or ScriptStorage.Backpack.Yama then return end
         if not FunctionsHandler.Yama:Get("EliteCount") then
@@ -570,30 +689,25 @@ function hoangtuveu()
         SetTask('MainTask', "Yama Quest | Pulling Sword")
         repeat
             task.wait()
-            TweenController.Create(game:GetService("ReplicatedStorage").FakeIslands.Waterfall:GetModelCFrame())
+            TweenController.Create(game.ReplicatedStorage.FakeIslands.Waterfall:GetModelCFrame())
         until workspace.Map:FindFirstChild("Waterfall") and workspace.Map.Waterfall:FindFirstChild("SealedKatana")
         fireclickdetector(workspace.Map.Waterfall.SealedKatana.Hitbox.ClickDetector)
     end)
+
     FunctionsHandler.Tushita:RegisterMethod("Refresh", function()
         if ScriptStorage.Backpack.Tushita or ScriptStorage.PlayerData.Level < 2000 or SeaIndex ~= 3 then return end
         TushitaProgress = TushitaProgress or Remotes.CommF_:InvokeServer("TushitaProgress")
         if not TushitaProgress.OpenedDoor then
-            if ScriptStorage.Enemies["rip_indra True Form"] then 
-                TushitaProgress = nil
-                return 1 
-            end
+            if ScriptStorage.Enemies["rip_indra True Form"] then TushitaProgress = nil return 1 end
         else
-            if ScriptStorage.Enemies['Longma'] then 
-                TushitaProgress = nil
-                return 2 
-            end
+            if ScriptStorage.Enemies['Longma'] then TushitaProgress = nil return 2 end
         end
     end)
     FunctionsHandler.Tushita:RegisterMethod('Start', function(k)
         if k == 1 then
-            SetTask("MainTask", "Tushita Quest | VIP: Lighting Torches while Indra is alive!")
+            SetTask("MainTask", "Tushita Quest | Lighting Torches!")
             TweenController.Create(CFrame.new(5714, 20, 256))
-            if ScriptStorage.Tools["Holy Torch"] or game.Players.LocalPlayer.Backpack:FindFirstChild("Holy Torch") then
+            if ScriptStorage.Tools["Holy Torch"] then
                 for i = 1, 5 do Remotes.CommF_:InvokeServer("TushitaProgress", "Torch", i) end
                 return true
             end
@@ -602,15 +716,13 @@ function hoangtuveu()
             CombatController.Attack("Longma")
         end
     end)
-    function CheckFullMoon(isForce)
+
+    function CheckFullMoon()
         if Lighting.Sky.MoonTextureId ~= 'http://www.roblox.com/asset/?id=970914431' then return end
-        if isForce then return true end
         return Lighting.ClockTime > 18 or Lighting.ClockTime < 5
     end
     FunctionsHandler.SoulGuitar:RegisterMethod("Refresh", function()
-        if not Config.Items.SoulGuitar then return end
-        if ScriptStorage.Backpack['Skull Guitar'] or not ScriptStorage.Backpack['Dark Fragment'] then return end
-        if ScriptStorage.PlayerData.Level < 2300 then return end
+        if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or not ScriptStorage.Backpack['Dark Fragment'] or ScriptStorage.PlayerData.Level < 2300 then return end
         local ecto = (ScriptStorage.Backpack['Ectoplasm'] or {Count = 0})["Count"]
         local bones = (ScriptStorage.Backpack["Bones"] or {Count = 0})['Count']
         if ecto < 250 then return 1 end
@@ -631,277 +743,164 @@ function hoangtuveu()
     FunctionsHandler.SoulGuitar:RegisterMethod('Start', function(step)
         if step == 7 then
             SetTask("MainTask", 'Soul Guitar | Activating Gravestone Event')
-            while CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 do
-                task.wait()
-                TweenController.Create(CFrame.new(-8654.0, 140, 6167))
-            end
+            while CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 do task.wait() TweenController.Create(CFrame.new(-8654.0, 140, 6167)) end
             SoulGuitarProcess = Remotes.CommF_:InvokeServer("gravestoneEvent", 2, true)
         elseif step == 1 then
             if SeaIndex ~= 2 then
-                SetTask("MainTask", 'Soul Guitar | Teleporting to Sea 2 for Ectoplasm')
+                SetTask("MainTask", 'Soul Guitar | Travel to Sea 2 for Ectoplasm')
                 return Remotes.CommF_:InvokeServer("TravelDressrosa")
             else
                 SetTask("MainTask", "Soul Guitar | Farming Ectoplasm")
                 CombatController.Attack({"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"})
-                return
             end
         elseif step == 2 then
-            SetTask("MainTask", 'Soul Guitar | Step 1: Zombie Puzzle')
+            SetTask("MainTask", 'Soul Guitar | Zombie Puzzle')
             local zombieList = {}
-            for _, ent in pairs(Services.Workspace.Enemies:GetChildren()) do
-                if ent.Name == "Living Zombie" then table.insert(zombieList, ent) end
-            end
+            for _, ent in pairs(workspace.Enemies:GetChildren()) do if ent.Name == "Living Zombie" then table.insert(zombieList, ent) end end
             if #zombieList < 6 then
-                TweenController.Create(ScriptStorage.MobRegions["Living Zombie"][1] + Vector3.new(0, 30, 0))
+                TweenController.Create(CFrame.new(-9473, 142, 5567))
             else
-                local stepStart = os.time()
-                for i, zombie in pairs(zombieList) do
-                    while task.wait() and zombie.Humanoid.Health > 7000 do
-                        FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Melee')
-                        if os.time() - stepStart > 60 then break end
-                        TweenController.Create(zombie.HumanoidRootPart.CFrame + Vector3.new(0, 50, 0))
-                        W.Attack()
-                    end
-                end
-                while workspace.Enemies:FindFirstChild("Living Zombie") and task.wait() do
-                    if os.time() - stepStart > 60 then break end
-                    CombatController.Attack('Living Zombie')
-                end
+                while workspace.Enemies:FindFirstChild("Living Zombie") and task.wait() do CombatController.Attack('Living Zombie') end
             end
         elseif step == 3 then
-            SetTask("MainTask", "Soul Guitar | Step 2: Placards Puzzle")
+            SetTask("MainTask", "Soul Guitar | Placards Puzzle")
             local hauntMap = workspace.Map["Haunted Castle"]
-            while CaculateDistance(CFrame.new(-8800.0, 178, 6033)) > 10 do
-                task.wait()
-                TweenController.Create(CFrame.new(-8800.0, 178, 6033))
-            end
+            while CaculateDistance(CFrame.new(-8800.0, 178, 6033)) > 10 do task.wait() TweenController.Create(CFrame.new(-8800.0, 178, 6033)) end
             local placards = {Placard1 = "Right", Placard2 = "Right", Placard3 = "Left", Placard4 = 'Right', Placard5 = 'Left', Placard6 = 'Left', Placard7 = "Left"}
             for pName, side in pairs(placards) do fireclickdetector(hauntMap[pName][side].ClickDetector) end
         elseif step == 4 then
-            SetTask("MainTask", "Soul Guitar | Step 3: Ghost NPC")
             Remotes.CommF_:InvokeServer("GuitarPuzzleProgress", "Ghost")
         elseif step == 5 then
-            SetTask("MainTask", "Soul Guitar | Step 4: Trophies & Tablets Puzzle")
-            if CaculateDistance(CFrame.new(-9530.0, 6.1, 6054.8)) > 30 then
-                TweenController.Create(CFrame.new(-9530.0, 6.1, 6054.8))
+            if CaculateDistance(CFrame.new(-9530.0, 6.1, 6054.8)) > 30 then TweenController.Create(CFrame.new(-9530.0, 6.1, 6054.8))
             else
                 local tabletMap = workspace.Map['Haunted Castle'].Tablet
+                local BlankTablets = {"Segment6", 'Segment2', 'Segment8', "Segment9", 'Segment5'}
+                local Trophy = {["Segment1"] = "Trophy1", ["Segment3"] = "Trophy2", ['Segment4'] = "Trophy3", ['Segment7'] = "Trophy4", ["Segment10"] = "Trophy5"}
                 for _, segName in pairs(BlankTablets) do
                     local seg = tabletMap[segName]
-                    if seg.Line.Rotation.Z ~= 0 then
-                        repeat task.wait() fireclickdetector(seg.ClickDetector) until seg.Line.Rotation.Z == 0
-                    end
+                    if seg.Line.Rotation.Z ~= 0 then repeat task.wait() fireclickdetector(seg.ClickDetector) until seg.Line.Rotation.Z == 0 end
                 end
                 for segId, trophyId in pairs(Trophy) do
                     local trophyCf = workspace.Map["Haunted Castle"].Trophies.Quest[trophyId].Handle.CFrame
                     local orientation = tostring(trophyCf):split(", ")[4]
-                    local targetRot = "180"
-                    if orientation == "1" or orientation == "-1" then targetRot = "90" end
+                    local targetRot = (orientation == "1" or orientation == "-1") and "90" or "180"
                     if not string.find(tostring(tabletMap[segId].Line.Rotation.Z), targetRot) then
                         repeat task.wait() fireclickdetector(tabletMap[segId].ClickDetector) until string.find(tostring(tabletMap[segId].Line.Rotation.Z), targetRot)
                     end
                 end
             end
         elseif step == 6 then
-            SetTask("MainTask", "Soul Guitar | Step 5: Pipes Puzzle")
+            local Pipes = {['Part1'] = 'Really black', ['Part2'] = 'Really black', ["Part3"] = "Dusty Rose", ['Part4'] = "Storm blue", ['Part5'] = 'Really black', ['Part6'] = "Parsley green", ["Part7"] = 'Really black', ["Part8"] = "Dusty Rose", ["Part9"] = 'Really black', ['Part10'] = 'Storm blue'}
             for partId, colorName in pairs(Pipes) do
                 pcall(function()
                     local pipePart = workspace.Map['Haunted Castle']['Lab Puzzle'].ColorFloor.Model[partId]
-                    if pipePart.BrickColor.Name ~= colorName then
-                        repeat task.wait() fireclickdetector(pipePart.ClickDetector) until pipePart.BrickColor.Name == colorName
-                    end
+                    if pipePart.BrickColor.Name ~= colorName then repeat task.wait() fireclickdetector(pipePart.ClickDetector) until pipePart.BrickColor.Name == colorName end
                 end)
             end
             Remotes.CommF_:InvokeServer('soulGuitarBuy')
         elseif step == 8 then
-            SetTask("MainTask", "Soul Guitar | Purchasing Weapon")
             Remotes.CommF_:InvokeServer('soulGuitarBuy')
         end
     end)
+
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
-        if not Config.Items.CursedDualKatana then return end
+        if not Config.Items.CursedDualKatana or ScriptStorage.PlayerData.Level < 2200 or SeaIndex ~= 3 then return end
         local bp = ScriptStorage.Backpack
-        if ScriptStorage.PlayerData.Level < 2200 then return end
-        if not bp.Tushita or not bp.Yama then return end
-        if bp["Cursed Dual Katana"] then return false end
-        if SeaIndex ~= 3 then return "Travel" end
-        local prog = Remotes.CommF_:InvokeServer("CDKQuest", 'Progress')
-        if not prog or type(prog) ~= "table" then return "Init" end
-        if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return "BreakDoor" end
+        if bp["Cursed Dual Katana"] or not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return end
+        local prog = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
+        if not prog or prog == 'uwu' then
+            local masterNpc = ScriptStorage.NPCs["Crypt Master"]
+            if masterNpc then
+                TweenController.Create(masterNpc:GetModelCFrame())
+                if CaculateDistance(masterNpc) < 15 then fireproximityprompt(masterNpc:FindFirstChildOfClass("ProximityPrompt")) Remotes.CommF_:InvokeServer("CDKQuest", "Npc") end
+            end
+            return nil
+        end
+        if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return {"break"} end
         local mapType = {Good = 'Tushita', Evil = 'Yama'}
-        if prog.Good == 4 and prog.Evil == 4 then return "Boss" end
+        if prog.Good == 4 and prog.Evil == 4 then return {'burn 2'} end
+        if prog.Good == 3 or prog.Evil == 3 then return {"burn"} end
         if prog.Opened then
             for side, val in pairs(prog) do
                 if side ~= 'Opened' and side ~= "Finished" and val < 3 then
                     if not ScriptStorage.Tools[mapType[side]] then Remotes.CommF_:InvokeServer('LoadItem', mapType[side]) end
                     Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', side)
-                    return side
+                    return {side, val + 1}
                 end
             end
         end
-        return false
     end)
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
-        if step == "Travel" then
-            SetTask("MainTask", "CDK | Đang chuyển qua Sea 3")
-            Remotes.CommF_:InvokeServer("TravelZou")
-        elseif step == "Init" then
-            SetTask("MainTask", "CDK | Nhận nhiệm vụ từ Crypt Master")
-            local master = workspace.NPCs:FindFirstChild("Crypt Master") or game.ReplicatedStorage.NPCs:FindFirstChild("Crypt Master")
-            if master then
-                TweenController.Create(master:GetModelCFrame())
-                if CaculateDistance(master) < 15 then
-                    fireproximityprompt(master:FindFirstChildOfClass("ProximityPrompt"))
-                    Remotes.CommF_:InvokeServer("CDKQuest", "Npc")
-                end
-            end
-        elseif step == "BreakDoor" or step == "Boss" then
-            SetTask("MainTask", "CDK | Đang giải quyết Boss/Cửa Cuối")
-            if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then
-                TweenController.Create(workspace.Map.Turtle.Cursed.Breakable.CFrame * CFrame.new(0, 0, 5))
-                FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Yama")
-                W.Attack()
-                game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Z, false, game)
-                task.wait(0.2)
-                game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Z, false, game)
-            end
-            FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Yama")
-            CombatController.Attack({"Skeleton Boss", "Cursed Skeleton Boss"})
-        else
-            SetTask("MainTask", "CDK | Đang làm Trial: " .. tostring(step))
+        SetTask("MainTask", "CDK Quest | Processing...")
+        if type(step) == "table" and step[1] == "break" then
+            TweenController.Create(workspace.Map.Turtle.Cursed.Breakable.CFrame)
+            if CaculateDistance(workspace.Map.Turtle.Cursed.Breakable.CFrame) < 15 then CombatController.Attack("Cursed Skeleton") end
         end
     end)
-    FunctionsHandler.RaidController:RegisterMethod('RefreshRaidType', function()
-        for k, raid_name in pairs(require(game.ReplicatedStorage.Raids).raids) do
-            if string.find(ScriptStorage.PlayerData.DevilFruit, raid_name) then
-                FunctionsHandler.RaidController:Set('CurrentChip', raid_name)
-                return
-            end
-        end
-        FunctionsHandler.RaidController:Set('CurrentChip', 'Flame')
-    end)
-    FunctionsHandler.RaidController:RegisterMethod('GetRaidableFruit', function()
-        for _, item in pairs(ScriptStorage.Backpack) do
-            local itemName = item.Name
-            local match = string.match(itemName, "((%u)[^%-]+)$")
-            if match and string.find(match .. ' Fruit', " Fruit") then
-                if item.Value and item.Value < 1000000 then return item end
-            end
-        end
-    end)
-    FunctionsHandler.RaidController:RegisterMethod("GetCurrentRaidIsland", function()
-        IslandsList = {{}, {}, {}, {}, {}}
-        for _, loc in pairs(workspace['_WorldOrigin'].Locations:GetChildren()) do
-            if string.find(loc.Name, 'Island ') and CaculateDistance(loc.Position) > 7000 then
-                pcall(function()
-                    local id_str = string.gsub(loc.Name, "Island ", "")
-                    local id_num = tonumber(id_str)
-                    if id_num and IslandsList[id_num] then table.insert(IslandsList[id_num], loc) end
-                end)
-            end
-        end
-        for i = 5, 1, -1 do
-            for _, isl in pairs(IslandsList[i]) do 
-                if CaculateDistance(isl.Position) < 2000 then return isl end 
-            end
-        end
-    end)
-    function CheckSpecialMicrochip()
-        for _, folder in pairs({LocalPlayer.Character:GetChildren(), LocalPlayer.Backpack:GetChildren()}) do
-            for _, item in pairs(folder) do if item.Name == "Special Microchip" then return item end end
-        end
-    end
+
     FunctionsHandler.RaidController:RegisterMethod("Refresh", function()
         local p_lvl = ScriptStorage.PlayerData.Level
         local p_frag = ScriptStorage.PlayerData.Fragments
         if p_lvl < 1300 or SeaIndex == 1 then return end
         if p_lvl < 1500 and p_frag > 2000 then return end
-        if p_lvl < MaxLevel then
-            if p_frag > 5000 then return end
-        else
-            if p_frag > 10000 then return end
+        if p_lvl < MaxLevel and p_frag > 5000 then return end
+        if p_lvl >= MaxLevel and p_frag > 10000 then return end
+        for _, item in pairs(ScriptStorage.Backpack) do
+            if string.find(FruitIdToName(item.Name), " Fruit") and item.Value and item.Value < 1000000 then return item end
         end
-        local raid_fruit = FunctionsHandler.RaidController.Methods.GetRaidableFruit:Call()
-        if raid_fruit then FunctionsHandler.RaidController:Set("CurrentProgressLevel", raid_fruit) end
-        return raid_fruit or FunctionsHandler.RaidController.Methods.GetCurrentRaidIsland:Call() or CheckSpecialMicrochip()
+        local isl
+        for _, loc in pairs(workspace['_WorldOrigin'].Locations:GetChildren()) do
+            if string.find(loc.Name, 'Island ') and CaculateDistance(loc.Position, Vector3.new(0, 0, 0)) > 7000 then
+                if CaculateDistance(loc.Position) < 2000 then isl = loc break end
+            end
+        end
+        return isl or ScriptStorage.Tools["Special Microchip"]
     end)
-    FunctionsHandler.RaidController:RegisterMethod("Start", function()
-        if not FunctionsHandler.RaidController:Get('CurrentChip') then FunctionsHandler.RaidController.Methods.RefreshRaidType:Call() end
-        local curr_island = FunctionsHandler.RaidController.Methods.GetCurrentRaidIsland:Call()
-        local bpk = {}
-        for _, v in pairs(Remotes.CommF_:InvokeServer('getInventory') or {}) do bpk[v.Name] = v end
-        ScriptStorage.Backpack = bpk
-        FunctionsHandler.RaidController:Set("CurrentProgressLevel", nil)
-        if not curr_island then
-            SetTask('MainTask', 'Auto Raid | Mua Chip ' .. FunctionsHandler.RaidController:Get("CurrentChip"))
-            if not ScriptStorage.Tools['Special Microchip'] then
-                local f_item = FunctionsHandler.RaidController.Methods.GetRaidableFruit:Call()
-                if f_item then
-                    Remotes.CommF_:InvokeServer('LoadFruit', f_item.Name)
-                    Remotes.CommF_:InvokeServer("RaidsNpc", 'Select', FunctionsHandler.RaidController:Get('CurrentChip'))
-                    task.wait(2)
-                end
-            end
-            local raid_loc = ({nil, 'Circle Island', "Boat Castle"})[SeaIndex]
-            if not ScriptStorage.Map[raid_loc] and not workspace.Map:FindFirstChild(raid_loc) then
-                task.wait(1) game.Players.LocalPlayer:Kick("Rejoining..")
-            end
-            local summon_spot = ScriptStorage.Map[raid_loc] or workspace.Map:FindFirstChild(raid_loc)
-            if summon_spot and not summon_spot:FindFirstChild('RaidSummon2') then
-                task.wait(1) TweenController.Create(summon_spot:GetModelCFrame())
-            end
-            if ScriptStorage.Tools['Special Microchip'] then
-                FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Special Microchip')
-                if summon_spot and summon_spot:FindFirstChild("RaidSummon2") then
-                    fireclickdetector(summon_spot.RaidSummon2.Button.Main.ClickDetector)
-                end
-            end
-            local start_t = os.time()
-            SetTask("MainTask", "Auto Raid | Chờ Raid bắt đầu")
-            repeat task.wait() until os.time() - start_t > 30
-            TweenController.Create(LocalPlayer.Character.HumanoidRootPart.CFrame)
-            repeat task.wait() until os.time() - start_t > 30
-            task.wait(.5)
-            if os.time() - start_t > 30 then game.Players.LocalPlayer:Kick("Rejoining..") end
-        else
-            SetTask('MainTask', "Auto Raid | Dọn dẹp Đảo " .. curr_island.Name .. " /5")
-            local hit_any = false
+    FunctionsHandler.RaidController:RegisterMethod("Start", function(data)
+        if typeof(data) == "Instance" and data:IsA("Part") then
+            SetTask('MainTask', "Auto Raid | Dọn dẹp Đảo " .. data.Name)
+            local hit = false
             for _, mon in pairs(GetMonAsSortedRange()) do
-                local mon_start = os.time()
-                while mon and mon:FindFirstChild("HumanoidRootPart") and mon:FindFirstChild("Humanoid") and mon.Humanoid.Health > 0 and CaculateDistance(mon.HumanoidRootPart.Position) < 1000 and os.time() - mon_start < 60 and task.wait(.05) do
-                    hit_any = true
+                if mon and mon:FindFirstChild("HumanoidRootPart") and mon.Humanoid.Health > 0 and CaculateDistance(mon.HumanoidRootPart.Position) < 1000 then
+                    hit = true
                     CombatController.Attack(mon.Name)
                 end
             end
-            if not hit_any then TweenController.Create(curr_island.Position + Vector3.new(0, 100, 0)) end
+            if not hit then TweenController.Create(data.Position + Vector3.new(0, 100, 0)) end
+        else
+            SetTask('MainTask', "Auto Raid | Chuẩn bị Raid Flame")
+            if not ScriptStorage.Tools['Special Microchip'] and type(data) == "table" then
+                Remotes.CommF_:InvokeServer('LoadFruit', data.Name)
+                Remotes.CommF_:InvokeServer("RaidsNpc", 'Select', 'Flame')
+            end
+            local raid_loc = ({nil, 'Circle Island', "Boat Castle"})[SeaIndex]
+            local summon_spot = ScriptStorage.Map[raid_loc]
+            if summon_spot then TweenController.Create(summon_spot:GetModelCFrame()) end
+            if ScriptStorage.Tools['Special Microchip'] and summon_spot and summon_spot:FindFirstChild("RaidSummon2") then
+                FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Special Microchip')
+                fireclickdetector(summon_spot.RaidSummon2.Button.Main.ClickDetector)
+            end
         end
     end)
+
     FunctionsHandler.Wenlocktoad:RegisterMethod("Refresh", function()
-        if ScriptStorage.PlayerData.RaceLevel ~= 2 then return end
-        if ScriptStorage.PlayerData.Level < 1000 then return end
-        if ScriptStorage.PlayerData.Beli < 2000000 then return end
-        if SeaIndex ~= 2 then return end
-        local quest_status = Remotes.CommF_:InvokeServer("Wenlocktoad", "1")
-        if quest_status == -2 then
-            ScriptStorage.PlayerData.RaceLevel = 3
-            return false
-        end
+        if ScriptStorage.PlayerData.RaceLevel ~= 2 or ScriptStorage.PlayerData.Level < 1000 or ScriptStorage.PlayerData.Beli < 2000000 or SeaIndex ~= 2 then return end
+        if Remotes.CommF_:InvokeServer("Wenlocktoad", "1") == -2 then ScriptStorage.PlayerData.RaceLevel = 3 return false end
         return true
     end)
     FunctionsHandler.Wenlocktoad:RegisterMethod("Start", function()
-        SetTask('MainTask', "Up Tộc V3 | Nhiệm vụ Arowe (Wenlocktoad)")
-        local arowe = workspace.NPCs:FindFirstChild("Arowe") or game.ReplicatedStorage.NPCs:FindFirstChild("Arowe")
+        SetTask('MainTask', "Up Tộc V3 | Nhiệm vụ Arowe")
+        local arowe = ScriptStorage.NPCs["Arowe"]
         if arowe then
             TweenController.Create(arowe:GetModelCFrame())
             if CaculateDistance(arowe) < 15 then
                 Remotes.CommF_:InvokeServer("Wenlocktoad", "1")
-                task.wait(0.5)
-                Remotes.CommF_:InvokeServer("Wenlocktoad", "2")
-                task.wait(0.5)
-                Remotes.CommF_:InvokeServer("Wenlocktoad", "3")
+                task.wait(0.5) Remotes.CommF_:InvokeServer("Wenlocktoad", "2")
+                task.wait(0.5) Remotes.CommF_:InvokeServer("Wenlocktoad", "3")
             end
         end
     end)
+
     FunctionsHandler.AutoHopBoss:RegisterMethod("Refresh", function()
         local bp = ScriptStorage.Backpack
         if Config.Items.DarkFragment and not bp['Dark Fragment'] and SeaIndex == 2 then
@@ -918,10 +917,10 @@ function hoangtuveu()
         return false
     end)
     FunctionsHandler.AutoHopBoss:RegisterMethod("Start", function(mode)
-        SetTask("MainTask", "VIP Săn Boss | Phát hiện " .. mode .. " trong Server, nhảy vào đấm!")
+        SetTask("MainTask", "VIP Săn Boss | Phát hiện " .. mode .. " trong Server, đấm ngay cho nóng!")
         if mode == "rip_indra True Form" and not ScriptStorage.Backpack['Tushita'] then
             TweenController.Create(CFrame.new(5714, 20, 256))
-            if ScriptStorage.Tools["Holy Torch"] or game.Players.LocalPlayer.Backpack:FindFirstChild("Holy Torch") then
+            if ScriptStorage.Tools["Holy Torch"] then
                 for i = 1, 5 do Remotes.CommF_:InvokeServer("TushitaProgress", "Torch", i) end
             end
         else
@@ -929,101 +928,102 @@ function hoangtuveu()
         end
     end)
 
-    function GetServers()
-        if LastServersDataPulled then
-            if os.time() - LastServersDataPulled < 60 then return CachedServers end
+    local notifier = {Listeners = {}}
+    getgenv().NotificationCallBack = (function(msg)
+        for key, func in pairs(notifier.Listeners) do
+            if string.find(string.lower(msg), string.lower(key)) then func(msg) end
         end
+    end)
+    function notifier:RegisterNotifyListener(key, func) notifier.Listeners[key] = func end
+    notifier:RegisterNotifyListener("level", function() AddPoint() end)
+
+    local old_notify
+    old_notify = hookfunction(require(game.ReplicatedStorage.Notification).new, function(title, msg)
+        getgenv().NotificationCallBack(tostring(tostring(title or '') .. tostring(msg or "")))
+        return old_notify(title, msg)
+    end)
+
+    function GetServers()
+        if LastServersDataPulled and os.time() - LastServersDataPulled < 60 then return CachedServers end
         for k_idx = 1, 100, 1 do
-            local W_res = game:GetService("ReplicatedStorage"):WaitForChild("__ServerBrowser"):InvokeServer(k_idx)
-            if type(W_res) == "table" and next(W_res) then
+            local W_res = game.ReplicatedStorage:WaitForChild("__ServerBrowser"):InvokeServer(k_idx)
+            if W_res and type(W_res) == "table" then
                 LastServersDataPulled = os.time()
                 CachedServers = W_res
                 return W_res
             end
         end
     end
-    spawn(function()
-        GetServers()
-        while task.wait(180) do GetServers() end
-    end)
+
     function Hop()
         local h_list = GetServers()
         local X_filtered = {}
-        for w_id, D_data in pairs(h_list) do table.insert(X_filtered, {JobId = w_id, Players = D_data.Count}) end
-        local ServerData = X_filtered[math.random(1, #X_filtered)]
-        if ServerData then game:GetService("ReplicatedStorage"):WaitForChild('__ServerBrowser'):InvokeServer("teleport", ServerData.JobId) end
+        if h_list then
+            for w_id, D_data in pairs(h_list) do table.insert(X_filtered, {JobId = w_id, Players = D_data.Count}) end
+            if #X_filtered > 0 then
+                game.ReplicatedStorage:WaitForChild('__ServerBrowser'):InvokeServer("teleport", X_filtered[math.random(1, #X_filtered)].JobId)
+            end
+        end
     end
 
     Storage = {WRITE_DELAY = .5, Data = {}}
-    local k_file_path = ".storage_u_" .. tostring(LocalPlayer)
+    local k_file_path = ".storage_u_" .. tostring(h)
     function Storage:Set(h_k, X_v) self.Data[h_k] = X_v end
     function Storage:Get(h_k) return self.Data[h_k] end
     function Storage:Save() pcall(function() writefile(k_file_path, game:GetService("HttpService"):JSONEncode(self.Data)) end) end
-    if not isfile(k_file_path) then writefile(k_file_path, "{}") task.wait(1) end
     pcall(function() Storage.Data = game:GetService("HttpService"):JSONDecode(readfile(k_file_path) or '{}') end)
     task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
 
+    ParsingTimes = 0
     function RefreshTasksData()
         if _G.Stop then return end
-        local isDoingAnyTask = false
+        if ScriptStorage.PlayerData.Level >= 2800 then
+            SetText('SubTask', "HoangPhucHub: Đã Max Level 2800 - Rình Boss Mansion")
+            local mansion_pos = CFrame.new(-12464, 332, -7254)
+            if CaculateDistance(mansion_pos) > 30 and not MonResult then TweenController.Create(mansion_pos) return end
+        end
         for _, taskName in pairs(TasksOrder) do
             local handler = FunctionsHandler[taskName]
             if handler and handler.Initalized then
-                local refresh = handler.Methods.Refresh
-                local start = handler.Methods.Start
-                if refresh then
-                    local status = refresh:Call()
-                    if status then
-                        SetText('DebugLine', taskName)
-                        start:Call(status)
-                        isDoingAnyTask = true
-                        return
-                    end
+                local status = handler.Methods.Refresh and handler.Methods.Refresh:Call(ParsingTimes < 100)
+                ParsingTimes = ParsingTimes + 1
+                if status and ParsingTimes > 100 then
+                    SetText('DebugLine', taskName)
+                    handler.Methods.Start:Call(status)
+                    return
                 end
-            end
-        end
-        if not isDoingAnyTask and ScriptStorage.PlayerData.Level >= 2800 and SeaIndex == 3 then
-            SetTask('MainTask', "HoangPhucHub: Đã Max 2800 - Đang rình Boss tại Mansion")
-            local mansion_pos = CFrame.new(-12464, 332, -7254)
-            if CaculateDistance(mansion_pos) > 30 and not MonResult then
-                TweenController.Create(mansion_pos)
             end
         end
     end
 
-    SetText('MainTextLabel', "HoangPhucHub: Đang tải thiết lập..")
-    pcall(function() J_q:RefreshQuest() end)
-    game.Players.LocalPlayer.Idled:Connect(function()
+    SetText('MainTextLabel', "HoangPhucHub: Hoàn Tất Khởi Tạo!")
+    AddPoint()
+    pcall(function() J_quest:RefreshQuest() end)
+    RefreshInventory()
+
+    h.Idled:Connect(function()
         game:GetService("VirtualUser"):CaptureController()
         game:GetService("VirtualUser"):ClickButton2(Vector2.new())
     end)
-    SetText("MainTextLabel", 'HoangPhucHub Loaded In ' .. tick() - StartTick .. 'ms!')
+
     task.spawn(function()
-        while task.wait(1) do
+        while task.wait() do
             if not _G.Stop then
-                for _, v in pairs(LocalPlayer.Data:GetChildren()) do pcall(function() ScriptStorage.PlayerData[v.Name] = v.Value end) end
-                local bpk = {}
-                for _, v in pairs(Remotes.CommF_:InvokeServer('getInventory') or {}) do bpk[v.Name] = v end
-                ScriptStorage.Backpack = bpk
-                local a_s = "Level: " .. (ScriptStorage.PlayerData.Level or 0) .. " | Beli: " .. (ScriptStorage.PlayerData.Beli or 0) .. " | Frag: " .. (ScriptStorage.PlayerData.Fragments or 0)
-                SetText('Currencies', a_s)
+                pcall(RefreshPlayerData)
                 local elapsed = os.time() - InitTime
                 local total = elapsed + OldSessionTime
-                pcall(function() writefile(".tdif-" .. game.Players.LocalPlayer.Name, tostring(total)) end)
-                SetText('LiveTime', "Tổng thời gian: " .. DispTime(total, true) .. ' | Phiên này: ' .. DispTime(elapsed, true))
+                pcall(function() writefile(".tdif-" .. h.Name, tostring(total)) end)
+                SetText('LiveTime', "Tổng: " .. DispTime(total, true) .. ' | Phiên này: ' .. DispTime(elapsed, true))
             end
         end
     end)
+
     task.spawn(function()
         task.wait(Config.Configuration.AutoHopDelay)
         if not Config.Configuration.AutoHop then Hop() end
     end)
-    while task.wait(0.1) do
-        if Config.Configuration.HopWhenIdle and LastIdling and os.time() - LastIdling > 300.0 then
-            SetTask('MainTask', "HoangPhucHub: Đang kết nối lại do treo máy lâu!")
-            task.wait(1)
-            while task.wait() do game:GetService('TeleportService'):Teleport(game.PlaceId) end
-        end
+
+    while task.wait() do
         local success, err = xpcall(RefreshTasksData, debug.traceback)
         if not success and err then warn("HoangPhucHub Error: ", err) end
     end
