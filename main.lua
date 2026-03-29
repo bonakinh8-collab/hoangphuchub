@@ -100,7 +100,7 @@ function hoangtuveu()
     getgenv().alert = function(a_t, h_t)
         pcall(function() J_fl:Notify({Title = a_t or '', Content = h_t or '', Duration = 5}) end)
     end
-    alert("HoangPhucHub", "Bản Clean VIP - Fix Đứng Im 100%")
+    alert("HoangPhucHub", "Bản Ưu Tiên CDK - Bỏ Qua Check Mastery")
 
     OldSessionTime = isfile('.tdif-' .. h.Name) and tonumber(readfile(".tdif-" .. h.Name)) or 0
     repeat task.wait() game.ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", Config.Team) until h.Character
@@ -127,6 +127,10 @@ function hoangtuveu()
     setmetatable(ScriptStorage.Map, {__index = function(J_s, J_k) return Services.Workspace.Map:FindFirstChild(J_k) or Services.Workspace:FindFirstChild(J_k) end})
     setmetatable(ScriptStorage.Tools, {__index = function(J_s, J_k) return LocalPlayer.Character:FindFirstChild(J_k) or LocalPlayer.Backpack:FindFirstChild(J_k) end})
     setmetatable(ScriptStorage.NPCs, {__index = function(J_s, J_k) if not J_k then return end; return workspace.NPCs:FindFirstChild(J_k) or game.ReplicatedStorage.NPCs:FindFirstChild(J_k) end})
+
+    -- ĐÃ CHỈNH SỬA: Ưu tiên CDK lên TOP 1
+    TasksOrder = {"CursedDualKatana", "SoulGuitar", "Tushita", "Yama", "AutoHopBoss", "RaidController", "Wenlocktoad", "LevelFarm"}
+    MaxLevel = 2800
 
     function SetTask(J_t, W_m)
         if ScriptStorage.Task[J_t] == W_m then return end
@@ -184,22 +188,6 @@ function hoangtuveu()
         if a_b then return (h_d .. "day, " .. X_h .. "hrs, " .. w_m .. "min, " .. D_s .. 'sec.') end
         return (h_d .. 'day, ' .. X_h .. "hrs.")
     end
-    function GetCurrentDateTime()
-        local W_d = os.date("*t")
-        local a_h = W_d.hour
-        local h_m = W_d.min
-        local X_d = W_d.day
-        local w_mo = W_d.month
-        local D_y = W_d.year
-        local y_w = W_d.wday
-        local W_s = string.format('%02d:%02d ', a_h, h_m)
-        local a_ds = {'Sun', "Mon", 'Tue', "Wed", 'Thu', "Fri", 'Sat'}
-        local h_ds = a_ds[y_w]
-        local a_ms = {"Jan", "Feb", "Mar", 'Apr', "May", 'Jun', "Jul", 'Aug', 'Sep', "Oct", 'Nov', "Dec"}
-        local y_ms = a_ms[w_mo]
-        local a_f = string.format('%s, %s %d %d', h_ds, y_ms, X_d, D_y)
-        return W_s .. a_f
-    end
 
     local W_ang = 30
     lastChange = tick()
@@ -226,10 +214,6 @@ function hoangtuveu()
         table.sort(W_m, function(a_1, h_1) return CaculateDistance(a_1.HumanoidRootPart.CFrame) < CaculateDistance(h_1.HumanoidRootPart.CFrame) end)
         return W_m
     end
-
-    -- ==========================================
-    -- HỆ THỐNG QUẢN LÝ NHIỆM VỤ (REAL QUEST MANAGER)
-    -- ==========================================
     local J_q = {CurrentLevel = 2, DoubleQuest = true, CurrentQuests = {}, BlacklistedQuestIds = {BartiloQuest = 1, CitizenQuest = 1, Trainees = 1, MarineQuest = 1, ImpelQuest = 1}}
     J_q.Quests = require(game.ReplicatedStorage.Quests)
     function J_q.Set(W_s, a_k, h_v) W_s[a_k] = h_v end
@@ -267,10 +251,6 @@ function hoangtuveu()
         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer('ColorsDealer', "2")
         return Remotes.CommF_:InvokeServer("StartQuest", W_i, a_l)
     end
-
-    -- ==========================================
-    -- HỆ THỐNG TWEEN (BAY MƯỢT XUYÊN TƯỜNG)
-    -- ==========================================
     ScriptStorage.MobRegions = {}
     for W_i, W_v in pairs(game:GetService("ReplicatedStorage").FortBuilderReplicatedSpawnPositionsFolder:GetChildren()) do
         ScriptStorage.MobRegions[tostring(W_v)] = ScriptStorage.MobRegions[tostring(W_v)] or {}
@@ -298,10 +278,6 @@ function hoangtuveu()
         TweenInstance = Services.TweenService:Create(game.Players.LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(W_d / 350, Enum.EasingStyle.Linear), {CFrame = a_c})
         TweenInstance:Play()
     end
-
-    -- ==========================================
-    -- HỆ THỐNG ĐÁNH QUÁI (FAST ATTACK & GOM QUÁI GỐC)
-    -- ==========================================
     local h_attack_lib = {}
     function GetAllBladeHits()
         local bladehits = {}
@@ -315,7 +291,6 @@ function hoangtuveu()
     local net_mod = (Services.ReplicatedStorage.Modules.Net)
     local reg_at = require(net_mod):RemoteEvent("RegisterAttack", true)
     local reg_hit = require(net_mod):RemoteEvent("RegisterHit", true)
-
     function h_attack_lib:Attack()
         local X_targets = GetAllBladeHits()
         if #X_targets == 0 then return end
@@ -327,17 +302,14 @@ function hoangtuveu()
         end
         reg_hit:FireServer(unpack(y_data))
     end
-
     task.spawn(function()
         while task.wait(.04) do 
             if _G.FastAttack == os.time() then pcall(function() h_attack_lib:Attack() end) end 
         end
     end)
     W.Attack = function(h_dmy) pcall(function() _G.FastAttack = os.time() end) end
-
     CombatController = {GRAB = true, GRAB_DISTANCE = SeaIndex == 1 and 250 or 350, CurrentIndex = 1}
     LastFound = os.time()
-    
     function CombatController.Grab(h_target)
         pcall(sethiddenproperty, game.Players.LocalPlayer, 'SimulationRadius', math.huge)
         if not CombatController.GRAB or GrabDebounce == os.time() then return end
@@ -368,7 +340,6 @@ function hoangtuveu()
             end)
         end
     end
-
     function CombatController.Search(h_search_list)
         local X_arr = {}
         for _, D_mon in pairs(GetMonAsSortedRange()) do
@@ -382,7 +353,6 @@ function hoangtuveu()
             if h_res then return h_res end
         end
     end
-
     function CombatController.Attack(h_at)
         pcall(sethiddenproperty, game.Players.LocalPlayer, 'SimulationRadius', math.huge)
         h_at = type(h_at) == "string" and {h_at} or (h_at or {})
@@ -416,10 +386,6 @@ function hoangtuveu()
             end
         end
     end
-
-    -- ==========================================
-    -- KHỞI TẠO FUNCTIONSHANDLER GỐC ĐỂ TRÁNH LỖI NIL
-    -- ==========================================
     FunctionsHandler = {Initalized = false}
     setmetatable(FunctionsHandler, {__index = function(h_f, X_f)
         local QueryResult = rawget(h_f, X_f)
@@ -440,7 +406,6 @@ function hoangtuveu()
         end
         return QueryResult
     end})
-
     FunctionsHandler.LocalPlayerController:Register()
     FunctionsHandler.LevelFarm:Register()
     FunctionsHandler.Saber:Register()
@@ -451,8 +416,6 @@ function hoangtuveu()
     FunctionsHandler.RaidController:Register()
     FunctionsHandler.AutoHopBoss:Register()
     FunctionsHandler.Wenlocktoad:Register()
-    FunctionsHandler.MeleesController:Register()
-
     FunctionsHandler.LocalPlayerController:RegisterMethod("EquipTool", function(toolName)
         if not Humanoid then return end
         for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
@@ -461,20 +424,16 @@ function hoangtuveu()
             end
         end
     end)
-
-    -- ==========================================
-    -- LOGIC CÀY CẤP (LEVEL FARM)
-    -- ==========================================
     FunctionsHandler.LevelFarm:RegisterMethod("Refresh", function()
         local lvl = ScriptStorage.PlayerData.Level
+        if lvl >= MaxLevel then return false end
         if lvl < 50 then return 1
         elseif lvl < 70 then return 2
         else return 4 end
     end)
-
     FunctionsHandler.LevelFarm:RegisterMethod("Start", function(floor)
         local currentLevel = ScriptStorage.PlayerData.Level
-        if os.time() - LastTravel > 60 then
+        if os.time() - (LastTravel or 0) > 60 then
             LastTravel = os.time()
             if currentLevel >= 1500 and SeaIndex == 2 then
                 if not Services.Workspace.Map.IceCastle.Hall.LibraryDoor:FindFirstChild('PhoeyuDoor') then
@@ -488,7 +447,6 @@ function hoangtuveu()
                 return
             end
         end
-
         if floor == 4 then
             local monName, npcPos, questId, qIndex, questTitle = J_q:GetCurrentQuest()
             local claimQuest, _ = J_q:GetCurrentClaimQuest()
@@ -752,7 +710,7 @@ function hoangtuveu()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
         if ScriptStorage.PlayerData.Level < 2200 then return end
-        if bp["Cursed Dual Katana"] or not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return end
+        if bp["Cursed Dual Katana"] or not bp.Tushita or not bp.Yama then return end
         if SeaIndex ~= 3 then return end
         local prog = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
         if not prog or prog == 'uwu' then
