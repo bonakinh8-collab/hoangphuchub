@@ -666,7 +666,8 @@ function hoangtuveu()
         if step == 1 then
             for i, p in pairs(FunctionsHandler.Saber.Methods.GetQuestplates:Call()) do
                 SetTask('MainTask', "Saber Quest | Touching Plate " .. i .. "/5")
-                if CaculateDistance(p.Button.CFrame) > 20 then TweenController.Create(p.Button.CFrame) end
+                while CaculateDistance(p.Button.CFrame) > 20 do task.wait() TweenController.Create(p.Button.CFrame) end
+                task.wait(1)
             end
         elseif step == 2 then 
             SetTask('MainTask', 'Saber Quest | Torch Puzzle')
@@ -700,12 +701,11 @@ function hoangtuveu()
     end)
     FunctionsHandler.Yama:RegisterMethod("Start", function()
         SetTask('MainTask', "Yama Quest | Pulling Sword")
-        local waterfall = workspace.Map:FindFirstChild("Waterfall")
-        if waterfall and waterfall:FindFirstChild("SealedKatana") then
-            fireclickdetector(waterfall.SealedKatana.Hitbox.ClickDetector)
-        else
+        repeat
+            task.wait()
             TweenController.Create(game.ReplicatedStorage.FakeIslands.Waterfall:GetModelCFrame())
-        end
+        until workspace.Map:FindFirstChild("Waterfall") and workspace.Map.Waterfall:FindFirstChild("SealedKatana")
+        fireclickdetector(workspace.Map.Waterfall.SealedKatana.Hitbox.ClickDetector)
     end)
 
     FunctionsHandler.Tushita:RegisterMethod("Refresh", function()
@@ -757,7 +757,8 @@ function hoangtuveu()
     FunctionsHandler.SoulGuitar:RegisterMethod('Start', function(step)
         if step == 7 then
             SetTask("MainTask", 'Soul Guitar | Activating Gravestone Event')
-            if CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 then TweenController.Create(CFrame.new(-8654.0, 140, 6167)) else SoulGuitarProcess = Remotes.CommF_:InvokeServer("gravestoneEvent", 2, true) end
+            while CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 do task.wait() TweenController.Create(CFrame.new(-8654.0, 140, 6167)) end
+            SoulGuitarProcess = Remotes.CommF_:InvokeServer("gravestoneEvent", 2, true)
         elseif step == 1 then
             if SeaIndex ~= 2 then
                 SetTask("MainTask", 'Soul Guitar | Travel to Sea 2 for Ectoplasm')
@@ -773,15 +774,14 @@ function hoangtuveu()
             if #zombieList < 6 then
                 TweenController.Create(CFrame.new(-9473, 142, 5567))
             else
-                if workspace.Enemies:FindFirstChild("Living Zombie") then CombatController.Attack('Living Zombie') end
+                while workspace.Enemies:FindFirstChild("Living Zombie") and task.wait() do CombatController.Attack('Living Zombie') end
             end
         elseif step == 3 then
             SetTask("MainTask", "Soul Guitar | Placards Puzzle")
             local hauntMap = workspace.Map["Haunted Castle"]
-            if CaculateDistance(CFrame.new(-8800.0, 178, 6033)) > 10 then TweenController.Create(CFrame.new(-8800.0, 178, 6033)) else
-                local placards = {Placard1 = "Right", Placard2 = "Right", Placard3 = "Left", Placard4 = 'Right', Placard5 = 'Left', Placard6 = 'Left', Placard7 = "Left"}
-                for pName, side in pairs(placards) do fireclickdetector(hauntMap[pName][side].ClickDetector) end
-            end
+            while CaculateDistance(CFrame.new(-8800.0, 178, 6033)) > 10 do task.wait() TweenController.Create(CFrame.new(-8800.0, 178, 6033)) end
+            local placards = {Placard1 = "Right", Placard2 = "Right", Placard3 = "Left", Placard4 = 'Right', Placard5 = 'Left', Placard6 = 'Left', Placard7 = "Left"}
+            for pName, side in pairs(placards) do fireclickdetector(hauntMap[pName][side].ClickDetector) end
         elseif step == 4 then
             Remotes.CommF_:InvokeServer("GuitarPuzzleProgress", "Ghost")
         elseif step == 5 then
@@ -792,14 +792,14 @@ function hoangtuveu()
                 local Trophy = {["Segment1"] = "Trophy1", ["Segment3"] = "Trophy2", ['Segment4'] = "Trophy3", ['Segment7'] = "Trophy4", ["Segment10"] = "Trophy5"}
                 for _, segName in pairs(BlankTablets) do
                     local seg = tabletMap[segName]
-                    if seg.Line.Rotation.Z ~= 0 then fireclickdetector(seg.ClickDetector) end
+                    if seg.Line.Rotation.Z ~= 0 then repeat task.wait() fireclickdetector(seg.ClickDetector) until seg.Line.Rotation.Z == 0 end
                 end
                 for segId, trophyId in pairs(Trophy) do
                     local trophyCf = workspace.Map["Haunted Castle"].Trophies.Quest[trophyId].Handle.CFrame
                     local orientation = tostring(trophyCf):split(", ")[4]
                     local targetRot = (orientation == "1" or orientation == "-1") and "90" or "180"
                     if not string.find(tostring(tabletMap[segId].Line.Rotation.Z), targetRot) then
-                        fireclickdetector(tabletMap[segId].ClickDetector)
+                        repeat task.wait() fireclickdetector(tabletMap[segId].ClickDetector) until string.find(tostring(tabletMap[segId].Line.Rotation.Z), targetRot)
                     end
                 end
             end
@@ -808,7 +808,7 @@ function hoangtuveu()
             for partId, colorName in pairs(Pipes) do
                 pcall(function()
                     local pipePart = workspace.Map['Haunted Castle']['Lab Puzzle'].ColorFloor.Model[partId]
-                    if pipePart.BrickColor.Name ~= colorName then fireclickdetector(pipePart.ClickDetector) end
+                    if pipePart.BrickColor.Name ~= colorName then repeat task.wait() fireclickdetector(pipePart.ClickDetector) until pipePart.BrickColor.Name == colorName end
                 end)
             end
             Remotes.CommF_:InvokeServer('soulGuitarBuy')
@@ -828,14 +828,21 @@ function hoangtuveu()
         if type(prog) ~= "table" then return {"talk_crypt_master"} end
         if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return {"break"} end
         
-        if prog.Good == 3 and prog.Evil == 3 then return {"boss"} end
+        if prog.Good == 4 and prog.Evil == 4 then return {"boss"} end
 
-        if type(prog.Good) == "number" and prog.Good < 3 then
-            return {"Good", prog.Good + 1}
+        -- [ ĐÃ FIX ]: Tìm SÂU BÊN TRONG (true) để móc nút E ra!
+        if type(prog.Good) == "number" and prog.Good < 4 then
+            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("GoodScroll")
+            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt", true) then return {"burn"} end
+            local stepNum = prog.Good == 0 and 1 or prog.Good
+            return {"Good", stepNum}
         end
 
-        if type(prog.Evil) == "number" and prog.Evil < 3 then
-            return {"Evil", prog.Evil + 1}
+        if type(prog.Evil) == "number" and prog.Evil < 4 then
+            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("EvilScroll")
+            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt", true) then return {"burn 2"} end
+            local stepNum = prog.Evil == 0 and 1 or prog.Evil
+            return {"Evil", stepNum}
         end
         
         return {"boss"}
@@ -852,13 +859,21 @@ function hoangtuveu()
 
     FunctionsHandler.CursedDualKatana:RegisterMethod("DoDimension", function(dim_name)
         local map_name = string.gsub(dim_name, ' ', "")
-        if (TorchEnabledTime or 0) > 0 and os.time() - TorchEnabledTime < 10 then
-            local dim_map = workspace.Map:FindFirstChild(map_name)
+        local start_t = os.time()
+        repeat
+            task.wait()
+            TweenController.Create(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame)
+            if os.time() - start_t > 60 then return end
+        until os.time() - (TorchEnabledTime or 0) < 10
+        repeat
+            task.wait()
+            local dim_map = workspace.Map:WaitForChild(map_name, 10)
             if dim_map then
                 for _, torch in pairs(dim_map:GetChildren()) do
                     if torch and string.find(torch.Name, "Torch") and torch:FindFirstChild('ProximityPrompt') and torch.ProximityPrompt.Enabled then
                         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = torch.CFrame
                         torch.ProximityPrompt.HoldDuration = 0
+                        task.wait(0.5)
                         fireproximityprompt(torch.ProximityPrompt)
                     end
                 end
@@ -867,14 +882,10 @@ function hoangtuveu()
                         CombatController.Attack(enemy.Name) 
                     end
                 end
-                if dim_map:FindFirstChild("Exit") then 
-                    local color = tostring(dim_map.Exit.BrickColor)
-                    if color == 'Olive' or color == "Cloudy grey" then Hop() end
-                end
+                if dim_map:FindFirstChild("Exit") then PortalBrick = tostring(dim_map.Exit.BrickColor) end
             end
-        else
-            TweenController.Create(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame)
-        end
+        until PortalBrick == 'Olive' or PortalBrick == "Cloudy grey"
+        Hop()
     end)
 
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
@@ -883,12 +894,11 @@ function hoangtuveu()
                 SetTask("MainTask", "CDK Quest | Nói chuyện với Crypt Master...")
                 local masterNpc = ScriptStorage.NPCs["Crypt Master"]
                 if masterNpc then
+                    TweenController.Create(masterNpc:GetModelCFrame())
                     if CaculateDistance(masterNpc:GetModelCFrame()) < 15 then
                         local p = masterNpc:FindFirstChildOfClass("ProximityPrompt", true)
                         if p then fireproximityprompt(p) end
                         Remotes.CommF_:InvokeServer("CDKQuest", "Npc")
-                    else
-                        TweenController.Create(masterNpc:GetModelCFrame())
                     end
                 end
             elseif step[1] == "break" then
@@ -900,6 +910,26 @@ function hoangtuveu()
                     if mob and mob:FindFirstChild("HumanoidRootPart") then mob.HumanoidRootPart.CFrame = door.CFrame end
                     CombatController.Attack("Cursed Skeleton")
                     task.delay(3, function() pcall(function() door:Destroy() end) end)
+                end
+            elseif step[1] == "burn" or step[1] == "burn 2" then
+                -- [ ĐÃ FIX TỌA ĐỘ TELEPORT: Đứng ngay ngắn trước mặt cuộn giấy ]
+                local scrollName = step[1] == "burn" and "GoodScroll" or "EvilScroll"
+                SetTask("MainTask", "CDK Quest | Đang lấy nhiệm vụ từ " .. scrollName)
+                local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(scrollName)
+                if scroll then 
+                    local targetPos = (scroll:IsA("Model") and scroll:GetModelCFrame() or scroll.CFrame)
+                    
+                    if CaculateDistance(targetPos) > 10 then
+                        -- Bay tới trước mặt cuộn giấy (cách 4 stud, cao 2 stud) để KHÔNG KẸT
+                        TweenController.Create(targetPos * CFrame.new(0, 2, 4)) 
+                    else
+                        local prompt = scroll:FindFirstChildOfClass("ProximityPrompt", true)
+                        if prompt then
+                            prompt.HoldDuration = 0
+                            fireproximityprompt(prompt)
+                            task.wait(1.5) 
+                        end
+                    end
                 end
             elseif step[1] == "boss" then
                 SetTask("MainTask", "CDK Quest | Tiêu diệt Boss để lấy CDK!")
@@ -943,7 +973,8 @@ function hoangtuveu()
                     elseif targetNPC then
                         local dest = targetNPC.npc:GetModelCFrame()
                         if CaculateDistance(dest) > 15 then
-                            TweenController.Create(dest)
+                            -- [ FIX TỌA ĐỘ BOAT DEALER ]: Bay cao hơn đầu ông ta để khỏi kẹt sàn gỗ
+                            TweenController.Create(dest * CFrame.new(0, 5, 0))
                             SetTask("MainTask", "CDK | Bay tới NPC " .. (count + 1) .. "/3")
                         else
                             local p = targetNPC.npc:FindFirstChildOfClass("ProximityPrompt", true)
@@ -1152,14 +1183,13 @@ function hoangtuveu()
                 if status and ParsingTimes > 100 then
                     SetText('DebugLine', "Module: " .. taskName)
                     
-                    -- [ HỆ THỐNG BẮT LỖI HIỂN THỊ LÊN MÀN HÌNH ]
                     local success, err = pcall(function()
                         handler.Methods.Start:Call(status)
                     end)
                     
                     if not success then
                         SetText('MainTextLabel', "<font color='#FF0000'>LỖI CODE Ở " .. taskName .. ": " .. tostring(err) .. "</font>")
-                        task.wait(3) -- Hiện lỗi 3 giây cho ông đọc
+                        task.wait(3) 
                     end
                     
                     taskHandled = true
@@ -1218,7 +1248,6 @@ function hoangtuveu()
     end)
 
     while task.wait() do
-        -- Bắt lỗi tổng của cả vòng lặp
         local success, err = xpcall(RefreshTasksData, debug.traceback)
         if not success and err then 
             warn("HoangPhucHub Error: ", err)
