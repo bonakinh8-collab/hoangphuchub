@@ -651,18 +651,50 @@ function hoangtuveu()
     end
 
     -- =====================================================================
-    -- [ HACK NHẸ QUYỀN ĐỔI VŨ KHÍ (KHÔNG CAN THIỆP VẬT LÝ/BRING MOB) ]
+    -- [ LOGIC SOURCE GỐC: HACK TARGET VŨ KHÍ & BRING MOB CỐ ĐỊNH ]
     -- =====================================================================
     if not _G.EquipHooked then
         _G.EquipHooked = true
         local oldEquip = FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call
         FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call = function(self, weaponName)
-            if _G.ForceWeapon and _G.ForceWeapon ~= "" then
-                weaponName = _G.ForceWeapon
+            -- Bắt CombatController phải Target vào Kiếm/Võ đang farm
+            if _G.TargetWeapon and _G.TargetWeapon ~= "" then
+                return oldEquip(self, _G.TargetWeapon)
             end
             return oldEquip(self, weaponName)
         end
     end
+
+    task.spawn(function()
+        local rs = game:GetService("RunService")
+        rs.Heartbeat:Connect(function()
+            if _G.Stop then return end
+            pcall(function()
+                local char = game.Players.LocalPlayer.Character
+                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+                -- 1. SOURCE GỐC BẬT HAKI: Gọi thẳng Server
+                if _G.FarmPos and not char:FindFirstChild("HasBuso") then
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
+                end
+
+                -- 2. SOURCE GỐC BRING MOB: Gom quái vào TỌA ĐỘ CỐ ĐỊNH (FarmPos) để không ôm nhau tự sát
+                if _G.FarmPos and _G.TargetMobList then
+                    for _, v in pairs(workspace.Enemies:GetChildren()) do
+                        if table.find(_G.TargetMobList, v.Name) and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            if (v.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude < 350 then
+                                v.HumanoidRootPart.CFrame = _G.FarmPos -- Gom tất cả lại 1 cục ngay trên mặt đất
+                                v.HumanoidRootPart.Size = Vector3.new(50, 50, 50)
+                                v.HumanoidRootPart.CanCollide = false
+                                v.Humanoid.WalkSpeed = 0
+                                v.Humanoid.JumpPower = 0
+                            end
+                        end
+                    end
+                end
+            end)
+        end)
+    end)
     -- =====================================================================
 
     FunctionsHandler.Saber:RegisterMethod('Refresh', function()
@@ -692,7 +724,7 @@ function hoangtuveu()
         return plateList
     end)
     FunctionsHandler.Saber:RegisterMethod('Start', function()
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         local step = FunctionsHandler.Saber:Get("CurrentProgressLevel")
         if step == 1 then
             for i, p in pairs(FunctionsHandler.Saber.Methods.GetQuestplates:Call()) do
@@ -730,7 +762,7 @@ function hoangtuveu()
         if FunctionsHandler.Yama:Get('EliteCount') >= 30 then return true end
     end)
     FunctionsHandler.Yama:RegisterMethod("Start", function()
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         SetTask('MainTask', "Yama Quest | Pulling Sword")
         local waterfall = workspace.Map:FindFirstChild("Waterfall")
         if waterfall and waterfall:FindFirstChild("SealedKatana") then
@@ -750,7 +782,7 @@ function hoangtuveu()
         end
     end)
     FunctionsHandler.Tushita:RegisterMethod('Start', function(k)
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         if k == 1 then
             SetTask("MainTask", "Tushita Quest | Lighting Torches!")
             TweenController.Create(CFrame.new(5714, 20, 256))
@@ -780,7 +812,7 @@ function hoangtuveu()
         end
     end)
     FunctionsHandler.ChestFarm:RegisterMethod("Start", function(step)
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         if step == "spawn_darkbeard" then
             SetTask("MainTask", "Soul Guitar | Tìm thấy Fist of Darkness! Đang gọi Râu Đen...")
             local arena = CFrame.new(3780, 22.5, -3494) 
@@ -830,7 +862,7 @@ function hoangtuveu()
         elseif (ScriptStorage.Backpack["Bones"] or {Count = 0})['Count'] >= 500 then return 8 end
     end)
     FunctionsHandler.SoulGuitar:RegisterMethod('Start', function(step)
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         if step == "travel_sea2" then
             SetTask("MainTask", "Soul Guitar | Về Sea 2 để tìm Dark Fragment / Ectoplasm")
             Remotes.CommF_:InvokeServer("TravelDressrosa")
@@ -958,30 +990,26 @@ function hoangtuveu()
     end)
     FunctionsHandler.Godhuman:RegisterMethod("Start", function(step)
         if step[1] == "equip_and_check" then
-            _G.ForceWeapon = nil
+            _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
             SetTask("MainTask", "Godhuman | Đang gọi võ " .. step[2] .. " để check Mastery...")
             Remotes.CommF_:InvokeServer(step[3])
             Remotes.CommF_:InvokeServer(step[3], true) 
             task.wait(1.5)
         elseif step[1] == "farm" then
-            _G.ForceWeapon = step[2]
             SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
-            
-            -- [ BẬT HAKI MỘT LẦN TRƯỚC KHI ĐÁNH ]
-            pcall(function()
-                local char = game.Players.LocalPlayer.Character
-                if char and not char:FindFirstChild("HasBuso") then
-                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                end
-            end)
-
             local bone_pos = CFrame.new(-9473, 142, 5567)
+            local mList = {"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"}
+            
+            -- Set Biến Global cho Target, Haki và Bring Mob cố định
+            _G.TargetWeapon = step[2]
+            _G.FarmPos = bone_pos
+            _G.TargetMobList = mList
+
             if CaculateDistance(bone_pos) > 1000 then TweenController.Create(bone_pos) else
-                -- Để CombatController của Source tự lo việc gom quái và đánh
-                CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
+                CombatController.Attack(mList)
             end
         elseif step[1] == "farm_mat" then
-            _G.ForceWeapon = nil
+            _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
             local matName = step[2]
             SetTask("MainTask", "Godhuman | Farm nguyên liệu: " .. matName .. " (" .. step[3] .. "/" .. step[4] .. ")")
             if matName == "Magma Ore" or matName == "Mystic Droplet" then
@@ -991,7 +1019,7 @@ function hoangtuveu()
             end
             CombatController.Attack(step[5])
         elseif step[1] == "godhuman_buy" then
-            _G.ForceWeapon = nil
+            _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
             SetTask("MainTask", "Godhuman | Đủ điều kiện! Đang mua Godhuman tại Cổ Thụ!")
             local treePos = CFrame.new(-5036, 314, -2620)
             if CaculateDistance(treePos) > 15 then TweenController.Create(treePos) else
@@ -1029,7 +1057,7 @@ function hoangtuveu()
         return tostring(hazeList[1])
     end)
     FunctionsHandler.CursedDualKatana:RegisterMethod("DoDimension", function(dim_name)
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         local map_name = string.gsub(dim_name, ' ', "")
         local start_t = os.time()
         repeat
@@ -1072,26 +1100,22 @@ function hoangtuveu()
                     currentMastery = step[3]
                 end
 
-                _G.ForceWeapon = weaponName
                 SetTask("MainTask", "CDK | Farm Mastery " .. weaponName .. " (" .. currentMastery .. "/350)")
-                
-                -- [ BẬT HAKI MỘT LẦN TRƯỚC KHI ĐÁNH ]
-                pcall(function()
-                    local char = game.Players.LocalPlayer.Character
-                    if char and not char:FindFirstChild("HasBuso") then
-                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                    end
-                end)
-
                 local bone_pos = CFrame.new(-9473, 142, 5567)
+                local mList = {"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"}
+
+                -- Target sang Kiếm, Bật Haki, Bring Mob cố định
+                _G.TargetWeapon = weaponName
+                _G.FarmPos = bone_pos
+                _G.TargetMobList = mList
+
                 if CaculateDistance(bone_pos) > 1000 then 
                     TweenController.Create(bone_pos) 
                 else
-                    -- Để CombatController của Source tự lo việc gom quái và đánh
-                    CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
+                    CombatController.Attack(mList)
                 end
             elseif step[1] == "talk_crypt_master" then
-                _G.ForceWeapon = nil
+                _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
                 SetTask("MainTask", "CDK Quest | Nhận phép mở cửa từ Crypt Master...")
                 local masterNpc = ScriptStorage.NPCs["Crypt Master"] or workspace.NPCs:FindFirstChild("Crypt Master")
                 if masterNpc then
@@ -1103,7 +1127,7 @@ function hoangtuveu()
                     end
                 end
             elseif step[1] == "burn" or step[1] == "burn 2" then
-                _G.ForceWeapon = nil
+                _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
                 local scrollName = step[1] == "burn" and "GoodScroll" or "EvilScroll"
                 SetTask("MainTask", "CDK Quest | Đang lấy nhiệm vụ từ " .. scrollName)
                 local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(scrollName)
@@ -1115,7 +1139,7 @@ function hoangtuveu()
                     end
                 end
             elseif step[1] == "boss" then
-                _G.ForceWeapon = nil
+                _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
                 SetTask("MainTask", "CDK Quest | Gắn đá vào Bệ để gọi Boss!")
                 local boss = workspace.Enemies:FindFirstChild("Cursed Skeleton Boss") or game.ReplicatedStorage:FindFirstChild("Cursed Skeleton Boss")
                 if boss then
@@ -1128,7 +1152,7 @@ function hoangtuveu()
                     end
                 end
             elseif step[1] == "Good" then
-                _G.ForceWeapon = nil
+                _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
                 Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', 'Good')
                 if step[2] == 1 then 
                     SetTask("MainTask", "CDK | Tushita 1: Tương tác Boat Dealer...")
@@ -1149,7 +1173,6 @@ function hoangtuveu()
                         end
                     else _G.CDK_DealerIndex = 1 end
                 elseif step[2] == 2 then 
-                    _G.ForceWeapon = nil
                     SetTask("MainTask", "CDK | Tushita 2: Đợi Pirate Raid ở Lâu Đài...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
                     local castlePos = CFrame.new(-5556, 314, -2988)
@@ -1159,14 +1182,13 @@ function hoangtuveu()
                         end
                     end
                 elseif step[2] == 3 then 
-                    _G.ForceWeapon = nil
                     SetTask("MainTask", "CDK | Tushita 3: Giết Cake Queen...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "Soulless")
                     if workspace.Enemies:FindFirstChild("Cake Queen") then CombatController.Attack("Cake Queen") end
                     FunctionsHandler.CursedDualKatana.Methods.DoDimension:Call("Heaven")
                 end
             elseif step[1] == "Evil" then
-                _G.ForceWeapon = nil
+                _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
                 Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', 'Evil')
                 if step[2] == 1 then 
                     SetTask("MainTask", "CDK | Yama 1: Đứng yên chịu đòn...")
@@ -1210,7 +1232,7 @@ function hoangtuveu()
         return isl or ScriptStorage.Tools["Special Microchip"]
     end)
     FunctionsHandler.RaidController:RegisterMethod("Start", function(data)
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         if typeof(data) == "Instance" and data:IsA("Part") then
             SetTask('MainTask', "Auto Raid | Dọn dẹp Đảo " .. data.Name)
             local hit = false
@@ -1242,7 +1264,7 @@ function hoangtuveu()
         return true
     end)
     FunctionsHandler.Wenlocktoad:RegisterMethod("Start", function()
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         SetTask('MainTask', "Up Tộc V3 | Nhiệm vụ Arowe")
         local arowe = ScriptStorage.NPCs["Arowe"]
         if arowe then
@@ -1271,7 +1293,7 @@ function hoangtuveu()
         return false
     end)
     FunctionsHandler.AutoHopBoss:RegisterMethod("Start", function(mode)
-        _G.ForceWeapon = nil
+        _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
         SetTask("MainTask", "VIP Săn Boss | Phát hiện Boss " .. mode .. " trong Server, đấm ngay!")
         if mode == "rip_indra True Form" and not ScriptStorage.Backpack['Tushita'] then
             TweenController.Create(CFrame.new(5714, 20, 256))
@@ -1371,7 +1393,7 @@ function hoangtuveu()
         end
 
         if not taskHandled and ScriptStorage.PlayerData.Level >= 2800 and SeaIndex == 3 and ParsingTimes > 100 then
-            _G.ForceWeapon = nil
+            _G.TargetWeapon = nil; _G.FarmPos = nil; _G.TargetMobList = nil
             SetTask('MainTask', "Hệ Thống | Rảnh rỗi: Đứng rình Boss tại Mansion!")
             local mansion_pos = CFrame.new(-12464, 332, -7254)
             if CaculateDistance(mansion_pos) > 30 and not MonResult then TweenController.Create(mansion_pos) end
