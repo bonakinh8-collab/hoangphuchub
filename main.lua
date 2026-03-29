@@ -453,7 +453,6 @@ function hoangtuveu()
         if not W_p or TweenDebounce then return end
         local a_c = typeof(W_p) ~= 'CFrame' and CFrame.new(W_p.X, W_p.Y, W_p.Z) or W_p
         
-        -- [ BỘ LỌC CHỐNG SPAM TWEEN BẢO VỆ NHÂN VẬT ]
         if _G.LastTweenTarget and (_G.LastTweenTarget.Position - a_c.Position).Magnitude < 5 then
             if TweenInstance and TweenInstance.PlaybackState == Enum.PlaybackState.Playing then return end
         end
@@ -470,12 +469,10 @@ function hoangtuveu()
             h_b.Parent = W_he
         end
         
-        -- [ FIX ANTI-CHEAT: GIẢM TỐC ĐỘ XUỐNG 300 AN TOÀN TỐI ĐA ]
         local W_d = CaculateDistance(h.Character.HumanoidRootPart.CFrame, a_c)
-        local safeSpeed = 300 -- Tốc độ bay chuẩn, không bị kick
+        local safeSpeed = 300 
         local tweenTime = W_d / safeSpeed
         
-        -- Chống lỗi khoảng cách quá ngắn dẫn đến thời gian = 0
         if tweenTime < 0.1 then tweenTime = 0.1 end 
 
         TweenInstance = game:GetService("TweenService"):Create(h.Character.HumanoidRootPart, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = a_c})
@@ -584,8 +581,10 @@ function hoangtuveu()
         Storage:Set("IsCodesRanOut", 1)
     end)
 
+    -- [ ĐÃ FIX TẮT LEVEL FARM KHI MAX LEVEL ĐỂ KHÔNG BỊ KẸT LỖI QUEST ]
     FunctionsHandler.LevelFarm:RegisterMethod("Refresh", function()
         local lvl = ScriptStorage.PlayerData.Level
+        if lvl >= MaxLevel then return nil end -- CÔNG TẮC: Trả về nil để tắt thẳng tay nếu đã Max Level 2800!
         if lvl < 50 then return 1 elseif lvl < 70 then return 2 else return 4 end
     end)
 
@@ -635,7 +634,8 @@ function hoangtuveu()
             SetTask('MainTask', 'Level Farming | Đang cày cấp với: ' .. monName)
             CombatController.Attack(monName)
         end
-    end)FunctionsHandler.Saber:RegisterMethod('Refresh', function()
+    end)
+	FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
         local step
@@ -817,25 +817,23 @@ function hoangtuveu()
         end
     end)
 
-    -- [ ĐÃ PHỤC HỒI TOÀN BỘ LOGIC CỦA CDK ]
+    -- [ ĐÃ FIX LỖI TỪ CHỐI GẶP CRYPT MASTER ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
         if ScriptStorage.PlayerData.Level < 2200 then return end
+        
+        -- LƯU Ý: Nếu ông chưa đủ 350 Mastery ở Yama và Tushita, nó sẽ dừng ở dòng này!
         if bp["Cursed Dual Katana"] or not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return end
         if SeaIndex ~= 3 then return end
+        
         local prog = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
+        
+        -- [ SỬA CHỖ NÀY: Trả về lệnh để Start thực hiện thay vì trả về nil ]
         if not prog or prog == 'uwu' then
-            local masterNpc = workspace.NPCs:FindFirstChild("Crypt Master") or game:GetService("ReplicatedStorage").NPCs:FindFirstChild("Crypt Master")
-            if masterNpc then
-                TweenController.Create(masterNpc:GetModelCFrame())
-                if CaculateDistance(masterNpc) < 15 then
-                    fireproximityprompt(masterNpc:FindFirstChildOfClass("ProximityPrompt"))
-                    Remotes.CommF_:InvokeServer("CDKQuest", "Npc")
-                end
-            end
-            return nil
+            return {"talk_crypt_master"}
         end
+        
         if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return {"break"} end
         local mapType = {Good = 'Tushita', Evil = 'Yama'}
         if prog.Good == 4 and prog.Evil == 4 then return {'burn 2'} end
@@ -897,19 +895,25 @@ function hoangtuveu()
         if type(step) == "table" then
             SetTask("MainTask", "CDK Quest | Đang làm nhiệm vụ: " .. tostring(step[1]) .. " - Bước: " .. tostring(step[2]))
             
-            if step[1] == "break" then
-                -- [ FIX TỰ ĐỘNG PHÁ CỬA 100% ]
+            -- [ SỬA CHỖ NÀY: Nhận lệnh bay đến NPC Master ]
+            if step[1] == "talk_crypt_master" then
+                local masterNpc = ScriptStorage.NPCs["Crypt Master"]
+                if masterNpc then
+                    TweenController.Create(masterNpc:GetModelCFrame())
+                    if CaculateDistance(masterNpc) < 15 then
+                        fireproximityprompt(masterNpc:FindFirstChildOfClass("ProximityPrompt"))
+                        Remotes.CommF_:InvokeServer("CDKQuest", "Npc")
+                    end
+                end
+            elseif step[1] == "break" then
                 local door = workspace.Map.Turtle.Cursed:FindFirstChild("Breakable")
                 if door then
                     TweenController.Create(door.CFrame)
                     local mob = workspace.Enemies:FindFirstChild("Cursed Skeleton")
                     if mob and mob:FindFirstChild("HumanoidRootPart") then
-                        -- Ép quái vật vào sát cửa để nó dùng chiêu phá vỡ
                         mob.HumanoidRootPart.CFrame = door.CFrame 
                     end
                     CombatController.Attack("Cursed Skeleton")
-                    
-                    -- Xóa luôn bức tường bằng code để bot đi xuyên vào lấy Scroll
                     task.delay(3, function() pcall(function() door:Destroy() end) end)
                 end
             elseif step[1] == "burn" or step[1] == "burn 2" then
@@ -919,7 +923,6 @@ function hoangtuveu()
                     fireproximityprompt(scroll:FindFirstChildOfClass("ProximityPrompt")) 
                 end
             elseif step[1] == "Good" then
-                -- [ AUTOMATION CHO TUSHITA ]
                 if step[2] == 1 then 
                     SetTask("MainTask", "CDK | Tushita 1: Tìm 3 Boat Dealer...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "DockLegend")
@@ -930,20 +933,15 @@ function hoangtuveu()
                 elseif step[2] == 3 then 
                     SetTask("MainTask", "CDK | Tushita 3: Giết Cake Queen / Vô Heaven...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "Soulless")
-                    if workspace.Enemies:FindFirstChild("Cake Queen") then 
-                        CombatController.Attack("Cake Queen") 
-                    end
+                    if workspace.Enemies:FindFirstChild("Cake Queen") then CombatController.Attack("Cake Queen") end
                     FunctionsHandler.CursedDualKatana.Methods.DoDimension:Call("Heaven")
                 end
             elseif step[1] == "Evil" then
-                -- [ AUTOMATION CHO YAMA ]
                 if step[2] == 1 then 
                     SetTask("MainTask", "CDK | Yama 1: Đứng yên chịu đòn...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "PainAndSuffering")
                     local mob = workspace.Enemies:FindFirstChild("Fishman Raider") or workspace.Enemies:FindFirstChild("Cursed Skeleton")
-                    if mob and mob:FindFirstChild("HumanoidRootPart") then 
-                        TweenController.Create(mob.HumanoidRootPart.CFrame) 
-                    end
+                    if mob and mob:FindFirstChild("HumanoidRootPart") then TweenController.Create(mob.HumanoidRootPart.CFrame) end
                 elseif step[2] == 2 then
                     SetTask("MainTask", "CDK | Yama 2: Diệt quái sương mù tím...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "HazeOfMisery")
@@ -1173,4 +1171,3 @@ function hoangtuveu()
     end
 end
 hoangtuveu()
-	
