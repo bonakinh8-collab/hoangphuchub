@@ -1012,7 +1012,14 @@ function hoangtuveu()
         end
     end
 
-    SetText('MainTextLabel', "HoangPhucHub: Khởi tạo cực đỉnh!")
+SetText('MainTextLabel', "HoangPhucHub: Đang đồng bộ dữ liệu...")
+    
+    -- [ CHỐT AN TOÀN ] Bắt buộc phải lấy xong Level mới cho chạy tiếp
+    repeat 
+        task.wait(0.5) 
+        pcall(RefreshPlayerData) 
+    until ScriptStorage.PlayerData.Level
+    
     AddPoint()
     pcall(function() J_quest:RefreshQuest() end)
     RefreshInventory()
@@ -1023,7 +1030,7 @@ function hoangtuveu()
     end)
 
     task.spawn(function()
-        while task.wait() do
+        while task.wait(1) do -- Chỉnh thành 1s cho nhẹ máy, không cần spam
             if not _G.Stop then
                 pcall(RefreshPlayerData)
                 local elapsed = os.time() - InitTime
@@ -1041,7 +1048,10 @@ function hoangtuveu()
 
     while task.wait() do
         local success, err = xpcall(RefreshTasksData, debug.traceback)
-        if not success and err then warn("HoangPhucHub Error: ", err) end
+        if not success and err then 
+            warn("HoangPhucHub Error: ", err) 
+            task.wait(1) -- Tạm nghỉ 1s nếu bị lỗi lặp để chống crash game
+        end
     end
 end
 hoangtuveu()
