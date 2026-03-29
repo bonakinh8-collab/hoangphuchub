@@ -1213,8 +1213,7 @@ function hoangtuveu()
             CombatController.Attack(monName)
         end
     end)
-	-- [[ SABER QUEST LOGIC ]]
-    FunctionsHandler.Saber:RegisterMethod('Refresh', function()
+	FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
         local step
@@ -1283,7 +1282,6 @@ function hoangtuveu()
         end
     end)
 
-    -- [[ YAMA QUEST ]]
     FunctionsHandler.Yama:RegisterMethod('Refresh', function()
         if SeaIndex ~= 3 or ScriptStorage.Backpack.Yama then return end
         if not FunctionsHandler.Yama:Get("EliteCount") then
@@ -1301,7 +1299,6 @@ function hoangtuveu()
         fireclickdetector(workspace.Map.Waterfall.SealedKatana.Hitbox.ClickDetector)
     end)
 
-    -- [[ TUSHITA QUEST (VIP INDRA LOGIC) ]]
     FunctionsHandler.Tushita:RegisterMethod("Refresh", function()
         if ScriptStorage.Backpack.Tushita or ScriptStorage.PlayerData.Level < 2000 or SeaIndex ~= 3 then return end
         TushitaProgress = TushitaProgress or Remotes.CommF_:InvokeServer("TushitaProgress")
@@ -1334,7 +1331,6 @@ function hoangtuveu()
         end
     end)
 
-    -- [[ SOUL GUITAR PUZZLE ]]
     function CheckFullMoon(isForce)
         if Lighting.Sky.MoonTextureId ~= 'http://www.roblox.com/asset/?id=970914431' then return end
         if isForce then return true end
@@ -1345,12 +1341,10 @@ function hoangtuveu()
         if not Config.Items.SoulGuitar then return end
         if ScriptStorage.Backpack['Skull Guitar'] or not ScriptStorage.Backpack['Dark Fragment'] then return end
         if ScriptStorage.PlayerData.Level < 2300 then return end
-        
         local ecto = (ScriptStorage.Backpack['Ectoplasm'] or {Count = 0})["Count"]
         local bones = (ScriptStorage.Backpack["Bones"] or {Count = 0})['Count']
         if ecto < 250 then return 1 end
         if SeaIndex ~= 3 then return end
-        
         SoulGuitarProcess = Remotes.CommF_:InvokeServer("GuitarPuzzleProgress", 'Check')
         if not SoulGuitarProcess then
             Remotes.CommF_:InvokeServer("gravestoneEvent", 2)
@@ -1467,16 +1461,13 @@ function hoangtuveu()
         end
     end)
 
-    -- [[ CDK (CURSED DUAL KATANA) PUZZLE LOGIC ]]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
         if ScriptStorage.PlayerData.Level < 2200 then return end
         if bp["Cursed Dual Katana"] or not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return end
         if SeaIndex ~= 3 then return end
-        
         local prog = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
-        
         if not prog or prog == 'uwu' then
             local masterNpc = workspace.NPCs:FindFirstChild("Crypt Master") or game:GetService("ReplicatedStorage").NPCs:FindFirstChild("Crypt Master")
             if masterNpc then
@@ -1488,12 +1479,10 @@ function hoangtuveu()
             end
             return nil
         end
-
         if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return {"break"} end
         local mapType = {Good = 'Tushita', Evil = 'Yama'}
         if prog.Good == 4 and prog.Evil == 4 then return {'burn 2'} end
         if prog.Good == 3 or prog.Evil == 3 then return {"burn"} end
-        
         if prog.Opened then
             for side, val in pairs(prog) do
                 if side ~= 'Opened' and side ~= "Finished" and val < 3 then
@@ -1524,7 +1513,6 @@ function hoangtuveu()
             TweenController.Create(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame)
             if os.time() - start_t > 60 then return end
         until os.time() - TorchEnabledTime < 10
-        
         repeat
             task.wait()
             local dim_map = workspace.Map:WaitForChild(map_name, 10)
@@ -1548,9 +1536,6 @@ function hoangtuveu()
         Hop()
     end)
 
-    -- ==========================================
-    -- HỆ THỐNG AUTO RAID (THỨC TỈNH TRÁI ÁC QUỶ)
-    -- ==========================================
     FunctionsHandler.RaidController:RegisterMethod('RefreshRaidType', function()
         for k, raid_name in pairs(require(game.ReplicatedStorage.Raids).raids) do
             if string.find(ScriptStorage.PlayerData.DevilFruit, raid_name) then
@@ -1615,7 +1600,7 @@ function hoangtuveu()
         RefreshInventory()
         FunctionsHandler.RaidController:Set("CurrentProgressLevel", nil)
         if not curr_island then
-            SetTask('MainTask', 'Auto Raid | Đang mua Chip ' .. FunctionsHandler.RaidController:Get("CurrentChip"))
+            SetTask('MainTask', 'Auto Raid | Mua Chip ' .. FunctionsHandler.RaidController:Get("CurrentChip"))
             if not ScriptStorage.Tools['Special Microchip'] then
                 local f_item = FunctionsHandler.RaidController.Methods.GetRaidableFruit:Call()
                 if f_item then
@@ -1648,7 +1633,7 @@ function hoangtuveu()
             if os.time() - start_t > 30 then game.Players.LocalPlayer:Kick("Rejoining..") end
             LastRaidAlert = 0
         else
-            SetTask('MainTask', "Auto Raid | Đang dọn dẹp Đảo " .. curr_island.Name .. " /5")
+            SetTask('MainTask', "Auto Raid | Dọn dẹp Đảo " .. curr_island.Name .. " /5")
             local hit_any = false
             for _, mon in pairs(GetMonAsSortedRange()) do
                 local mon_start = os.time()
@@ -1665,15 +1650,11 @@ function hoangtuveu()
         end
     end)
 
-    -- ==========================================
-    -- HỆ THỐNG UP RACE V3 (TỘC V3 - WENLOCKTOAD)
-    -- ==========================================
     FunctionsHandler.Wenlocktoad:RegisterMethod("Refresh", function()
         if ScriptStorage.PlayerData.RaceLevel ~= 2 then return end
         if ScriptStorage.PlayerData.Level < 1000 then return end
         if ScriptStorage.PlayerData.Beli < 2000000 then return end
         if SeaIndex ~= 2 then return end
-        
         local quest_status = Remotes.CommF_:InvokeServer("Wenlocktoad", "1")
         if quest_status == -2 then
             ScriptStorage.PlayerData.RaceLevel = 3
@@ -1683,7 +1664,7 @@ function hoangtuveu()
     end)
 
     FunctionsHandler.Wenlocktoad:RegisterMethod("Start", function()
-        SetTask('MainTask', "Up Tộc V3 | Đang làm nhiệm vụ Arowe (Wenlocktoad)")
+        SetTask('MainTask', "Up Tộc V3 | Nhiệm vụ Arowe (Wenlocktoad)")
         local arowe = workspace.NPCs:FindFirstChild("Arowe") or game.ReplicatedStorage.NPCs:FindFirstChild("Arowe")
         if arowe then
             TweenController.Create(arowe:GetModelCFrame())
@@ -1697,7 +1678,43 @@ function hoangtuveu()
         end
     end)
 
-    -- [[ HỆ THỐNG NOTIFY (LẮNG NGHE THÔNG BÁO TỪ GAME) ]]
+    FunctionsHandler.AutoHopBoss:RegisterMethod("Refresh", function()
+        if Config.Items.DarkFragment and not ScriptStorage.Backpack['Dark Fragment'] and SeaIndex == 2 then
+            if ScriptStorage.Enemies["Darkbeard"] then 
+                return "Darkbeard" 
+            else 
+                return "Hop_Darkbeard" 
+            end
+        end
+        if Config.Items.ValkyrieHelm and not ScriptStorage.Backpack['Valkyrie Helm'] and SeaIndex == 3 then
+            if ScriptStorage.Enemies["rip_indra True Form"] then 
+                return "rip_indra True Form" 
+            else 
+                return "Hop_rip_indra True Form" 
+            end
+        end
+        if Config.Items.DoughKing and SeaIndex == 3 then
+            if ScriptStorage.Enemies["Dough King"] then 
+                return "Dough King" 
+            else 
+                return "Hop_Dough King" 
+            end
+        end
+        return false
+    end)
+
+    FunctionsHandler.AutoHopBoss:RegisterMethod("Start", function(mode)
+        if string.find(mode, "Hop_") then
+            local targetBoss = string.gsub(mode, "Hop_", "")
+            SetTask("MainTask", "VIP Hop: Không có " .. targetBoss .. " ở server này, đang nhảy Server tìm!")
+            task.wait(1)
+            Hop()
+        else
+            SetTask("MainTask", "VIP Hop: Phát hiện " .. mode .. " xuất hiện, đang lao vào đấm!")
+            CombatController.Attack(mode)
+        end
+    end)
+
     local notifier = {Listeners = {}}
     TorchEnabledTime = 0
     DoneCdkTick = 0
@@ -1716,7 +1733,7 @@ function hoangtuveu()
     notifier:RegisterNotifyListener("torch", function() TorchEnabledTime = os.time() end)
     notifier:RegisterNotifyListener("scroll reacts", function() DoneCdkTick = os.time() end)
     notifier:RegisterNotifyListener("elite", function() FunctionsHandler.Yama:Set('EliteCount', Remotes.CommF_:InvokeServer("EliteHunter", "Progress")) end)
-    
+
     local old_notify
     old_notify = hookfunction(require(game.ReplicatedStorage.Notification).new, function(title, msg)
         local full_msg = tostring(tostring(title or '') .. tostring(msg or ""))
@@ -1724,9 +1741,8 @@ function hoangtuveu()
         return old_notify(title, msg)
     end)
 
-    -- [[ HỆ THỐNG SERVER HOP TỐI ƯU ]]
     function IfTableHaveIndex(k_tab) for _ in pairs(k_tab) do return true end end
-    
+
     function GetServers()
         if LastServersDataPulled then
             if os.time() - LastServersDataPulled < 60 then return CachedServers end
@@ -1740,7 +1756,7 @@ function hoangtuveu()
             end
         end
     end
-    
+
     spawn(function()
         GetServers()
         while task.wait(180) do GetServers() end
@@ -1785,7 +1801,6 @@ function hoangtuveu()
         end
     end
 
-    -- [[ HỆ THỐNG LƯU TRỮ FILE (.storage) ]]
     Storage = {WRITE_DELAY = .5, Data = {}}
     local k_file_path = ".storage_u_" .. tostring(LocalPlayer)
     function Decode(W_json) return game:GetService("HttpService"):JSONDecode(W_json) end
@@ -1793,7 +1808,7 @@ function hoangtuveu()
     function Storage:Set(h_k, X_v) self.Data[h_k] = X_v end
     function Storage:Get(h_k) return self.Data[h_k] end
     function Storage:Save() writefile(k_file_path, Encode(self.Data)) end
-    
+
     if not isfile(k_file_path) then
         writefile(k_file_path, "{}")
         task.wait(1)
@@ -1801,12 +1816,9 @@ function hoangtuveu()
     pcall(function() Storage.Data = Decode(readfile(k_file_path) or '{}') end)
     task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
 
-    -- [[ VÒNG LẶP NHIỆM VỤ CHÍNH (MAIN LOOP) ]]
     ParsingTimes = 0
     function RefreshTasksData()
         if _G.Stop then return end
-        
-        -- CÔNG THỨC VIP: Nếu đạt Max Level 2800 -> Tự động bay về Mansion rình Boss
         if ScriptStorage.PlayerData.Level >= 2800 then
             SetText('SubTask', "HoangPhucHub: Đã Max 2800 - Đang rình Boss tại Mansion")
             local mansion_pos = CFrame.new(-12464, 332, -7254)
@@ -1835,13 +1847,12 @@ function hoangtuveu()
         end
     end
 
-    -- [[ KHỞI CHẠY HỆ THỐNG ]]
     SetText('MainTextLabel', "HoangPhucHub: Đang tải thiết lập..")
     AddPoint()
     pcall(function() J_q:RefreshQuest() end)
     RefreshInventory()
     RefreshRace()
-    
+
     game.Players.LocalPlayer.Idled:Connect(function()
         game:GetService("VirtualUser"):CaptureController()
         game:GetService("VirtualUser"):ClickButton2(Vector2.new())
@@ -1869,13 +1880,11 @@ function hoangtuveu()
     end)
 
     while task.wait() do
-        -- CÔNG THỨC: Tự động kết nối lại nếu treo máy quá 5 phút
         if Config.Configuration.HopWhenIdle and LastIdling and os.time() - LastIdling > 300.0 then
             SetTask('MainTask', "HoangPhucHub: Đang kết nối lại do treo máy lâu!")
             task.wait(1)
             while task.wait() do game:GetService('TeleportService'):Teleport(game.PlaceId) end
         end
-
         pcall(function() FunctionsHandler.MeleesController.Methods.Start:Call() end)
         local success, err = xpcall(RefreshTasksData, debug.traceback)
         if not success and err then
@@ -1884,7 +1893,4 @@ function hoangtuveu()
     end
 end
 
--- =======================================================
--- KÍCH HOẠT SCRIPT
--- =======================================================
 hoangtuveu()
