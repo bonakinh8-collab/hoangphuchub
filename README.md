@@ -8,14 +8,10 @@ Config = {
         blackscreen = true
     },
     Items = {
-        -- Melees (Đã tắt)
         AutoFullyMelees = false,
-        -- Swords (Chỉ bật CDK)
         Saber = false,
-        CursedDualKatana = true,
-        -- Guns (Đã tắt)
+        CursedDualKatana = false, -- Đã tắt CDK tạm thời
         SoulGuitar = false,
-        -- Upgrades (Đã tắt)
         RaceV2 = false
     },
     Settings = {
@@ -284,7 +280,7 @@ function hoangtuveu()
     getgenv().alert = function(a, h)
         pcall(function() J:Notify({Title = a or '', Content = h or '', Duration = 5}) end)
     end
-    alert("ARYA HUB", "Bản Clean by AI - Đã xoá mã độc")
+    alert("ARYA HUB", "Bản Clean by AI - Auto Farm Level")
     local J = 'https://files.lumitone.xyz/'
     pcall(function() r[3][r[2]] = os.time() end)
     OldSessionTime = isfile('.tdif-' .. game.Players.LocalPlayer.Name) and tonumber(readfile(".tdif-" .. game.Players.LocalPlayer.Name)) or 0
@@ -685,8 +681,6 @@ function hoangtuveu()
         return Remotes.CommF_:InvokeServer("StartQuest", W, a)
     end
     
-    -- XÓA TRACKSTAT Ở ĐÂY
-    
     ScriptStorage.MobRegions = {}
     for W, W in game:GetService("ReplicatedStorage").FortBuilderReplicatedSpawnPositionsFolder:GetChildren() do
         ScriptStorage.MobRegions[tostring(W)] = ScriptStorage.MobRegions[tostring(W)] or {}
@@ -768,7 +762,7 @@ function hoangtuveu()
         TweenInstance = Services.TweenService:Create(game.Players.LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(W / (W < 18 and 25 or 330), Enum.EasingStyle.Linear), {CFrame = a})
         TweenInstance:Play()
     end
-	function CheckFullMoon(k)
+    function CheckFullMoon(k)
         if Lighting.Sky.MoonTextureId ~= 'http://www.roblox.com/asset/?id=970914431' then return end
         if k then return true end
         return Lighting.ClockTime > 18 or Lighting.ClockTime < 5
