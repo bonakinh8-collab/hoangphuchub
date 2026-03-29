@@ -810,7 +810,7 @@ function hoangtuveu()
         end
     end)
 
-    -- ĐÃ PHỤC HỒI TOÀN BỘ LOGIC CỦA CDK
+    -- [ ĐÃ PHỤC HỒI TOÀN BỘ LOGIC CỦA CDK ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
@@ -889,9 +889,22 @@ function hoangtuveu()
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
         if type(step) == "table" then
             SetTask("MainTask", "CDK Quest | Đang làm nhiệm vụ: " .. tostring(step[1]) .. " - Bước: " .. tostring(step[2]))
+            
             if step[1] == "break" then
-                TweenController.Create(workspace.Map.Turtle.Cursed.Breakable.CFrame)
-                if CaculateDistance(workspace.Map.Turtle.Cursed.Breakable.CFrame) < 15 then CombatController.Attack("Cursed Skeleton") end
+                -- [ FIX TỰ ĐỘNG PHÁ CỬA 100% ]
+                local door = workspace.Map.Turtle.Cursed:FindFirstChild("Breakable")
+                if door then
+                    TweenController.Create(door.CFrame)
+                    local mob = workspace.Enemies:FindFirstChild("Cursed Skeleton")
+                    if mob and mob:FindFirstChild("HumanoidRootPart") then
+                        -- Ép quái vật vào sát cửa để nó dùng chiêu phá vỡ
+                        mob.HumanoidRootPart.CFrame = door.CFrame 
+                    end
+                    CombatController.Attack("Cursed Skeleton")
+                    
+                    -- Xóa luôn bức tường bằng code để bot đi xuyên vào lấy Scroll
+                    task.delay(3, function() pcall(function() door:Destroy() end) end)
+                end
             elseif step[1] == "burn" or step[1] == "burn 2" then
                 local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(step[1] == "burn" and "GoodScroll" or "EvilScroll")
                 if scroll then 
@@ -899,15 +912,42 @@ function hoangtuveu()
                     fireproximityprompt(scroll:FindFirstChildOfClass("ProximityPrompt")) 
                 end
             elseif step[1] == "Good" then
-                if step[2] == 1 then Remotes.CommF_:InvokeServer("CDKQuest", "DockLegend")
-                elseif step[2] == 2 then Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
-                elseif step[2] == 3 then Remotes.CommF_:InvokeServer("CDKQuest", "Soulless") end
+                -- [ AUTOMATION CHO TUSHITA ]
+                if step[2] == 1 then 
+                    SetTask("MainTask", "CDK | Tushita 1: Tìm 3 Boat Dealer...")
+                    Remotes.CommF_:InvokeServer("CDKQuest", "DockLegend")
+                elseif step[2] == 2 then 
+                    SetTask("MainTask", "CDK | Tushita 2: Đợi Pirate Raid ở Lâu Đài...")
+                    Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
+                    TweenController.Create(CFrame.new(-5556, 314, -2988))
+                elseif step[2] == 3 then 
+                    SetTask("MainTask", "CDK | Tushita 3: Giết Cake Queen / Vô Heaven...")
+                    Remotes.CommF_:InvokeServer("CDKQuest", "Soulless")
+                    if workspace.Enemies:FindFirstChild("Cake Queen") then 
+                        CombatController.Attack("Cake Queen") 
+                    end
+                    FunctionsHandler.CursedDualKatana.Methods.DoDimension:Call("Heaven")
+                end
             elseif step[1] == "Evil" then
-                if step[2] == 1 then Remotes.CommF_:InvokeServer("CDKQuest", "PainAndSuffering")
+                -- [ AUTOMATION CHO YAMA ]
+                if step[2] == 1 then 
+                    SetTask("MainTask", "CDK | Yama 1: Đứng yên chịu đòn...")
+                    Remotes.CommF_:InvokeServer("CDKQuest", "PainAndSuffering")
+                    local mob = workspace.Enemies:FindFirstChild("Fishman Raider") or workspace.Enemies:FindFirstChild("Cursed Skeleton")
+                    if mob and mob:FindFirstChild("HumanoidRootPart") then 
+                        TweenController.Create(mob.HumanoidRootPart.CFrame) 
+                    end
                 elseif step[2] == 2 then
+                    SetTask("MainTask", "CDK | Yama 2: Diệt quái sương mù tím...")
+                    Remotes.CommF_:InvokeServer("CDKQuest", "HazeOfMisery")
                     local mon = FunctionsHandler.CursedDualKatana.Methods.GetHazeMon:Call()
                     if mon then CombatController.Attack(mon) end
-                elseif step[2] == 3 then Remotes.CommF_:InvokeServer("CDKQuest", "FearTheReaper") end
+                elseif step[2] == 3 then 
+                    SetTask("MainTask", "CDK | Yama 3: Triệu hồi Reaper / Vô Hell...")
+                    Remotes.CommF_:InvokeServer("CDKQuest", "FearTheReaper")
+                    TweenController.Create(CFrame.new(-9473, 142, 5567)) 
+                    FunctionsHandler.CursedDualKatana.Methods.DoDimension:Call("Hell")
+                end
             end
         end
     end)
