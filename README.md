@@ -1,20 +1,24 @@
--- [[ HỆ THỐNG CONFIG ĐỘNG TỪ EXECUTOR ]]
 local DefaultConfig = {
     Team = "Pirates",
     Configuration = {HopWhenIdle = true, AutoHop = true, AutoHopDelay = 10, FpsBoost = false, blackscreen = false},
-    Items = {AutoFullyMelees = false, Saber = false, CursedDualKatana = true, SoulGuitar = true, RaceV2 = false},
+    Items = {AutoFullyMelees = false, Saber = false, CursedDualKatana = true, SoulGuitar = true, RaceV2 = false, ValkyrieHelm = true, DarkFragment = true, DoughKing = true},
     Settings = {StayInSea2UntilHaveDarkFragments = false}
 }
 Config = getgenv().Config or DefaultConfig
 
 function hoangtuveu()
+    if not game:IsLoaded() then game.Loaded:Wait() end
+    repeat task.wait() until game:GetService("Players")
+    repeat task.wait() until game:GetService("Players").LocalPlayer
+    local h = game.Players.LocalPlayer
+    repeat task.wait() until h:GetMouse()
+    repeat task.wait() until game:GetService("CoreGui")
+
     local InitTime = os.time()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
     local W = {Instances = {}}
     local K = true
     local a = false
-    local h = game.Players.LocalPlayer
-    repeat task.wait() until game.CoreGui
     local h_gui = Instance.new('ScreenGui')
     local X = Instance.new('TextLabel')
     local w = Instance.new("UIStroke")
@@ -261,7 +265,7 @@ function hoangtuveu()
     getgenv().alert = function(a_t, h_t)
         pcall(function() J_fl:Notify({Title = a_t or '', Content = h_t or '', Duration = 5}) end)
     end
-    alert("HoangPhucHub", "Bản Clean Pro - Đã Thêm Raid & V3")
+    alert("HoangPhucHub", "Bản Clean VIP - Đã Tối Ưu Mọi Lỗi")
     OldSessionTime = isfile('.tdif-' .. game.Players.LocalPlayer.Name) and tonumber(readfile(".tdif-" .. game.Players.LocalPlayer.Name)) or 0
     repeat task.wait() game.ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", Config.Team) until game.Players.LocalPlayer.Character
     repeat wait() until game.Players.LocalPlayer.Character
@@ -287,7 +291,6 @@ function hoangtuveu()
     setmetatable(ScriptStorage.Map, {__index = function(J_s, J_k) return Services.Workspace.Map:FindFirstChild(J_k) or Services.Workspace:FindFirstChild(J_k) end})
     setmetatable(ScriptStorage.Tools, {__index = function(J_s, J_k) return LocalPlayer.Character:FindFirstChild(J_k) or LocalPlayer.Backpack:FindFirstChild(J_k) end})
     setmetatable(ScriptStorage.NPCs, {__index = function(J_s, J_k) if not J_k then return end; return workspace.NPCs:FindFirstChild(J_k) or game.ReplicatedStorage.NPCs:FindFirstChild(J_k) end})
-    
     function CreateTraceback(J_t, W_m) table.insert(ScriptStorage.Tracebacks, (GetCurrentDateTime() .. ' ( ' .. DispTime(os.time() - InitTime, true) .. ' ) after execution | ' .. J_t .. " | " .. W_m)) end
     function SetTask(J_t, W_m)
         if ScriptStorage.Task[J_t] == W_m then return end
@@ -395,7 +398,6 @@ function hoangtuveu()
         if W_b then return a_s end
         if ScriptStorage.Interface then SetText('Melees', a_s) end
     end
-
     function MeleeCheck(W_t)
         if W_t and typeof(W_t) == "Instance" and W_t:IsA("Tool") then
             if W_t.ToolTip == "Melee" then
@@ -473,7 +475,7 @@ function hoangtuveu()
     DropItemData = {['Buddy Sword'] = {Sea = 3, Level = 1500, Boss = "Cake Queen"}, ['Canvander'] = {Sea = 3, Level = 1500, Boss = "Beautiful Pirate"}, ['Twin Hooks'] = {Sea = 3, Level = 1500, Boss = 'Captain Elephant'}, ["Venom Bow"] = {Sea = 3, Level = 1500, Boss = "Hydra Leader"}}
     GodhumanMaterials = {['Fish Tail'] = {20, 3, {"Fishman Raider", "Fishman Captain"}, {'DeepForestIsland3', 1, 1775, 'Turtle Adventure Quest Giver'}}, ['Dragon Scale'] = {10, 3, {"Dragon Crew Warrior", "Dragon Crew Archer"}, {'DragonCrewQuest', 1, 1575, 'Dragon Crew Quest Giver'}}, ["Magma Ore"] = {20, 2, {'Magma Ninja'}, {"FireSideQuest", 1, 1100, "Fire Quest Giver"}}, ["Mystic Droplet"] = {10, 2, {'Sea Soldier', 'Water Fighter'}, {'ForgottenQuest', 2, 1425, 'Forgotten Quest Giver'}}}
     SeaIndexes = {"Main", "Dressrosa", "Zou"}
-    TasksOrder = {"AutoHopBoss", "SpecialBossesTask", "Tushita", 'Yama', "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", 'ThirdSeaPuzzle', "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm"}
+    TasksOrder = {"AutoHopBoss", "SpecialBossesTask", "SoulGuitar", "CursedDualKatana", "Tushita", "Yama", "RaidController", "Trevor", "UtillyItemsActivitation", "ColosseumPuzzle", "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "ThirdSeaPuzzle", "CollectDrops", "BossesTask", "ExpRedeem", "LevelFarm"}
     MaxLevel = 2800
     placeId = game.PlaceId
     if placeId == 85211729168715 or placeId == 2753915549 then
@@ -602,446 +604,7 @@ function hoangtuveu()
         local W_s = Split(J_n)[1]
         return W_s .. '-' .. W_s
     end
-    local J_q = {CurrentLevel = 2, DoubleQuest = true, CurrentQuests = {}, BlacklistedQuestIds = {BartiloQuest = 1, CitizenQuest = 1, Trainees = 1, MarineQuest = 1, ImpelQuest = 1}}
-    local W_g = require(game.ReplicatedStorage.GuideModule).Data.NPCList
-    repeat task.wait() until game.Players.LocalPlayer.DataLoaded and ScriptStorage
-    J_q.Quests = require(game.ReplicatedStorage.Quests)
-    function J_q.Set(W_s, a_k, h_v) W_s[a_k] = h_v end
-    function J_q.RefreshQuest(W_s)
-        while not ScriptStorage.PlayerData.Level do task.wait(1) end
-        local a_l = 0
-        local h_q
-        for X_i, w_v in pairs(J_q.Quests) do
-            if not J_q.BlacklistedQuestIds[X_i] then
-                if (w_v[1].LevelReq >= a_l and w_v[1].LevelReq <= ScriptStorage.PlayerData.Level) then
-                    a_l = w_v[1].LevelReq
-                    h_q = w_v
-                    W_s.CurrentQuestId = X_i
-                    if ScriptStorage.PlayerData.Level >= 1500 and SeaIndex == 2 and X_i == 'ForgottenQuest' then break end
-                end
-            end
-        end
-        local a_la = h_q[#h_q]
-        for X_i, X_v in pairs(a_la.Task) do if X_v == 1 then table.remove(h_q, #h_q) end end
-        for a_n, X_c in pairs(require(game.ReplicatedStorage.GuideModule).Data.NPCList) do
-            for w_i, w_l in pairs(X_c.Levels) do if w_l == h_q[#h_q].LevelReq then W_s.CurrentNpc = a_n.CFrame end end
-        end
-        W_s.CurrentQuests = h_q
-    end
-    function J_q.GetCurrentQuest(W_s)
-        local a_i = W_s.CurrentQuests[W_s.CurrentLevel] and W_s.CurrentQuests[W_s.CurrentLevel].LevelReq <= ScriptStorage.PlayerData.Level and W_s.CurrentLevel or 1
-        for h_n in pairs(W_s.CurrentQuests[a_i].Task) do return h_n, W_s.CurrentNpc, W_s.CurrentQuestId, a_i, W_s.CurrentQuests[a_i].Name end
-    end
-    function J_q.MarkAsCompleted(W_s) W_s.CurrentLevel = W_s.CurrentLevel == 2 and 1 or 2 end
-    function J_q.AbandonQuest() Remotes.CommF_:InvokeServer("AbandonQuest") end
-    function J_q.GetCurrentClaimQuest(W_s)
-        local W_t = game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible and game.Players.LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text:gsub("%s*Defeat%s*(%d*)%s*(.-)%s*%b()", '%2')
-        return (type(W_t) == "string" and string.gsub(W_t, "Military ", "Mil. ") or W_t), game.Players.LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text
-    end
-    function J_q.StartQuest(W_i, a_l)
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer('ColorsDealer', "2")
-        return Remotes.CommF_:InvokeServer("StartQuest", W_i, a_l)
-    end
-    ScriptStorage.MobRegions = {}
-    for W_i, W_v in pairs(game:GetService("ReplicatedStorage").FortBuilderReplicatedSpawnPositionsFolder:GetChildren()) do
-        ScriptStorage.MobRegions[tostring(W_v)] = ScriptStorage.MobRegions[tostring(W_v)] or {}
-        table.insert(ScriptStorage.MobRegions[tostring(W_v)], W_v.CFrame)
-    end
-    TweenController = {}
-    local W_t = 0
-    local W_h = {}
-    for a_i, a_v in pairs(game.ReplicatedStorage.NPCs:GetChildren()) do if a_v.Name == 'Set Home Point' then table.insert(W_h, a_v:GetModelCFrame()) end end
-    function TweenController.Update()
-        local a_r = game.Players.LocalPlayer.Character.HumanoidRootPart
-        HumanoidRootPart = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-        if CaculateDistance(a_r.CFrame) > 250 then
-            pcall(function() TweenInstance:Cancel() end)
-            TweenDebounce = true
-            a_r.CFrame = HumanoidRootPart.CFrame
-            TweenDebounce = false
-        end
-        HumanoidRootPart.CFrame = a_r.CFrame + Vector3.new(0, 3, 0)
-    end
-    function GetPortal(a_p)
-        local h_m, X_b = 9e9, nil
-        for w_i, w_v in pairs(Portals) do
-            local D_d = CaculateDistance(w_v, a_p)
-            if D_d < (CaculateDistance(a_p) - 300) and D_d < h_m then
-                h_m = D_d
-                X_b = w_v
-            end
-        end
-        if X_b then
-            Remotes.CommF_:InvokeServer("requestEntrance", X_b)
-            return task.wait()
-        end
-    end
-    function GetEntries(a_p)
-        local h_m, X_b = 9e9, nil
-        for w_i, w_v in pairs(W_h) do
-            local W_d = CaculateDistance(w_v, a_p)
-            if W_d < (CaculateDistance(a_p) - 700) and W_d < h_m then
-                h_m = W_d
-                X_b = w_v
-            end
-        end
-        if X_b then if os.time() - 0 > 30 then for W_i = 1, 10, 1 do task.wait() end end end
-    end
-    function TweenController.Tween2(W_o, a_p)
-        TweenInstance2 = Services.TweenService:Create(W_o, TweenInfo.new(CaculateDistance(W_o.CFrame, a_p) / 50, Enum.EasingStyle.Linear), {CFrame = ConvertTo(CFrame, a_p) - Vector3.new(0, 0, 0)})
-        TweenInstance2:Play()
-    end
-    function TweenController.Create(W_p)
-        if not W_p or TweenDebounce then return end
-        local a_c = typeof(W_p) ~= 'CFrame' and ConvertTo(CFrame, W_p) or W_p
-        if TweenInstance then pcall(function() TweenInstance:Cancel() end) end
-        for W_i, W_v in ipairs(game.Players.LocalPlayer.Character:GetDescendants()) do if W_v:IsA("BasePart") then W_v.CanCollide = false end end
-        local W_he = game.Players.LocalPlayer.Character:WaitForChild("Head")
-        if not W_he:FindFirstChild("eltrul") then
-            local h_b = Instance.new('BodyVelocity')
-            h_b.Name = "eltrul"
-            h_b.MaxForce = Vector3.new(0, math.huge, 0)
-            h_b.Velocity = Vector3.zero
-            h_b.Parent = W_he
-        end
-        if CaculateDistance(a_c) > 500 then
-            if SeaIndex == 3 and not ScriptStorage.Backpack['Valkyrie Helm'] then
-            elseif SeaIndex ~= 3 then
-                GetPortal(a_c)
-            end
-        end
-        if CaculateDistance(Vector3.new(11256, -2138.0, 9888), a_c) < (CaculateDistance(a_c) - 700) and SeaIndex == 3 then
-            local W_s = CFrame.new(-16269.0, 23, 1371)
-            if CaculateDistance(W_s) > 60 then return TweenController.Create(W_s) and task.wait(1) end
-            local W_m = require(game.ReplicatedStorage.Modules.Net)
-            W_m:RemoteFunction('SubmarineWorkerSpeak'):InvokeServer('TravelToSubmergedIsland')
-        end
-        a_c = CFrame.new(a_c.Position)
-        local W_d = CaculateDistance(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame, a_c)
-        local h_c = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(h_c.x, a_c.y, h_c.z)
-        TweenInstance = Services.TweenService:Create(game.Players.LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(W_d / 350, Enum.EasingStyle.Linear), {CFrame = a_c})
-        TweenInstance:Play()
-    end
-	local h_attack_lib = {}
-    function GetAllBladeHits()
-        local bladehits = {}
-        for _, X_e in pairs(workspace.Enemies:GetChildren()) do
-            if X_e:FindFirstChild('Humanoid') and X_e:FindFirstChild('HumanoidRootPart') and X_e.Humanoid.Health > 0 and (X_e.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude <= 65 then
-                table.insert(bladehits, X_e)
-            end
-        end
-        return bladehits
-    end
-
-    function Getplayerhit()
-        local bladehits = {}
-        for _, X_p in pairs(workspace.Characters:GetChildren()) do
-            if X_p.Name ~= game.Players.LocalPlayer.Name and X_p:FindFirstChild('Humanoid') and X_p:FindFirstChild('HumanoidRootPart') and X_p.Humanoid.Health > 0 and (X_p.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude <= 65 then
-                table.insert(bladehits, X_p)
-            end
-        end
-        return bladehits
-    end
-
-    local net_mod = (Services.ReplicatedStorage.Modules.Net)
-    local reg_at = require(net_mod):RemoteEvent("RegisterAttack", true)
-    local reg_hit = require(net_mod):RemoteEvent("RegisterHit", true)
-
-    function h_attack_lib:Attack()
-        local X_targets = {}
-        for _, y in pairs(GetAllBladeHits()) do table.insert(X_targets, y) end
-        for _, y in pairs(Getplayerhit()) do table.insert(X_targets, y) end
-        if #X_targets == 0 then return end
-        local y_data = {[1] = nil, [2] = {}, [4] = "078da5141"}
-        for _, L in pairs(X_targets) do
-            reg_at:FireServer(0)
-            if not y_data[1] then y_data[1] = L.Head end
-            table.insert(y_data[2], {[1] = L, [2] = L.HumanoidRootPart})
-        end
-        reg_hit:FireServer(unpack(y_data))
-    end
-
-    task.spawn(function()
-        -- CÔNG THỨC: Fast Attack 0.04s
-        while task.wait(.04) do 
-            if _G.FastAttack == os.time() then pcall(function() h_attack_lib:Attack() end) end 
-        end
-    end)
-
-    function W.Attack(h_dmy) pcall(function() _G.FastAttack = os.time() end) end
-
-    CombatController = {GRAB = true, GRAB_DISTANCE = SeaIndex == 1 and 250 or 350, MAX_ATTACK_DURATION = 2, MAX_ATTACK_DURATION_2 = 60, LEVITATE_TIME = 0, CurrentIndex = 1}
-    LastFound = os.time()
-
-    function CombatController.Grab(h_target)
-        pcall(sethiddenproperty, game.Players.LocalPlayer, 'SimulationRadius', math.huge)
-        if not CombatController.GRAB or GrabDebounce == os.time() then return end
-        GrabDebounce = os.time()
-        local X_vec, w_count = Vector3.zero, 0
-        ForcePosition = nil
-        local D_list = {}
-        for _, y_mon in pairs(Services.Workspace.Enemies:GetChildren()) do
-            if y_mon.Name == h_target then
-                if y_mon:FindFirstChild('Humanoid') and y_mon:FindFirstChild("HumanoidRootPart") and y_mon.Humanoid.Health > 0 then
-                    local h_pos = y_mon.HumanoidRootPart.Position
-                    if h_pos and isnetworkowner(y_mon.PrimaryPart) then
-                        if not ForcePosition or CaculateDistance(h_pos, ForcePosition) < CombatController.GRAB_DISTANCE then
-                            w_count = w_count + 1
-                            y_mon:SetAttribute("OldPosition", y_mon:GetAttribute('OldPosition') or h_pos)
-                            X_vec = X_vec + h_pos
-                            ForcePosition = ForcePosition or h_pos
-                            table.insert(D_list, y_mon)
-                        end
-                    end
-                end
-            end
-        end
-        X_vec = CFrame.new(X_vec / w_count)
-        table.foreach(D_list, function(_, h_ent)
-            (function()
-                if h_ent:GetAttribute("IgnoreGrab") then return end
-                if (h_ent:GetAttribute("FailureCount") or 0) > 7 then return end
-                local w_root = h_ent:FindFirstChild("HumanoidRootPart")
-                local D_vel = w_root:FindFirstChild('FarmingVelocity')
-                if not D_vel then
-                    D_vel = Instance.new('BodyVelocity')
-                    D_vel.Name = 'FarmingVelocity'
-                    D_vel.MaxForce = Vector3.new(4000, 4000, 4000)
-                    D_vel.Parent = w_root
-                end
-                D_vel.Velocity = Vector3.new(0, 0, 0)
-                local D_pos = w_root:FindFirstChild("FarmingPosition")
-                if not D_pos then
-                    D_pos = Instance.new("BodyPosition")
-                    D_pos.Name = 'FarmingPosition'
-                    D_pos.MaxForce = Vector3.new(4000, 4000, 4000)
-                    D_pos.P = 4.12
-                    D_pos.D = 1000
-                    D_pos.Parent = w_root
-                end
-                h_ent:SetAttribute('IsGrabbed', true)
-                h_ent.HumanoidRootPart.CFrame = X_vec
-                h_ent:SetAttribute("MidPoint", X_vec)
-            end)()
-        end)
-    end
-
-    function Sort1(h_ent) return h_ent and h_ent:FindFirstChild("HumanoidRootPart") and math.floor(CaculateDistance(h_ent.HumanoidRootPart.CFrame)) end
-    function CombatController.Search(h_search_list)
-        local X_arr = {}
-        local w_found = false
-        for _, D_mon in pairs(GetMonAsSortedRange()) do
-            if table.find(h_search_list, D_mon.Name) and D_mon:FindFirstChild("Humanoid") and D_mon.Humanoid.Health > 0 then
-                if (D_mon:GetAttribute('FailureCount') or 0) < 3 then
-                    w_found = true
-                    table.insert(X_arr, D_mon)
-                end
-            end
-        end
-        table.sort(X_arr, function(D_a, y_b) return Sort1(D_a) < Sort1(y_b) end)
-        if w_found then return X_arr[1] end
-        for _, X_name in pairs(h_search_list) do
-            local h_res = game.ReplicatedStorage:FindFirstChild(X_name)
-            if h_res then return h_res end
-        end
-    end
-
-    function CombatController.Attack(h_at, X_at, w_at, D_at)
-        if ScriptStorage.Tools["Sweet Chalice"] and getsenv(game.ReplicatedStorage.GuideModule)["_G"]['InCombat'] then TweenController.Create(Vector3.new(0, 0, 0)) return end
-        sethiddenproperty(game.Players.LocalPlayer, 'SimulationRadius', math.huge)
-        h_at = type(h_at) == "string" and {h_at} or (h_at or {})
-        for _, L_name in pairs(h_at) do
-            local b_str = tostring(L_name)
-            if b_str == 'Deandre' or b_str == "Urban" or b_str == "Diablo" and (os.time() - (LastFire12 or 0)) > 180 then
-                LastFire12 = os.time()
-                Remotes.CommF_:InvokeServer("EliteHunter")
-            end
-            if X_at then
-                local b_mon = GetMonAsSortedRange()[1]
-                local C_pos = b_mon and b_mon:FindFirstChild('HumanoidRootPart') and b_mon.HumanoidRootPart.Position
-                if C_pos and CaculateDistance(C_pos) < w_at then MonResult = b_mon end
-            else
-                MonResult = CombatController.Search(h_at)
-            end
-            if MonResult then
-                LastFound = os.time()
-                local h_val, w_val = 0, os.time()
-                local w_tick, b_tick = 0, os.time()
-                while task.wait() do
-                    if _G.Stop then return end
-                    if ScriptStorage.Tools["Sweet Chalice"] and getsenv(game.ReplicatedStorage.GuideModule)["_G"]["InCombat"] then TweenController.Create(Vector3.new(0, 0, 0)) return end
-                    local C_hum = MonResult:FindFirstChild('Humanoid')
-                    local p_root = MonResult:FindFirstChild('HumanoidRootPart')
-                    if not C_hum or C_hum.Health <= 0 then
-                        if MonResult.Name == "Don Swan" then Storage:Set("SwanDefeated", true) end
-                        break
-                    end
-                    TweenController.Create(CaculateCircreDirection(p_root.CFrame) + Vector3.new(0, 35, 0))
-                    if CaculateDistance(p_root.Position + Vector3.new(0, 35, 0)) < 150 then
-                        _ = D_at and D_at()
-                        CombatController.Grab(L_name or '')
-                        if MonResult.Name ~= "Core" then
-                            if ScriptStorage.PlayerData.Level > 100 and w_val >= CombatController.MAX_ATTACK_DURATION_2 and C_hum.Health - C_hum.MaxHealth == 0 then
-                                _G.Stop = true
-                                game.Players.LocalPlayer:Kick('Rejoining..')
-                            end
-                            if h_val >= CombatController.MAX_ATTACK_DURATION and C_hum.Health - C_hum.MaxHealth == 0 then
-                                h_val = 0
-                                local D_old = MonResult:GetAttribute('OldPosition')
-                                if D_old then
-                                    MonResult:SetPrimaryPartCFrame(CFrame.new(D_old))
-                                    MonResult:SetAttribute('IgnoreGrab', true)
-                                    MonResult:SetAttribute('FailureCount', (MonResult:GetAttribute("FailureCount") or 0) + 1)
-                                    MonResult.HumanoidRootPart.CFrame = (CFrame.new(D_old))
-                                    task.wait()
-                                    return
-                                end
-                            end
-                        end
-                        if (FarmFruitMastery or math.huge) - os.time() < 3 and math.floor(C_hum.Health / C_hum.MaxHealth * 100) < 30 and not FunctionsHandler.RaidController.Methods.GetCurrentRaidIsland:Call() then
-                            TweenController.Create((p_root.CFrame) + Vector3.new(0, 25, 0))
-                            FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Blox Fruit')
-                            LockAimPositionTo(MonResult.HumanoidRootPart.CFrame.p)
-                            local D_keys = {'Z', 'X', "C", 'V'}
-                            local y_k = D_keys[math.random(1, #D_keys)]
-                            SendKey(y_k, .31)
-                        else
-                            FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call(ScriptStorage.ForceToUseSword and 'Sword' or "Melee")
-                        end
-                        W.Attack(MonResult)
-                        if os.time() ~= b_tick then
-                            b_tick = os.time()
-                            h_val = h_val + 1
-                            w_val = w_val + 1
-                        end
-                        if h_val > 30 and MonResult.Name ~= "Core" then break end
-                    end
-                end
-            elseif not X_at then
-                if (os.time() - LastFound) > 200 then
-                    game.Players.LocalPlayer:Kick('Rejoining..')
-                    return
-                end
-                local h_reg = ScriptStorage.MobRegions[L_name]
-                if not h_reg then
-                    local X_e = Services.Workspace.Enemies:FindFirstChild(L_name) or game.ReplicatedStorage:FindFirstChild(L_name)
-                    h_reg = X_e and {X_e:GetPrimaryPartCFrame().p}
-                end
-                if not h_reg then return end
-                local X_target
-                if not h_reg[CombatController.CurrentIndex] then CombatController.CurrentIndex = 1 end
-                X_target = h_reg[CombatController.CurrentIndex]
-                TweenController.Create(X_target + Vector3.new(0, 35, 35))
-                if CaculateDistance(X_target + Vector3.new(0, 35, 35)) < 15 then CombatController.CurrentIndex = CombatController.CurrentIndex + 1 end
-            end
-        end
-    end
-
-    LevelFarmTTL = 0
-    LastTravel = os.time()
-    FunctionsHandler = {Initalized = false}
-    setmetatable(FunctionsHandler, {__index = function(h_f, X_f)
-        QueryResult = rawget(h_f, X_f)
-        if not QueryResult then
-            return {
-                Register = function(w_f)
-                    if w_f == false then return end
-                    Result = {CacheListener = {}, RealCache = {}, Methods = {}, Constants = {}, Events = {}, Initalized = true}
-                    function Result.RegisterMethod(w_m, D_m, y_m)
-                        w_m.Methods[D_m] = {Name = D_m, Callback = y_m, Call = function(w_c, ...) return w_c.Callback(...) end, Events = {}}
-                        return true
-                    end
-                    setmetatable(Result.Constants, {__newindex = function() assert(false, 'cannot change constant value!') end})
-                    function Result.Set(h_s, w_s, D_s) h_s.CacheListener[w_s] = D_s return D_s end
-                    function Result.Get(h_g, w_g) return h_g.Constants[w_g] or h_g.RealCache[w_g] end
-                    function Result.AddVariableChangeListener(h_v, w_v, D_v) h_v.Events[w_v] = D_v end
-                    Result.CacheListener.__parent = Result
-                    setmetatable(Result.CacheListener, {__newindex = function(h_cl, w_cl, D_cl)
-                        _ = h_cl.__parent.Events[w_cl] and h_cl.__parent.Events[w_cl](w_cl, D_cl)
-                        h_cl.__parent.RealCache[w_cl] = D_cl
-                    end})
-                    FunctionsHandler[X_f] = Result
-                end, Initalized = false
-            }
-        end
-        return QueryResult
-    end})
-
-    FunctionsHandler.LocalPlayerController:Register()
-    FunctionsHandler.ExpRedeem:Register()
-    FunctionsHandler.LevelFarm:Register()
-    FunctionsHandler.Saber:Register()
-    FunctionsHandler.Rengoku:Register()
-    FunctionsHandler.Yama:Register()
-    FunctionsHandler.Tushita:Register()
-    FunctionsHandler.SpikeyTrident:Register()
-    FunctionsHandler.SharkAchor:Register()
-    FunctionsHandler.Pole:Register()
-    FunctionsHandler.FoxLamp:Register()
-    FunctionsHandler.DarkDagger:Register()
-    FunctionsHandler.Canvander:Register()
-    FunctionsHandler.BuddySword:Register()
-    FunctionsHandler.HallowScythe:Register()
-    FunctionsHandler.CursedDualKatana:Register()
-    FunctionsHandler.AcidumRifle:Register()
-    FunctionsHandler.Kabucha:Register()
-    FunctionsHandler.VenomBow:Register()
-    FunctionsHandler.SoulGuitar:Register()
-    FunctionsHandler.DragonStorm:Register()
-    FunctionsHandler.InsictV2:Register()
-    FunctionsHandler.RainbowSaviour:Register()
-    FunctionsHandler.DarkBladeV2:Register()
-    FunctionsHandler.SecondSeaPuzzle:Register()
-    FunctionsHandler.ColosseumPuzzle:Register()
-    FunctionsHandler.Trevor:Register()
-    FunctionsHandler.EvoRace:Register()
-    FunctionsHandler.Wenlocktoad:Register()
-    FunctionsHandler.DarkBladeV3:Register()
-    FunctionsHandler.ThirdSeaPuzzle:Register()
-    FunctionsHandler.DojoQuest:Register()
-    FunctionsHandler.RaceAwakening:Register()
-    FunctionsHandler.PirateRaid:Register()
-    FunctionsHandler.RaidController:Register()
-    FunctionsHandler.MeleesController:Register()
-    FunctionsHandler.Superhuman:Register()
-    FunctionsHandler.DeathStep:Register()
-    FunctionsHandler.SharkmanKarate:Register()
-    FunctionsHandler.ElectricClaw:Register()
-    FunctionsHandler.DragonTalon:Register()
-    FunctionsHandler.Godhuman:Register()
-    FunctionsHandler.BossesTask:Register()
-    FunctionsHandler.SpecialBossesTask:Register()
-    FunctionsHandler.CollectDrops:Register()
-    FunctionsHandler.CollectBerries:Register()
-    FunctionsHandler.UtillyItemsActivitation:Register()
-
-    FunctionsHandler.ExpRedeem:RegisterMethod("Refresh", function() return ScriptStorage.PlayerData.Level < MaxLevel and getsenv(game.ReplicatedStorage.GuideModule)._G.ServerData.ExpBoost == 0 and not Storage.Get(Storage, "IsCodesRanOut") end)
-    FunctionsHandler.ExpRedeem:RegisterMethod("Start", function()
-        local codes = {'BANEXPLOIT', 'NOMOREHACKS', "WildDares", 'BossBuild', 'GetPranked', 'EARN_FRUITS', "Sub2UncleKizaru", 'FIGHT4FRUIT', "kittgaming", 'TRIPLEABUSE', "Sub2CaptainMaui", 'Sub2Fer999', "Enyu_is_Pro", "Magicbus", "JCWK", 'Starcodeheo', 'Bluxxy', 'SUB2GAMERROBOT_EXP1', 'Sub2NoobMaster123', 'Sub2Daigrock', "Axiore", "TantaiGaming", 'StrawHatMaine', 'Sub2OfficialNoobie', "TheGreatAce", "SEATROLLIN", "24NOADMIN", 'ADMIN_TROLL', 'NEWTROLL', 'SECRET_ADMIN', "staffbattle", "NOEXPLOIT", "NOOB2ADMIN", "CODESLIDE", "fruitconcepts"}
-        for _, code in pairs(codes) do
-            SetTask("MainTask", 'Code Redemption | ' .. code .. ' | Redeeming...')
-            local res = (Remotes.Redeem:InvokeServer(code))
-            task.wait()
-            SetTask('MainTask', 'Code Redemption | ' .. code .. " | " .. (res or "Failed"))
-            if getsenv(game.ReplicatedStorage.GuideModule)._G.ServerData.ExpBoost == 0 then
-                if res and string.find(res, 'SUCC') then
-                    return SetTask('MainTask', 'Code Redemption | X2 Exp Boost Activated!') and task.wait(1)
-                end
-            else return end
-        end
-        Storage:Set("IsCodesRanOut", 1)
-        Storage:Save()
-    end)
-
-    FunctionsHandler.LevelFarm:RegisterMethod("Refresh", function()
-        local lvl = ScriptStorage.PlayerData.Level
-        if lvl < 50 then return 1
-        elseif lvl < 70 then return 2
-        else return 4 end
-    end)
-    
-    FunctionsHandler.LevelFarm:RegisterMethod("Start", function(floor)
+	FunctionsHandler.LevelFarm:RegisterMethod("Start", function(floor)
         if SeaIndex == 3 then
             if (ScriptStorage.Backpack.Bones or {Count = 0}).Count >= 50 then
                 if os.time() > (BonesCooldown or 0) then
@@ -1056,7 +619,6 @@ function hoangtuveu()
                 end
             end
         end
-
         local currentLevel = ScriptStorage.PlayerData.Level
         if GodHumanFlag then
             local targetMat, matConfig = (function()
@@ -1066,7 +628,6 @@ function hoangtuveu()
                     end
                 end
             end)()
-
             if targetMat then
                 if SeaIndex ~= matConfig[2] then
                     SetTask("MainTask", 'Sea Travel | Farming Godhuman | To Sea ' .. matConfig[2])
@@ -1104,7 +665,6 @@ function hoangtuveu()
             GodHumanFlag = false 
             return true
         end
-
         if os.time() - LastTravel > 60 then
             LastTravel = os.time()
             if currentLevel >= 1500 and SeaIndex == 2 then
@@ -1117,8 +677,6 @@ function hoangtuveu()
                 Remotes.CommF_:InvokeServer("TravelDressrosa")
             end
         end
-
-        -- CÔNG THỨC VIP: Dough King / Cake Prince Farming
         if ScriptStorage.Tools['Sweet Chalice'] or (currentLevel == MaxLevel and (ScriptStorage.Backpack.Bones or {Count = 0}).Count >= 500) then
             SetTask("MainTask", "VIP Auto | Dough King & Cake Prince")
             if (ScriptStorage.Tools["Sweet Chalice"]) then
@@ -1154,7 +712,6 @@ function hoangtuveu()
             end
             return
         end
-
         if currentLevel >= 2025 and (ScriptStorage.Backpack.Bones or {Count = 0}).Count < 500 then
             SetTask('MainTask', "Resource Farming | Bones Collection")
             local qName, qTitle = J_quest:GetCurrentClaimQuest()
@@ -1180,7 +737,6 @@ function hoangtuveu()
                 return
             end
         end
-
         if floor == 1 then 
             SetTask('MainTask', 'Level Farming | Skip Mode | Floor 1')
             CombatController.Attack("Sky Bandit")
@@ -1190,7 +746,6 @@ function hoangtuveu()
         elseif floor == 4 then
             local monName, npcPos, questId, qIndex, questTitle = J_quest:GetCurrentQuest()
             local claimQuest, _ = J_quest:GetCurrentClaimQuest()
-            
             if claimQuest then
                 if claimQuest ~= questTitle then 
                     J_quest:AbandonQuest() 
@@ -1208,9 +763,16 @@ function hoangtuveu()
                 J_quest:StartQuest(questId, qIndex)
                 task.wait(1)
             end
-            
             SetTask('MainTask', 'Level Farming | ' .. monName .. " | Defeating Enemies")
             CombatController.Attack(monName)
+        end
+    end)
+    FunctionsHandler.LocalPlayerController:RegisterMethod("EquipTool", function(toolName)
+        if not Humanoid then return end
+        for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do
+            if item:IsA('Tool') and (item.Name == tostring(toolName) or item.ToolTip == toolName) then
+                LocalPlayer.Character:WaitForChild('Humanoid'):EquipTool(item)
+            end
         end
     end)
 	FunctionsHandler.Saber:RegisterMethod('Refresh', function()
@@ -1233,7 +795,6 @@ function hoangtuveu()
         FunctionsHandler.Saber:Set('LastestRefreshSenque', os.time())
         return step
     end)
-
     FunctionsHandler.Saber:RegisterMethod('GetQuestplates', function()
         local cached = FunctionsHandler.Saber:Get("QuestplatesCache")
         if cached then return cached end
@@ -1247,7 +808,6 @@ function hoangtuveu()
         FunctionsHandler.Saber:Set('QuestplatesCache', plateList)
         return plateList
     end)
-
     FunctionsHandler.Saber:RegisterMethod('Start', function()
         local step = FunctionsHandler.Saber:Get("CurrentProgressLevel")
         if step == 1 then
@@ -1281,7 +841,6 @@ function hoangtuveu()
             CombatController.Attack("Saber Expert") 
         end
     end)
-
     FunctionsHandler.Yama:RegisterMethod('Refresh', function()
         if SeaIndex ~= 3 or ScriptStorage.Backpack.Yama then return end
         if not FunctionsHandler.Yama:Get("EliteCount") then
@@ -1289,7 +848,6 @@ function hoangtuveu()
         end
         if FunctionsHandler.Yama:Get('EliteCount') >= 30 then return true end
     end)
-
     FunctionsHandler.Yama:RegisterMethod("Start", function()
         SetTask('MainTask', "Yama Quest | Pulling Sword")
         repeat
@@ -1298,7 +856,6 @@ function hoangtuveu()
         until workspace.Map:FindFirstChild("Waterfall") and workspace.Map.Waterfall:FindFirstChild("SealedKatana")
         fireclickdetector(workspace.Map.Waterfall.SealedKatana.Hitbox.ClickDetector)
     end)
-
     FunctionsHandler.Tushita:RegisterMethod("Refresh", function()
         if ScriptStorage.Backpack.Tushita or ScriptStorage.PlayerData.Level < 2000 or SeaIndex ~= 3 then return end
         TushitaProgress = TushitaProgress or Remotes.CommF_:InvokeServer("TushitaProgress")
@@ -1314,7 +871,6 @@ function hoangtuveu()
             end
         end
     end)
-
     FunctionsHandler.Tushita:RegisterMethod('Start', function(k)
         if k == 1 then
             SetTask("MainTask", "Tushita Quest | VIP: Lighting Torches while Indra is alive!")
@@ -1330,13 +886,11 @@ function hoangtuveu()
             CombatController.Attack("Longma")
         end
     end)
-
     function CheckFullMoon(isForce)
         if Lighting.Sky.MoonTextureId ~= 'http://www.roblox.com/asset/?id=970914431' then return end
         if isForce then return true end
         return Lighting.ClockTime > 18 or Lighting.ClockTime < 5
     end
-
     FunctionsHandler.SoulGuitar:RegisterMethod("Refresh", function()
         if not Config.Items.SoulGuitar then return end
         if ScriptStorage.Backpack['Skull Guitar'] or not ScriptStorage.Backpack['Dark Fragment'] then return end
@@ -1361,7 +915,6 @@ function hoangtuveu()
         elseif not SoulGuitarProcess.Pipes then return 6
         elseif bones >= 500 and not ScriptStorage.Backpack["Skull Guitar"] then return 8 end
     end)
-
     FunctionsHandler.SoulGuitar:RegisterMethod('Start', function(step)
         if step == 7 then
             SetTask("MainTask", 'Soul Guitar | Activating Gravestone Event')
@@ -1460,7 +1013,6 @@ function hoangtuveu()
             Remotes.CommF_:InvokeServer('soulGuitarBuy')
         end
     end)
-
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
@@ -1495,7 +1047,6 @@ function hoangtuveu()
         end
         return ScriptStorage.CdkCache
     end)
-
     FunctionsHandler.CursedDualKatana:RegisterMethod("GetHazeMon", function()
         local hazeList = {}
         for _, obj in pairs(game.Players.LocalPlayer.QuestHaze:GetChildren()) do 
@@ -1504,7 +1055,6 @@ function hoangtuveu()
         table.sort(hazeList, function(a, b) return CaculateDistance(a:GetAttribute('Position')) < CaculateDistance(b:GetAttribute('Position')) end)
         return tostring(hazeList[1])
     end)
-
     FunctionsHandler.CursedDualKatana:RegisterMethod("DoDimension", function(dim_name)
         local map_name = string.gsub(dim_name, ' ', "")
         local start_t = os.time()
@@ -1535,7 +1085,6 @@ function hoangtuveu()
         until PortalBrick == 'Olive' or PortalBrick == "Cloudy grey"
         Hop()
     end)
-
     FunctionsHandler.RaidController:RegisterMethod('RefreshRaidType', function()
         for k, raid_name in pairs(require(game.ReplicatedStorage.Raids).raids) do
             if string.find(ScriptStorage.PlayerData.DevilFruit, raid_name) then
@@ -1545,7 +1094,6 @@ function hoangtuveu()
         end
         FunctionsHandler.RaidController:Set('CurrentChip', 'Flame')
     end)
-
     FunctionsHandler.RaidController:RegisterMethod('GetRaidableFruit', function()
         for _, item in pairs(ScriptStorage.Backpack) do
             if string.find(FruitIdToName(item.Name), " Fruit") then
@@ -1553,7 +1101,6 @@ function hoangtuveu()
             end
         end
     end)
-
     FunctionsHandler.RaidController:RegisterMethod("GetCurrentRaidIsland", function()
         PlayerPosition = LocalPlayer.Character.HumanoidRootPart.CFrame
         IslandsList = {{}, {}, {}, {}, {}}
@@ -1572,13 +1119,11 @@ function hoangtuveu()
             end
         end
     end)
-
     function CheckSpecialMicrochip()
         for _, folder in pairs({LocalPlayer.Character:GetChildren(), LocalPlayer.Backpack:GetChildren()}) do
             for _, item in pairs(folder) do if item.Name == "Special Microchip" then return item end end
         end
     end
-
     FunctionsHandler.RaidController:RegisterMethod("Refresh", function()
         local p_lvl = ScriptStorage.PlayerData.Level
         local p_frag = ScriptStorage.PlayerData.Fragments
@@ -1593,7 +1138,6 @@ function hoangtuveu()
         if raid_fruit then FunctionsHandler.RaidController:Set("CurrentProgressLevel", raid_fruit) end
         return raid_fruit or FunctionsHandler.RaidController.Methods.GetCurrentRaidIsland:Call() or CheckSpecialMicrochip()
     end)
-
     FunctionsHandler.RaidController:RegisterMethod("Start", function()
         if not FunctionsHandler.RaidController:Get('CurrentChip') then FunctionsHandler.RaidController.Methods.RefreshRaidType:Call() end
         local curr_island = FunctionsHandler.RaidController.Methods.GetCurrentRaidIsland:Call()
@@ -1649,7 +1193,6 @@ function hoangtuveu()
             if not hit_any then TweenController.Create(curr_island.Position + Vector3.new(0, 100, 0)) end
         end
     end)
-
     FunctionsHandler.Wenlocktoad:RegisterMethod("Refresh", function()
         if ScriptStorage.PlayerData.RaceLevel ~= 2 then return end
         if ScriptStorage.PlayerData.Level < 1000 then return end
@@ -1662,7 +1205,6 @@ function hoangtuveu()
         end
         return true
     end)
-
     FunctionsHandler.Wenlocktoad:RegisterMethod("Start", function()
         SetTask('MainTask', "Up Tộc V3 | Nhiệm vụ Arowe (Wenlocktoad)")
         local arowe = workspace.NPCs:FindFirstChild("Arowe") or game.ReplicatedStorage.NPCs:FindFirstChild("Arowe")
@@ -1677,55 +1219,41 @@ function hoangtuveu()
             end
         end
     end)
-FunctionsHandler.AutoHopBoss:Register()
-
+    FunctionsHandler.AutoHopBoss:Register()
     FunctionsHandler.AutoHopBoss:RegisterMethod("Refresh", function()
-        if Config.Items.DarkFragment and not ScriptStorage.Backpack['Dark Fragment'] and SeaIndex == 2 then
-            if ScriptStorage.Enemies["Darkbeard"] then 
-                return "Darkbeard" 
-            else 
-                return "Hop_Darkbeard" 
-            end
+        local bp = ScriptStorage.Backpack
+        if Config.Items.DarkFragment and not bp['Dark Fragment'] and SeaIndex == 2 then
+            if ScriptStorage.Enemies["Darkbeard"] then return "Darkbeard" end
         end
-        if Config.Items.ValkyrieHelm and not ScriptStorage.Backpack['Valkyrie Helm'] and SeaIndex == 3 then
-            if ScriptStorage.Enemies["rip_indra True Form"] then 
-                return "rip_indra True Form" 
-            else 
-                return "Hop_rip_indra True Form" 
-            end
+        local thieuTushita = Config.Items.CursedDualKatana and not bp['Tushita']
+        local thieuMu = Config.Items.ValkyrieHelm and not bp['Valkyrie Helm']
+        if (thieuTushita or thieuMu) and SeaIndex == 3 then
+            if ScriptStorage.Enemies["rip_indra True Form"] then return "rip_indra True Form" end
         end
-        if Config.Items.DoughKing and SeaIndex == 3 then
-            if ScriptStorage.Enemies["Dough King"] then 
-                return "Dough King" 
-            else 
-                return "Hop_Dough King" 
-            end
+        if Config.Items.DoughKing and not bp['Pale Scarf'] and SeaIndex == 3 then
+            if ScriptStorage.Enemies["Dough King"] then return "Dough King" end
         end
         return false
     end)
-
     FunctionsHandler.AutoHopBoss:RegisterMethod("Start", function(mode)
-        if string.find(mode, "Hop_") then
-            local targetBoss = string.gsub(mode, "Hop_", "")
-            SetTask("MainTask", "VIP Hop: Không có " .. targetBoss .. " ở server này, đang nhảy Server tìm!")
-            task.wait(1)
-            Hop()
+        SetTask("MainTask", "VIP Săn Boss | Phát hiện " .. mode .. " trong Server, nhảy vào đấm!")
+        if mode == "rip_indra True Form" and not ScriptStorage.Backpack['Tushita'] then
+            TweenController.Create(CFrame.new(5714, 20, 256))
+            if ScriptStorage.Tools["Holy Torch"] or game.Players.LocalPlayer.Backpack:FindFirstChild("Holy Torch") then
+                for i = 1, 5 do Remotes.CommF_:InvokeServer("TushitaProgress", "Torch", i) end
+            end
         else
-            SetTask("MainTask", "VIP Hop: Phát hiện " .. mode .. " xuất hiện, đang lao vào đấm!")
             CombatController.Attack(mode)
         end
     end)
-
     local notifier = {Listeners = {}}
     TorchEnabledTime = 0
     DoneCdkTick = 0
-
     getgenv().NotificationCallBack = (function(msg)
         for key, func in pairs(notifier.Listeners) do
             if string.find(string.lower(msg), string.lower(key)) then func(msg) end
         end
     end)
-
     function notifier:RegisterNotifyListener(key, func) notifier.Listeners[key] = func end
     notifier:RegisterNotifyListener('go!', function() LastRaidAlert = os.time() end)
     notifier:RegisterNotifyListener('raid', function() LastRaidAlert2 = os.time() end)
@@ -1734,16 +1262,13 @@ FunctionsHandler.AutoHopBoss:Register()
     notifier:RegisterNotifyListener("torch", function() TorchEnabledTime = os.time() end)
     notifier:RegisterNotifyListener("scroll reacts", function() DoneCdkTick = os.time() end)
     notifier:RegisterNotifyListener("elite", function() FunctionsHandler.Yama:Set('EliteCount', Remotes.CommF_:InvokeServer("EliteHunter", "Progress")) end)
-
     local old_notify
     old_notify = hookfunction(require(game.ReplicatedStorage.Notification).new, function(title, msg)
         local full_msg = tostring(tostring(title or '') .. tostring(msg or ""))
         getgenv().NotificationCallBack(full_msg)
         return old_notify(title, msg)
     end)
-
     function IfTableHaveIndex(k_tab) for _ in pairs(k_tab) do return true end end
-
     function GetServers()
         if LastServersDataPulled then
             if os.time() - LastServersDataPulled < 60 then return CachedServers end
@@ -1757,12 +1282,10 @@ FunctionsHandler.AutoHopBoss:Register()
             end
         end
     end
-
     spawn(function()
         GetServers()
         while task.wait(180) do GetServers() end
     end)
-
     function Hop(k_player_limit, W_target_region)
         local h_list = GetServers()
         local X_filtered = {}
@@ -1784,7 +1307,6 @@ FunctionsHandler.AutoHopBoss:Register()
         end
         game:GetService("ReplicatedStorage"):WaitForChild('__ServerBrowser'):InvokeServer("teleport", ServerData.JobId)
     end
-
     LowHop = function()
         local k_server_ids = {}
         local W_api_url = 'https://games.roblox.com/v1/games/' .. game.PlaceId .. '/servers/Public?sortOrder=Asc&limit=100&excludeFullGames=true'
@@ -1801,7 +1323,6 @@ FunctionsHandler.AutoHopBoss:Register()
             game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, k_server_ids[math.random(1, #k_server_ids)], game.Players.LocalPlayer)
         end
     end
-
     Storage = {WRITE_DELAY = .5, Data = {}}
     local k_file_path = ".storage_u_" .. tostring(LocalPlayer)
     function Decode(W_json) return game:GetService("HttpService"):JSONDecode(W_json) end
@@ -1809,14 +1330,12 @@ FunctionsHandler.AutoHopBoss:Register()
     function Storage:Set(h_k, X_v) self.Data[h_k] = X_v end
     function Storage:Get(h_k) return self.Data[h_k] end
     function Storage:Save() writefile(k_file_path, Encode(self.Data)) end
-
     if not isfile(k_file_path) then
         writefile(k_file_path, "{}")
         task.wait(1)
     end
     pcall(function() Storage.Data = Decode(readfile(k_file_path) or '{}') end)
     task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
-
     ParsingTimes = 0
     function RefreshTasksData()
         if _G.Stop then return end
@@ -1828,7 +1347,6 @@ FunctionsHandler.AutoHopBoss:Register()
                 return
             end
         end
-
         for _, taskName in pairs(TasksOrder) do
             local handler = FunctionsHandler[taskName]
             if handler and handler.Initalized then
@@ -1847,20 +1365,16 @@ FunctionsHandler.AutoHopBoss:Register()
             end
         end
     end
-
     SetText('MainTextLabel', "HoangPhucHub: Đang tải thiết lập..")
     AddPoint()
     pcall(function() J_q:RefreshQuest() end)
     RefreshInventory()
     RefreshRace()
-
     game.Players.LocalPlayer.Idled:Connect(function()
         game:GetService("VirtualUser"):CaptureController()
         game:GetService("VirtualUser"):ClickButton2(Vector2.new())
     end)
-
     SetText("MainTextLabel", 'HoangPhucHub Loaded In ' .. tick() - StartTick .. 'ms!')
-
     task.spawn(function()
         while task.wait() do
             if not _G.Stop then
@@ -1874,12 +1388,10 @@ FunctionsHandler.AutoHopBoss:Register()
             end
         end
     end)
-
     task.spawn(function()
         task.wait(Config.Configuration.AutoHopDelay)
         if not Config.Configuration.AutoHop then Hop() end
     end)
-
     while task.wait() do
         if Config.Configuration.HopWhenIdle and LastIdling and os.time() - LastIdling > 300.0 then
             SetTask('MainTask', "HoangPhucHub: Đang kết nối lại do treo máy lâu!")
@@ -1893,5 +1405,4 @@ FunctionsHandler.AutoHopBoss:Register()
         end
     end
 end
-
 hoangtuveu()
