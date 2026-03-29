@@ -635,16 +635,20 @@ function hoangtuveu()
             CombatController.Attack(monName)
         end
     end)
-	-- [ KHỞI TẠO NÃO BỘ CHO CHESTFARM VÀ GODHUMAN TRƯỚC KHI DÙNG ]
-    FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
-    function FunctionsHandler.ChestFarm:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
-    function FunctionsHandler.ChestFarm:Get(key) return self[key] end
-    function FunctionsHandler.ChestFarm:Set(key, val) self[key] = val end
+	-- [ KHỞI TẠO NÃO BỘ CHỐNG CRASH CHO CÁC MODULE MỚI ]
+    if not FunctionsHandler.ChestFarm or not FunctionsHandler.ChestFarm.RegisterMethod then
+        FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
+        function FunctionsHandler.ChestFarm:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
+        function FunctionsHandler.ChestFarm:Get(key) return self[key] end
+        function FunctionsHandler.ChestFarm:Set(key, val) self[key] = val end
+    end
 
-    FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
-    function FunctionsHandler.Godhuman:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
-    function FunctionsHandler.Godhuman:Get(key) return self[key] end
-    function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
+    if not FunctionsHandler.Godhuman or not FunctionsHandler.Godhuman.RegisterMethod then
+        FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
+        function FunctionsHandler.Godhuman:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
+        function FunctionsHandler.Godhuman:Get(key) return self[key] end
+        function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
+    end
 
     FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
