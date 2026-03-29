@@ -810,16 +810,22 @@ function hoangtuveu()
         end
     end)
 
+    -- ĐÃ PHỤC HỒI TOÀN BỘ LOGIC CỦA CDK
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
-        if not Config.Items.CursedDualKatana or ScriptStorage.PlayerData.Level < 2200 or SeaIndex ~= 3 then return end
+        if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
+        if ScriptStorage.PlayerData.Level < 2200 then return end
         if bp["Cursed Dual Katana"] or not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return end
+        if SeaIndex ~= 3 then return end
         local prog = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
         if not prog or prog == 'uwu' then
-            local masterNpc = ScriptStorage.NPCs["Crypt Master"]
+            local masterNpc = workspace.NPCs:FindFirstChild("Crypt Master") or game:GetService("ReplicatedStorage").NPCs:FindFirstChild("Crypt Master")
             if masterNpc then
                 TweenController.Create(masterNpc:GetModelCFrame())
-                if CaculateDistance(masterNpc) < 15 then fireproximityprompt(masterNpc:FindFirstChildOfClass("ProximityPrompt")) Remotes.CommF_:InvokeServer("CDKQuest", "Npc") end
+                if CaculateDistance(masterNpc) < 15 then
+                    fireproximityprompt(masterNpc:FindFirstChildOfClass("ProximityPrompt"))
+                    Remotes.CommF_:InvokeServer("CDKQuest", "Npc")
+                end
             end
             return nil
         end
@@ -830,18 +836,79 @@ function hoangtuveu()
         if prog.Opened then
             for side, val in pairs(prog) do
                 if side ~= 'Opened' and side ~= "Finished" and val < 3 then
+                    ScriptStorage.CdkCache = {side, val + 1}
                     if not ScriptStorage.Tools[mapType[side]] then Remotes.CommF_:InvokeServer('LoadItem', mapType[side]) end
                     Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', side)
                     return {side, val + 1}
                 end
             end
         end
+        return ScriptStorage.CdkCache
     end)
+
+    FunctionsHandler.CursedDualKatana:RegisterMethod("GetHazeMon", function()
+        local hazeList = {}
+        for _, obj in pairs(game.Players.LocalPlayer.QuestHaze:GetChildren()) do 
+            if obj.Value > 0 then table.insert(hazeList, obj) end 
+        end
+        table.sort(hazeList, function(a, b) return CaculateDistance(a:GetAttribute('Position')) < CaculateDistance(b:GetAttribute('Position')) end)
+        return tostring(hazeList[1])
+    end)
+
+    FunctionsHandler.CursedDualKatana:RegisterMethod("DoDimension", function(dim_name)
+        local map_name = string.gsub(dim_name, ' ', "")
+        local start_t = os.time()
+        repeat
+            task.wait()
+            TweenController.Create(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame)
+            if os.time() - start_t > 60 then return end
+        until os.time() - (TorchEnabledTime or 0) < 10
+        repeat
+            task.wait()
+            local dim_map = workspace.Map:WaitForChild(map_name, 10)
+            if dim_map then
+                for _, torch in pairs(dim_map:GetChildren()) do
+                    if torch and string.find(torch.Name, "Torch") and torch:FindFirstChild('ProximityPrompt') and torch.ProximityPrompt.Enabled then
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = torch.CFrame
+                        torch.ProximityPrompt.HoldDuration = 0
+                        task.wait(0.5)
+                        fireproximityprompt(torch.ProximityPrompt)
+                    end
+                end
+                for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+                    if enemy:FindFirstChild("HumanoidRootPart") and CaculateDistance(enemy.HumanoidRootPart.CFrame) < 1000 then 
+                        CombatController.Attack(enemy.Name) 
+                    end
+                end
+                if dim_map:FindFirstChild("Exit") then PortalBrick = tostring(dim_map.Exit.BrickColor) end
+            end
+        until PortalBrick == 'Olive' or PortalBrick == "Cloudy grey"
+        Hop()
+    end)
+
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
-        SetTask("MainTask", "CDK Quest | Processing...")
-        if type(step) == "table" and step[1] == "break" then
-            TweenController.Create(workspace.Map.Turtle.Cursed.Breakable.CFrame)
-            if CaculateDistance(workspace.Map.Turtle.Cursed.Breakable.CFrame) < 15 then CombatController.Attack("Cursed Skeleton") end
+        if type(step) == "table" then
+            SetTask("MainTask", "CDK Quest | Đang làm nhiệm vụ: " .. tostring(step[1]) .. " - Bước: " .. tostring(step[2]))
+            if step[1] == "break" then
+                TweenController.Create(workspace.Map.Turtle.Cursed.Breakable.CFrame)
+                if CaculateDistance(workspace.Map.Turtle.Cursed.Breakable.CFrame) < 15 then CombatController.Attack("Cursed Skeleton") end
+            elseif step[1] == "burn" or step[1] == "burn 2" then
+                local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(step[1] == "burn" and "GoodScroll" or "EvilScroll")
+                if scroll then 
+                    TweenController.Create(scroll.CFrame) 
+                    fireproximityprompt(scroll:FindFirstChildOfClass("ProximityPrompt")) 
+                end
+            elseif step[1] == "Good" then
+                if step[2] == 1 then Remotes.CommF_:InvokeServer("CDKQuest", "DockLegend")
+                elseif step[2] == 2 then Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
+                elseif step[2] == 3 then Remotes.CommF_:InvokeServer("CDKQuest", "Soulless") end
+            elseif step[1] == "Evil" then
+                if step[2] == 1 then Remotes.CommF_:InvokeServer("CDKQuest", "PainAndSuffering")
+                elseif step[2] == 2 then
+                    local mon = FunctionsHandler.CursedDualKatana.Methods.GetHazeMon:Call()
+                    if mon then CombatController.Attack(mon) end
+                elseif step[2] == 3 then Remotes.CommF_:InvokeServer("CDKQuest", "FearTheReaper") end
+            end
         end
     end)
 
@@ -981,13 +1048,12 @@ function hoangtuveu()
     pcall(function() Storage.Data = game:GetService("HttpService"):JSONDecode(readfile(k_file_path) or '{}') end)
     task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
 
-    -- [ VÒNG LẶP CHÍNH THÔNG MINH - KHÔNG BỊ KẸT MANSION ]
+    -- VÒNG LẶP CHÍNH
     ParsingTimes = 0
     function RefreshTasksData()
         if _G.Stop then return end
         
         local taskHandled = false
-        -- QUÉT NHIỆM VỤ (BOSS, ITEM, V3, RAID, LEVEL)
         for _, taskName in pairs(TasksOrder) do
             local handler = FunctionsHandler[taskName]
             if handler and handler.Initalized then
@@ -1002,7 +1068,6 @@ function hoangtuveu()
             end
         end
 
-        -- NẾU RẢNH RỖI + MAX LEVEL -> VỀ MANSION NGỦ CHỜ BOSS
         if not taskHandled and ScriptStorage.PlayerData.Level >= 2800 and SeaIndex == 3 and ParsingTimes > 100 then
             SetTask('MainTask', "Hệ Thống | Rảnh rỗi: Đứng rình Boss tại Mansion!")
             local mansion_pos = CFrame.new(-12464, 332, -7254)
@@ -1013,11 +1078,8 @@ function hoangtuveu()
     end
 
     SetText('MainTextLabel', "HoangPhucHub: Đang ép game tải dữ liệu...")
-    
-    -- [ PHÁ ẤN ] Ép hệ thống chờ thư mục Data của game xuất hiện
     h:WaitForChild("Data", 9e9)
     
-    -- Vòng lặp lấy dữ liệu Level (Không có Level tuyệt đối không cho chạy Quest)
     repeat 
         task.wait(0.5) 
         pcall(function()
