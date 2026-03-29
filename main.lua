@@ -817,6 +817,7 @@ function hoangtuveu()
         end
     end)
 
+    -- [ ĐÃ FIX TẬN GỐC LỖI KẸT NHIỆM VỤ CUỘN THƯ ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
@@ -828,20 +829,16 @@ function hoangtuveu()
         if type(prog) ~= "table" then return {"talk_crypt_master"} end
         if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return {"break"} end
         
-        if prog.Good == 4 and prog.Evil == 4 then return {"boss"} end
+        if prog.Good == 3 and prog.Evil == 3 then return {"boss"} end
 
-        if type(prog.Good) == "number" and prog.Good < 4 then
-            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("GoodScroll")
-            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt") then return {"burn"} end
-            local stepNum = prog.Good == 0 and 1 or prog.Good
-            return {"Good", stepNum}
+        -- Xử lý cuộn Thiện (Tushita)
+        if type(prog.Good) == "number" and prog.Good < 3 then
+            return {"Good", prog.Good + 1}
         end
 
-        if type(prog.Evil) == "number" and prog.Evil < 4 then
-            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("EvilScroll")
-            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt") then return {"burn 2"} end
-            local stepNum = prog.Evil == 0 and 1 or prog.Evil
-            return {"Evil", stepNum}
+        -- Xử lý cuộn Ác (Yama)
+        if type(prog.Evil) == "number" and prog.Evil < 3 then
+            return {"Evil", prog.Evil + 1}
         end
         
         return {"boss"}
@@ -910,22 +907,6 @@ function hoangtuveu()
                     CombatController.Attack("Cursed Skeleton")
                     task.delay(3, function() pcall(function() door:Destroy() end) end)
                 end
-            elseif step[1] == "burn" or step[1] == "burn 2" then
-                local scrollName = step[1] == "burn" and "GoodScroll" or "EvilScroll"
-                SetTask("MainTask", "CDK Quest | Tương tác với " .. scrollName)
-                local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(scrollName)
-                if scroll then 
-                    if CaculateDistance(scroll.CFrame) > 10 then
-                        TweenController.Create(scroll.CFrame) 
-                    else
-                        local prompt = scroll:FindFirstChildOfClass("ProximityPrompt")
-                        if prompt then
-                            prompt.HoldDuration = 0
-                            fireproximityprompt(prompt)
-                            task.wait(1.5) 
-                        end
-                    end
-                end
             elseif step[1] == "boss" then
                 SetTask("MainTask", "CDK Quest | Tiêu diệt Cursed Skeleton Boss để lấy CDK!")
                 local boss = workspace.Enemies:FindFirstChild("Cursed Skeleton Boss") or game.ReplicatedStorage:FindFirstChild("Cursed Skeleton Boss")
@@ -939,41 +920,32 @@ function hoangtuveu()
                     end
                 end
             elseif step[1] == "Good" then
+                -- [ GỬI TÍN HIỆU NHẬN NHIỆM VỤ CUỘN THƯ TỰ ĐỘNG ]
+                Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', 'Good')
+                
                 if step[2] == 1 then 
-                    -- [ ĐÃ FIX TRIỆT ĐỂ: KHÔNG DÙNG HUMANOIDROOTPART NỮA ĐỂ TRÁNH NPC BỊ LỖI ]
-                    Remotes.CommF_:InvokeServer("CDKQuest", "DockLegend")
-                    _G.TalkedDealers = _G.TalkedDealers or {}
-                    local foundDealer = nil
-                    
+                    SetTask("MainTask", "CDK | Tushita 1: Tương tác 3 Boat Dealer...")
+                    local count = 0
                     for _, v in pairs(workspace.NPCs:GetChildren()) do
+                        if count >= 3 then break end
                         if string.find(v.Name, "Boat Dealer") or string.find(v.Name, "Luxury Boat Dealer") then
-                            local d_id = v.Name .. "_" .. math.floor(v:GetModelCFrame().X)
-                            if not _G.TalkedDealers[d_id] then
-                                foundDealer = {npc = v, id = d_id}
-                                break
+                            local dest = v:GetModelCFrame()
+                            while CaculateDistance(dest) > 15 do
+                                task.wait()
+                                TweenController.Create(dest)
                             end
+                            local p = v:FindFirstChildOfClass("ProximityPrompt", true)
+                            if p then
+                                p.HoldDuration = 0
+                                fireproximityprompt(p)
+                                task.wait(1.5)
+                            end
+                            count = count + 1
                         end
                     end
-
-                    if foundDealer then
-                        SetTask("MainTask", "CDK | Tushita 1: Bay tới " .. foundDealer.npc.Name)
-                        local dest = foundDealer.npc:GetModelCFrame()
-                        TweenController.Create(dest)
-                        if CaculateDistance(dest) < 15 then
-                            local prompt = foundDealer.npc:FindFirstChildOfClass("ProximityPrompt", true)
-                            if prompt then
-                                prompt.HoldDuration = 0
-                                fireproximityprompt(prompt)
-                                task.wait(1)
-                            end
-                            _G.TalkedDealers[foundDealer.id] = true
-                        end
-                    else
-                        SetTask("MainTask", "CDK | Tushita 1: Đang reset danh sách NPC...")
-                        _G.TalkedDealers = {}
-                        task.wait(1)
-                    end
-
+                    -- Gửi tín hiệu hoàn thành bước 1
+                    Remotes.CommF_:InvokeServer("CDKQuest", "DockLegend")
+                    
                 elseif step[2] == 2 then 
                     SetTask("MainTask", "CDK | Tushita 2: Đợi Pirate Raid ở Lâu Đài...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
@@ -994,6 +966,9 @@ function hoangtuveu()
                     FunctionsHandler.CursedDualKatana.Methods.DoDimension:Call("Heaven")
                 end
             elseif step[1] == "Evil" then
+                -- [ GỬI TÍN HIỆU NHẬN NHIỆM VỤ CUỘN THƯ TỰ ĐỘNG ]
+                Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', 'Evil')
+                
                 if step[2] == 1 then 
                     SetTask("MainTask", "CDK | Yama 1: Đứng yên chịu đòn...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "PainAndSuffering")
