@@ -1,22 +1,8 @@
-Config = {
+Config = getgenv().Config or {
     Team = "Pirates",
-    Configuration = {
-        HopWhenIdle = true,
-        AutoHop = true,
-        AutoHopDelay = 60 * 60,
-        FpsBoost = false,
-        blackscreen = false
-    },
-    Items = {
-        AutoFullyMelees = false,
-        Saber = false,
-        CursedDualKatana = false,
-        SoulGuitar = false,
-        RaceV2 = false
-    },
-    Settings = {
-        StayInSea2UntilHaveDarkFragments = false
-    }
+    Configuration = {HopWhenIdle = true, AutoHop = true, AutoHopDelay = 10, FpsBoost = false, blackscreen = false},
+    Items = {AutoFullyMelees = false, Saber = false, CursedDualKatana = false, SoulGuitar = false, RaceV2 = false},
+    Settings = {StayInSea2UntilHaveDarkFragments = false}
 }
 
 function hoangtuveu()
@@ -43,9 +29,9 @@ function hoangtuveu()
     h.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     h.IgnoreGuiInset = true
 
-    if Config.Configuration.blackscreen then
-        game:GetService('Lighting').ExposureCompensation = -math.huge
-    end
+    if Config.Configuration.blackscreen then game:GetService('Lighting').ExposureCompensation = -math.huge
+    else game:GetService('Lighting').ExposureCompensation = 0 end
+
     X.Name = 'NameHub'
     X.Parent = h
     X.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -273,7 +259,7 @@ function hoangtuveu()
     getgenv().alert = function(a, h)
         pcall(function() J:Notify({Title = a or '', Content = h or '', Duration = 5}) end)
     end
-    alert("ARYA HUB", "Bản Clean Nguyên Gốc")
+    alert("ARYA HUB", "Bản Clean Pro - Load Config")
     OldSessionTime = isfile('.tdif-' .. game.Players.LocalPlayer.Name) and tonumber(readfile(".tdif-" .. game.Players.LocalPlayer.Name)) or 0
     repeat task.wait() game.ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", Config.Team) until game.Players.LocalPlayer.Character
     repeat wait() until game.Players.LocalPlayer.Character
@@ -407,26 +393,31 @@ function hoangtuveu()
         if W then return a end
         if ScriptStorage.Interface then SetText('Melees', a) end
     end
+
     function MeleeCheck(W)
         if W and typeof(W) == "Instance" and W:IsA("Tool") then
             if W.ToolTip == "Melee" then
-                if ScriptStorage.Connections.Melees then ScriptStorage.Connections.Melees:Disconnect() end
-                ScriptStorage.CurrentMeleeData.Name = W.Name
-                pcall(function() ScriptStorage.Connections.Melees:Destroy() end)
-                ScriptStorage.Connections.Melees = W.Level.Changed:Connect(function(a)
-                    ScriptStorage.Melees[W.Name] = a
+                local lvlObj = W:FindFirstChild("Level")
+                if lvlObj then
+                    if ScriptStorage.Connections.Melees then ScriptStorage.Connections.Melees:Disconnect() end
+                    ScriptStorage.CurrentMeleeData.Name = W.Name
+                    pcall(function() ScriptStorage.Connections.Melees:Destroy() end)
+                    ScriptStorage.Connections.Melees = lvlObj.Changed:Connect(function(a)
+                        ScriptStorage.Melees[W.Name] = a
+                        RefreshMelees()
+                    end)
+                    ScriptStorage.Melees[W.Name] = lvlObj.Value
                     RefreshMelees()
-                end)
-                ScriptStorage.Melees[W.Name] = W.Level.Value
-                RefreshMelees()
+                end
             elseif string.find(tostring(W), "Fruit") then
                 task.spawn(function()
                     if table.find(ScriptStorage.IgnoreStoreFruits, W:GetAttribute('OriginalName')) then return end
-                    local a = Remotes.CommF_:InvokeServer("StoreFruit", W:GetAttribute("OriginalName"), W)
+                    pcall(function() Remotes.CommF_:InvokeServer("StoreFruit", W:GetAttribute("OriginalName"), W) end)
                 end)
             end
         end
     end
+    
     SetText('MainTextLabel', 'Refreshing Player Data')
     MeleeCheck(LocalPlayer.Character:FindFirstChildOfClass('Tool'))
     RefreshPlayerData()
@@ -1072,9 +1063,7 @@ function hoangtuveu()
                         local X = Split(w, ":")
                         local w = ((tonumber(X[1]) * 60) + tonumber(X[2])) * 60
                         BonesCooldown = os.time() + w
-                    else
-                        Remotes.CommF_:InvokeServer('Bones', 'Buy', 1, 1)
-                    end
+                    else Remotes.CommF_:InvokeServer('Bones', 'Buy', 1, 1) end
                 end
             end
         end
