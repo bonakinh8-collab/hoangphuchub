@@ -7,12 +7,12 @@ local DefaultConfig = {
 Config = getgenv().Config or DefaultConfig
 
 function hoangtuveu()
+    -- [ KHÓA AN TOÀN VỮNG CHẮC ]
     if not game:IsLoaded() then game.Loaded:Wait() end
-    repeat task.wait() until game:GetService("Players")
-    repeat task.wait() until game:GetService("Players").LocalPlayer
-    local h = game.Players.LocalPlayer
-    repeat task.wait() until h:GetMouse()
-    repeat task.wait() until game:GetService("CoreGui")
+    local Players = game:GetService("Players")
+    while not Players.LocalPlayer do task.wait() end
+    local h = Players.LocalPlayer
+    while not game:GetService("CoreGui") do task.wait() end
 
     local InitTime = os.time()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
@@ -265,7 +265,7 @@ function hoangtuveu()
     getgenv().alert = function(a_t, h_t)
         pcall(function() J_fl:Notify({Title = a_t or '', Content = h_t or '', Duration = 5}) end)
     end
-    alert("HoangPhucHub", "Phiên bản Hoàn Mỹ - Fixed Mọi Lỗi")
+    alert("HoangPhucHub", "Cập Nhật: Fixed lỗi Tween, Mansion & Load!")
 
     FunctionsHandler = {Initalized = false}
     setmetatable(FunctionsHandler, {__index = function(h_f, X_f)
@@ -452,6 +452,13 @@ function hoangtuveu()
     function TweenController.Create(W_p)
         if not W_p or TweenDebounce then return end
         local a_c = typeof(W_p) ~= 'CFrame' and CFrame.new(W_p.X, W_p.Y, W_p.Z) or W_p
+        
+        -- [ BỘ LỌC CHỐNG SPAM TWEEN BẢO VỆ NHÂN VẬT ]
+        if _G.LastTweenTarget and (_G.LastTweenTarget.Position - a_c.Position).Magnitude < 5 then
+            if TweenInstance and TweenInstance.PlaybackState == Enum.PlaybackState.Playing then return end
+        end
+        _G.LastTweenTarget = a_c
+
         if TweenInstance then pcall(function() TweenInstance:Cancel() end) end
         for _, v in ipairs(h.Character:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end
         local W_he = h.Character:WaitForChild("Head")
@@ -591,10 +598,10 @@ function hoangtuveu()
         if os.time() - (LastTravel or 0) > 60 then
             LastTravel = os.time()
             if currentLevel >= 1500 and SeaIndex == 2 and not workspace.Map.IceCastle.Hall.LibraryDoor:FindFirstChild('PhoeyuDoor') then
-                SetTask('MainTask', 'Sea Travel | Teleporting to Third Sea') 
+                SetTask('MainTask', 'Sea Travel | Đang dịch chuyển lên Sea 3...') 
                 Remotes.CommF_:InvokeServer("TravelZou")
             elseif currentLevel >= 700 and SeaIndex == 1 then
-                SetTask('MainTask', 'Sea Travel | Teleporting to Second Sea') 
+                SetTask('MainTask', 'Sea Travel | Đang dịch chuyển qua Sea 2...') 
                 Remotes.CommF_:InvokeServer("TravelDressrosa")
             end
         end
@@ -609,7 +616,7 @@ function hoangtuveu()
             else
                 if not npcPos then J_quest:RefreshQuest() return end
                 TweenController.Create(npcPos + Vector3.new(0, 5, 3))
-                SetTask("MainTask", "Level Farming | Claiming Quest: " .. monName)
+                SetTask("MainTask", "Level Farming | Lấy Quest: " .. monName)
                 if CaculateDistance(npcPos) < 10 then
                     task.wait(1)
                     J_quest:StartQuest(questId, qIndex)
@@ -617,7 +624,7 @@ function hoangtuveu()
                 end
                 return
             end
-            SetTask('MainTask', 'Level Farming | Đang cày: ' .. monName)
+            SetTask('MainTask', 'Level Farming | Đang cày cấp với: ' .. monName)
             CombatController.Attack(monName)
         end
     end)
@@ -917,7 +924,7 @@ function hoangtuveu()
         return false
     end)
     FunctionsHandler.AutoHopBoss:RegisterMethod("Start", function(mode)
-        SetTask("MainTask", "VIP Săn Boss | Phát hiện " .. mode .. " trong Server, đấm ngay cho nóng!")
+        SetTask("MainTask", "VIP Săn Boss | Phát hiện Boss " .. mode .. " trong Server, đấm ngay!")
         if mode == "rip_indra True Form" and not ScriptStorage.Backpack['Tushita'] then
             TweenController.Create(CFrame.new(5714, 20, 256))
             if ScriptStorage.Tools["Holy Torch"] then
@@ -974,29 +981,38 @@ function hoangtuveu()
     pcall(function() Storage.Data = game:GetService("HttpService"):JSONDecode(readfile(k_file_path) or '{}') end)
     task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
 
+    -- [ VÒNG LẶP CHÍNH THÔNG MINH - KHÔNG BỊ KẸT MANSION ]
     ParsingTimes = 0
     function RefreshTasksData()
         if _G.Stop then return end
-        if ScriptStorage.PlayerData.Level >= 2800 then
-            SetText('SubTask', "HoangPhucHub: Đã Max Level 2800 - Rình Boss Mansion")
-            local mansion_pos = CFrame.new(-12464, 332, -7254)
-            if CaculateDistance(mansion_pos) > 30 and not MonResult then TweenController.Create(mansion_pos) return end
-        end
+        
+        local taskHandled = false
+        -- QUÉT NHIỆM VỤ (BOSS, ITEM, V3, RAID, LEVEL)
         for _, taskName in pairs(TasksOrder) do
             local handler = FunctionsHandler[taskName]
             if handler and handler.Initalized then
                 local status = handler.Methods.Refresh and handler.Methods.Refresh:Call(ParsingTimes < 100)
                 ParsingTimes = ParsingTimes + 1
                 if status and ParsingTimes > 100 then
-                    SetText('DebugLine', taskName)
+                    SetText('DebugLine', "Module: " .. taskName)
                     handler.Methods.Start:Call(status)
+                    taskHandled = true
                     return
                 end
             end
         end
+
+        -- NẾU RẢNH RỖI + MAX LEVEL -> VỀ MANSION NGỦ CHỜ BOSS
+        if not taskHandled and ScriptStorage.PlayerData.Level >= 2800 and SeaIndex == 3 and ParsingTimes > 100 then
+            SetTask('MainTask', "Hệ Thống | Rảnh rỗi: Đứng rình Boss tại Mansion!")
+            local mansion_pos = CFrame.new(-12464, 332, -7254)
+            if CaculateDistance(mansion_pos) > 30 and not MonResult then 
+                TweenController.Create(mansion_pos) 
+            end
+        end
     end
 
-    SetText('MainTextLabel', "HoangPhucHub: Hoàn Tất Khởi Tạo!")
+    SetText('MainTextLabel', "HoangPhucHub: Khởi tạo cực đỉnh!")
     AddPoint()
     pcall(function() J_quest:RefreshQuest() end)
     RefreshInventory()
@@ -1013,7 +1029,7 @@ function hoangtuveu()
                 local elapsed = os.time() - InitTime
                 local total = elapsed + OldSessionTime
                 pcall(function() writefile(".tdif-" .. h.Name, tostring(total)) end)
-                SetText('LiveTime', "Tổng: " .. DispTime(total, true) .. ' | Phiên này: ' .. DispTime(elapsed, true))
+                SetText('LiveTime', "Tổng: " .. DispTime(total, true) .. ' | Lần này: ' .. DispTime(elapsed, true))
             end
         end
     end)
