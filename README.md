@@ -474,7 +474,13 @@ function hoangtuveu()
     DropItemData = {['Buddy Sword'] = {Sea = 3, Level = 1500, Boss = "Cake Queen"}, ['Canvander'] = {Sea = 3, Level = 1500, Boss = "Beautiful Pirate"}, ['Twin Hooks'] = {Sea = 3, Level = 1500, Boss = 'Captain Elephant'}, ["Venom Bow"] = {Sea = 3, Level = 1500, Boss = "Hydra Leader"}}
     GodhumanMaterials = {['Fish Tail'] = {20, 3, {"Fishman Raider", "Fishman Captain"}, {'DeepForestIsland3', 1, 1775, 'Turtle Adventure Quest Giver'}}, ['Dragon Scale'] = {10, 3, {"Dragon Crew Warrior", "Dragon Crew Archer"}, {'DragonCrewQuest', 1, 1575, 'Dragon Crew Quest Giver'}}, ["Magma Ore"] = {20, 2, {'Magma Ninja'}, {"FireSideQuest", 1, 1100, "Fire Quest Giver"}}, ["Mystic Droplet"] = {10, 2, {'Sea Soldier', 'Water Fighter'}, {'ForgottenQuest', 2, 1425, 'Forgotten Quest Giver'}}}
     SeaIndexes = {"Main", "Dressrosa", "Zou"}
-    TasksOrder = {"AutoHopBoss", "SpecialBossesTask", "SoulGuitar", "CursedDualKatana", "Tushita", "Yama", "RaidController", "Trevor", "UtillyItemsActivitation", "ColosseumPuzzle", "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "ThirdSeaPuzzle", "CollectDrops", "BossesTask", "ExpRedeem", "LevelFarm"}
+    
+    -- ==========================================
+    -- ĐÃ FIX: Chỉnh thứ tự Task ưu tiên Farm Item trước khi đi Hop Boss
+    -- ==========================================
+    TasksOrder = {"SoulGuitar", "CursedDualKatana", "Tushita", "Yama", "CollectDrops", "SpecialBossesTask", "BossesTask", "AutoHopBoss", "RaidController", "Trevor", "UtillyItemsActivitation", "ColosseumPuzzle", "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "ExpRedeem", "LevelFarm"}
+    -- ==========================================
+    
     MaxLevel = 2800
     placeId = game.PlaceId
     if placeId == 85211729168715 or placeId == 2753915549 then
@@ -605,7 +611,7 @@ function hoangtuveu()
     end
 
 -- ==========================================
--- ĐOẠN FIX: Khởi tạo FunctionsHandler và các Controller cốt lõi
+-- Khởi tạo FunctionsHandler và các Controller cốt lõi
 -- ==========================================
 getgenv().FunctionsHandler = {}
 
@@ -1442,16 +1448,13 @@ end
     pcall(function() Storage.Data = Decode(readfile(k_file_path) or '{}') end)
     task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
     ParsingTimes = 0
+
+    -- ==========================================
+    -- ĐÃ FIX: Tháo bỏ lệnh block khi Level >= 2800 để Hub tiếp tục Farm Item thay vì kẹt
+    -- ==========================================
     function RefreshTasksData()
         if _G.Stop then return end
-        if ScriptStorage.PlayerData.Level >= 2800 then
-            SetText('SubTask', "HoangPhucHub: Đã Max 2800 - Đang rình Boss tại Mansion")
-            local mansion_pos = CFrame.new(-12464, 332, -7254)
-            if CaculateDistance(mansion_pos) > 30 and not MonResult then
-                TweenController.Create(mansion_pos)
-                return
-            end
-        end
+        
         for _, taskName in pairs(TasksOrder) do
             local handler = FunctionsHandler[taskName]
             if handler and handler.Initalized then
@@ -1470,6 +1473,8 @@ end
             end
         end
     end
+    -- ==========================================
+
     SetText('MainTextLabel', "HoangPhucHub: Đang tải thiết lập..")
     AddPoint()
     pcall(function() J_q:RefreshQuest() end)
