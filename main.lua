@@ -469,8 +469,16 @@ function hoangtuveu()
             h_b.Velocity = Vector3.zero
             h_b.Parent = W_he
         end
+        
+        -- [ FIX ANTI-CHEAT: GIẢM TỐC ĐỘ XUỐNG 300 AN TOÀN TỐI ĐA ]
         local W_d = CaculateDistance(h.Character.HumanoidRootPart.CFrame, a_c)
-        TweenInstance = game:GetService("TweenService"):Create(h.Character.HumanoidRootPart, TweenInfo.new(W_d / 350, Enum.EasingStyle.Linear), {CFrame = a_c})
+        local safeSpeed = 300 -- Tốc độ bay chuẩn, không bị kick
+        local tweenTime = W_d / safeSpeed
+        
+        -- Chống lỗi khoảng cách quá ngắn dẫn đến thời gian = 0
+        if tweenTime < 0.1 then tweenTime = 0.1 end 
+
+        TweenInstance = game:GetService("TweenService"):Create(h.Character.HumanoidRootPart, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = a_c})
         TweenInstance:Play()
     end
 
@@ -627,8 +635,7 @@ function hoangtuveu()
             SetTask('MainTask', 'Level Farming | Đang cày cấp với: ' .. monName)
             CombatController.Attack(monName)
         end
-    end)
-	FunctionsHandler.Saber:RegisterMethod('Refresh', function()
+    end)FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
         local step
@@ -1166,3 +1173,4 @@ function hoangtuveu()
     end
 end
 hoangtuveu()
+	
