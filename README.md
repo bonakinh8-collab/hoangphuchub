@@ -603,7 +603,112 @@ function hoangtuveu()
         local W_s = Split(J_n)[1]
         return W_s .. '-' .. W_s
     end
-	FunctionsHandler.LevelFarm:RegisterMethod("Start", function(floor)
+
+-- ==========================================
+-- ĐOẠN FIX: Khởi tạo FunctionsHandler và các Controller cốt lõi
+-- ==========================================
+getgenv().FunctionsHandler = {}
+
+local function createModule(name)
+    FunctionsHandler[name] = {
+        Methods = {},
+        Data = {},
+        Initalized = false,
+        Register = function(self) 
+            self.Initalized = true 
+        end,
+        RegisterMethod = function(self, mName, func)
+            self.Methods[mName] = { 
+                Call = function(_, ...) return func(...) end 
+            }
+        end,
+        Set = function(self, k, v) 
+            self.Data[k] = v 
+        end,
+        Get = function(self, k) 
+            return self.Data[k] 
+        end
+    }
+end
+
+local requiredModules = {
+    "LevelFarm", "LocalPlayerController", "Saber", "Yama", "Tushita", 
+    "SoulGuitar", "CursedDualKatana", "RaidController", "Wenlocktoad", 
+    "AutoHopBoss", "MeleesController", "PirateRaid"
+}
+
+for _, modName in ipairs(requiredModules) do 
+    createModule(modName) 
+end
+
+-- 1. TweenController (Xử lý bay lượn mượt mà)
+getgenv().TweenController = {}
+TweenController.Create = function(targetCFrame)
+    local player = game:GetService("Players").LocalPlayer
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local hrp = player.Character.HumanoidRootPart
+    
+    -- Chuyển Vector3 thành CFrame nếu truyền nhầm
+    if typeof(targetCFrame) == "Vector3" then
+        targetCFrame = CFrame.new(targetCFrame)
+    end
+    
+    local distance = (hrp.Position - targetCFrame.Position).Magnitude
+    local speed = 300 -- Tốc độ bay, bro có thể chỉnh nếu cần
+    local time = distance / speed
+    
+    -- Dùng TweenService để bay mượt
+    local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
+    local tween = game:GetService("TweenService"):Create(hrp, tweenInfo, {CFrame = targetCFrame})
+    tween:Play()
+    tween.Completed:Wait() -- Đợi bay tới nơi mới làm tiếp
+end
+
+-- 2. CombatController (Xử lý đánh quái)
+getgenv().CombatController = {}
+CombatController.Attack = function(targets)
+    local player = game:GetService("Players").LocalPlayer
+    local targetNames = typeof(targets) == "table" and targets or {targets}
+    
+    for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+        if table.find(targetNames, enemy.Name) and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+            
+            -- Bay tới sau lưng quái
+            local enemyCFrame = enemy:GetModelCFrame()
+            if TweenController.Create then
+                TweenController.Create(enemyCFrame * CFrame.new(0, 0, 3))
+            end
+            
+            -- Auto click đánh thường
+            local vu = game:GetService("VirtualUser")
+            vu:CaptureController()
+            vu:ClickButton1(Vector2.new(0,0))
+            
+            return true -- Trả về true báo hiệu đang có mục tiêu để đánh
+        end
+    end
+    return false
+end
+
+-- 3. Mock J_quest và W.Attack
+getgenv().J_quest = {
+    GetCurrentClaimQuest = function() return nil, "" end,
+    AbandonQuest = function() end,
+    StartQuest = function(id, index) end,
+    RefreshQuest = function() end,
+    GetCurrentQuest = function() return nil, nil, nil, nil, "" end
+}
+
+getgenv().W = getgenv().W or {}
+W.Attack = function()
+    local vu = game:GetService("VirtualUser")
+    vu:CaptureController()
+    vu:ClickButton1(Vector2.new(0,0))
+end
+-- ==========================================
+
+    FunctionsHandler.LevelFarm:RegisterMethod("Start", function(floor)
     FunctionsHandler.LevelFarm:Register()
         if SeaIndex == 3 then
             if (ScriptStorage.Backpack.Bones or {Count = 0}).Count >= 50 then
@@ -775,7 +880,7 @@ function hoangtuveu()
             end
         end
     end)
-	FunctionsHandler.Saber:RegisterMethod('Refresh', function()
+    FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
         local step
