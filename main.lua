@@ -817,6 +817,7 @@ function hoangtuveu()
         end
     end)
 
+    -- [ ĐÃ XÓA TẠP NIỆM: BOT SẼ NÓI CHUYỆN VỚI CRYPT MASTER RỒI MỚI VÀO PHÒNG ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
@@ -825,17 +826,26 @@ function hoangtuveu()
         if SeaIndex ~= 3 then return end
         
         local prog = Remotes.CommF_:InvokeServer("CDKQuest", 'Progress')
+        -- Nếu chưa bắt đầu quest thì tới nói chuyện ổng
         if type(prog) ~= "table" then return {"talk_crypt_master"} end
-        if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return {"break"} end
         
+        -- Tiến trình chuẩn của 6 viên đá
         if prog.Good == 3 and prog.Evil == 3 then return {"boss"} end
 
+        -- Làm 3 thử thách cuộn Tushita (Good) trước
         if type(prog.Good) == "number" and prog.Good < 3 then
-            return {"Good", prog.Good + 1}
+            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("GoodScroll")
+            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt", true) then return {"burn"} end
+            local stepNum = prog.Good == 0 and 1 or prog.Good
+            return {"Good", stepNum}
         end
 
+        -- Xong Tushita thì làm 3 thử thách cuộn Yama (Evil)
         if type(prog.Evil) == "number" and prog.Evil < 3 then
-            return {"Evil", prog.Evil + 1}
+            local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("EvilScroll")
+            if scroll and scroll:FindFirstChildOfClass("ProximityPrompt", true) then return {"burn 2"} end
+            local stepNum = prog.Evil == 0 and 1 or prog.Evil
+            return {"Evil", stepNum}
         end
         
         return {"boss"}
@@ -884,25 +894,22 @@ function hoangtuveu()
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
         if type(step) == "table" then
             if step[1] == "talk_crypt_master" then
-                SetTask("MainTask", "CDK Quest | Nói chuyện với Crypt Master...")
-                local masterNpc = ScriptStorage.NPCs["Crypt Master"]
+                SetTask("MainTask", "CDK Quest | Nhận phép mở cửa từ Crypt Master...")
+                local masterNpc = ScriptStorage.NPCs["Crypt Master"] or workspace.NPCs:FindFirstChild("Crypt Master")
                 if masterNpc then
-                    TweenController.Create(masterNpc:GetModelCFrame())
-                    if CaculateDistance(masterNpc:GetModelCFrame()) < 15 then
+                    local dest = masterNpc:GetModelCFrame()
+                    if CaculateDistance(dest) > 10 then
+                        TweenController.Create(dest)
+                    else
                         local p = masterNpc:FindFirstChildOfClass("ProximityPrompt", true)
-                        if p then fireproximityprompt(p) end
+                        if p then 
+                            p.HoldDuration = 0
+                            fireproximityprompt(p) 
+                            task.wait(1)
+                        end
+                        -- Báo server mở cửa!
                         Remotes.CommF_:InvokeServer("CDKQuest", "Npc")
                     end
-                end
-            elseif step[1] == "break" then
-                SetTask("MainTask", "CDK Quest | Phá vỡ bức tường bí mật!")
-                local door = workspace.Map.Turtle.Cursed:FindFirstChild("Breakable")
-                if door then
-                    TweenController.Create(door.CFrame)
-                    local mob = workspace.Enemies:FindFirstChild("Cursed Skeleton")
-                    if mob and mob:FindFirstChild("HumanoidRootPart") then mob.HumanoidRootPart.CFrame = door.CFrame end
-                    CombatController.Attack("Cursed Skeleton")
-                    task.delay(3, function() pcall(function() door:Destroy() end) end)
                 end
             elseif step[1] == "burn" or step[1] == "burn 2" then
                 local scrollName = step[1] == "burn" and "GoodScroll" or "EvilScroll"
@@ -912,7 +919,7 @@ function hoangtuveu()
                     local targetPos = (scroll:IsA("Model") and scroll:GetModelCFrame() or scroll.CFrame)
                     
                     if CaculateDistance(targetPos) > 10 then
-                        TweenController.Create(targetPos) 
+                        TweenController.Create(targetPos * CFrame.new(0, 2, 4)) 
                     else
                         local prompt = scroll:FindFirstChildOfClass("ProximityPrompt", true)
                         if prompt then
@@ -923,9 +930,10 @@ function hoangtuveu()
                     end
                 end
             elseif step[1] == "boss" then
-                SetTask("MainTask", "CDK Quest | Tiêu diệt Boss để lấy CDK!")
+                SetTask("MainTask", "CDK Quest | Gắn đá vào Bệ để gọi Boss!")
                 local boss = workspace.Enemies:FindFirstChild("Cursed Skeleton Boss") or game.ReplicatedStorage:FindFirstChild("Cursed Skeleton Boss")
                 if boss then
+                    SetTask("MainTask", "CDK Quest | Đang tiêu diệt Boss lấy CDK!")
                     CombatController.Attack("Cursed Skeleton Boss")
                 else
                     local ped = workspace.Map.Turtle.Cursed:FindFirstChild("Pedestal")
@@ -941,7 +949,6 @@ function hoangtuveu()
                 Remotes.CommF_:InvokeServer('CDKQuest', 'StartTrial', 'Good')
                 
                 if step[2] == 1 then 
-                    -- [ ĐÃ FIX TẬN GỐC ]: Lỗi đâm vô trần nhà, kẹt tường và quên chờ hội thoại
                     SetTask("MainTask", "CDK | Tushita 1: Tương tác Boat Dealer...")
                     _G.CDK_DealerIndex = _G.CDK_DealerIndex or 1
                     
@@ -961,7 +968,6 @@ function hoangtuveu()
                         local dest = targetNPC:GetModelCFrame()
                         
                         if CaculateDistance(dest) > 10 then
-                            -- Chỉ bay đến tọa độ gốc (ngang bụng), TỐI KỴ việc bay lên cao đâm nóc nhà
                             TweenController.Create(dest)
                             SetTask("MainTask", "CDK | Bay tới NPC " .. _G.CDK_DealerIndex .. "/3")
                         else
@@ -969,10 +975,9 @@ function hoangtuveu()
                             if p then
                                 p.HoldDuration = 0
                                 fireproximityprompt(p)
-                                task.wait(2) -- CHỜ 2 GIÂY CHUẨN ĐỂ GAME TÍNH ĐIỂM
+                                task.wait(2) 
                                 _G.CDK_DealerIndex = _G.CDK_DealerIndex + 1
                             else
-                                -- Gặp NPC bị lỗi tàng hình thì bỏ qua nhảy qua thằng tiếp theo
                                 _G.CDK_DealerIndex = _G.CDK_DealerIndex + 1 
                             end
                         end
