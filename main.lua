@@ -650,6 +650,38 @@ function hoangtuveu()
         function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
     end
 
+    -- [ HỆ THỐNG GOM QUÁI, BẬT HAKI & ÉP VŨ KHÍ TỪ SOURCE GỐC ]
+    if not _G.BringAndEquip then
+        _G.BringAndEquip = function(weaponName, targetPos, mobList)
+            pcall(function()
+                local char = game.Players.LocalPlayer.Character
+                -- 1. Tự động bật Haki (Aura) nếu chưa bật
+                if char and not char:FindFirstChild("HasBuso") then
+                    game.ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
+                end
+                
+                -- 2. Ép cầm đúng vũ khí (Tushita/Yama/Melee)
+                local wep = game.Players.LocalPlayer.Backpack:FindFirstChild(weaponName)
+                if wep and char:FindFirstChild("Humanoid") then
+                    char.Humanoid:EquipTool(wep)
+                end
+                
+                -- 3. Gom Quái (Bring Mob) + Phóng to Hitbox
+                for _, v in pairs(workspace.Enemies:GetChildren()) do
+                    if table.find(mobList, v.Name) and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                        if (v.HumanoidRootPart.Position - targetPos.Position).Magnitude < 400 then
+                            v.HumanoidRootPart.CFrame = targetPos
+                            v.HumanoidRootPart.CanCollide = false
+                            v.HumanoidRootPart.Size = Vector3.new(50, 50, 50) -- Phóng to quái để chém AOE
+                            v.Humanoid.WalkSpeed = 0
+                            v.Humanoid.JumpPower = 0
+                        end
+                    end
+                end
+            end)
+        end
+    end
+
     FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
@@ -823,7 +855,10 @@ function hoangtuveu()
             Remotes.CommF_:InvokeServer("TravelZou")
         elseif step == "farm_ecto" then
             SetTask("MainTask", "Soul Guitar | Cursed Ship: Farm Ectoplasm (" .. ((ScriptStorage.Backpack['Ectoplasm'] or {Count=0}).Count) .. "/250)")
-            CombatController.Attack({"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"})
+            local mobList = {"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"}
+            -- Thêm Gom quái cho Cursed Ship luôn
+            _G.BringAndEquip("Melee", game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame, mobList)
+            CombatController.Attack(mobList)
         elseif step == 7 then
             SetTask("MainTask", 'Soul Guitar | Activating Gravestone Event')
             if CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 then TweenController.Create(CFrame.new(-8654.0, 140, 6167)) else SoulGuitarProcess = Remotes.CommF_:InvokeServer("gravestoneEvent", 2, true) end
@@ -949,10 +984,12 @@ function hoangtuveu()
             task.wait(1.5)
         elseif step[1] == "farm" then
             SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
-            FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call(step[2])
             local bone_pos = CFrame.new(-9473, 142, 5567)
+            local mobList = {"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"}
             if CaculateDistance(bone_pos) > 1000 then TweenController.Create(bone_pos) else
-                CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
+                -- [ ĐÃ FIX ]: Gom quái, bật Haki, ép cầm võ đang farm
+                _G.BringAndEquip(step[2], bone_pos, mobList)
+                CombatController.Attack(mobList)
             end
         elseif step[1] == "farm_mat" then
             local matName = step[2]
@@ -962,6 +999,7 @@ function hoangtuveu()
             elseif matName == "Fish Tail" or matName == "Dragon Scale" then
                 if SeaIndex ~= 3 then Remotes.CommF_:InvokeServer("TravelZou") return end
             end
+            _G.BringAndEquip("Melee", game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame, step[5])
             CombatController.Attack(step[5])
         elseif step[1] == "godhuman_buy" then
             SetTask("MainTask", "Godhuman | Đủ điều kiện! Đang mua Godhuman tại Cổ Thụ!")
@@ -977,7 +1015,13 @@ function hoangtuveu()
         local bp = ScriptStorage.Backpack
         if ScriptStorage.PlayerData.Level < 2200 or bp["Cursed Dual Katana"] then return end
         if SeaIndex ~= 3 then return end
-        if not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return {"mastery"} end
+        
+        local tushitaMastery = bp.Tushita and (bp.Tushita.Mastery or 0) or 0
+        local yamaMastery = bp.Yama and (bp.Yama.Mastery or 0) or 0
+        
+        if not bp.Tushita or tushitaMastery < 350 or not bp.Yama or yamaMastery < 350 then 
+            return {"mastery", tushitaMastery, yamaMastery} 
+        end
 
         local prog = Remotes.CommF_:InvokeServer("CDKQuest", 'Progress')
         if type(prog) ~= "table" then return {"talk_crypt_master"} end
@@ -1030,17 +1074,27 @@ function hoangtuveu()
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
         if type(step) == "table" then
             if step[1] == "mastery" then
-                local bp = ScriptStorage.Backpack
-                if bp.Tushita and (bp.Tushita.Mastery or 0) < 350 then
-                    SetTask("MainTask", "CDK | Farm Mastery Tushita (" .. (bp.Tushita.Mastery or 0) .. "/350)")
-                    FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Tushita')
-                elseif bp.Yama and (bp.Yama.Mastery or 0) < 350 then
-                    SetTask("MainTask", "CDK | Farm Mastery Yama (" .. (bp.Yama.Mastery or 0) .. "/350)")
-                    FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Yama')
+                local weaponName = ""
+                local currentMastery = 0
+                if step[2] < 350 then 
+                    weaponName = "Tushita" 
+                    currentMastery = step[2]
+                else 
+                    weaponName = "Yama" 
+                    currentMastery = step[3]
                 end
+
+                SetTask("MainTask", "CDK | Farm Mastery " .. weaponName .. " (" .. currentMastery .. "/350)")
+                
                 local bone_pos = CFrame.new(-9473, 142, 5567)
-                if CaculateDistance(bone_pos) > 1000 then TweenController.Create(bone_pos) else
-                    CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
+                local mobList = {"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"}
+                
+                if CaculateDistance(bone_pos) > 1000 then 
+                    TweenController.Create(bone_pos) 
+                else
+                    -- [ ĐÃ FIX ]: Chạy hàm gom quái, hút tất cả lại, bật Haki, tay cầm đúng kiếm đang farm
+                    _G.BringAndEquip(weaponName, bone_pos, mobList)
+                    CombatController.Attack(mobList)
                 end
             elseif step[1] == "talk_crypt_master" then
                 SetTask("MainTask", "CDK Quest | Nhận phép mở cửa từ Crypt Master...")
