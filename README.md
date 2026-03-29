@@ -2297,9 +2297,7 @@ function hoangtuveu()
     Storage.Data = {}
     pcall(function() Storage.Data = Decode(readfile(k) or '{}') end)
     spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
-    for k, k in getconnections(game:GetService("Players").LocalPlayer.PlayerGui.Main.Settings.Buttons.Page2.FastModeButton.Activated) do
-        k.Function()
-    end
+    
     local k = {}
     SetTask("MainTask", 'n/a')
     SetTask("SubTask", 'n/a')
