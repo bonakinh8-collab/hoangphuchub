@@ -1,7 +1,7 @@
 Config = getgenv().Config or {
     Team = "Pirates",
     Configuration = {HopWhenIdle = true, AutoHop = true, AutoHopDelay = 10, FpsBoost = false, blackscreen = false},
-    Items = {AutoFullyMelees = false, Saber = false, CursedDualKatana = false, SoulGuitar = false, RaceV2 = false},
+    Items = {AutoFullyMelees = false, Saber = false, CursedDualKatana = true, SoulGuitar = true, RaceV2 = false},
     Settings = {StayInSea2UntilHaveDarkFragments = false}
 }
 
