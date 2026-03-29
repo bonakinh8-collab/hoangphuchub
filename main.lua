@@ -635,10 +635,7 @@ function hoangtuveu()
             CombatController.Attack(monName)
         end
     end)
-	FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
-    FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
-
-    FunctionsHandler.Saber:RegisterMethod('Refresh', function()
+	FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
         local step
@@ -739,63 +736,12 @@ function hoangtuveu()
         return Lighting.ClockTime > 18 or Lighting.ClockTime < 5
     end
 
-    -- [ ĐÃ FIX: TRẢ LẠI CHEST FARM TÌM FIST OF DARKNESS (CÚP SEA 2) ĐỂ GỌI RÂU ĐEN ]
-    FunctionsHandler.ChestFarm:RegisterMethod("Refresh", function()
-        if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or ScriptStorage.PlayerData.Level < 2300 then return end
-        if SeaIndex == 2 and not ScriptStorage.Backpack['Dark Fragment'] then
-            if ScriptStorage.Backpack["Fist of Darkness"] or ScriptStorage.Tools["Fist of Darkness"] then
-                return "spawn_darkbeard"
-            end
-            if workspace.Enemies:FindFirstChild("Darkbeard") then return nil end -- Râu đen có rồi thì nhường cho AutoHopBoss đấm
-            return "farm_chest"
-        end
-    end)
-    FunctionsHandler.ChestFarm:RegisterMethod("Start", function(step)
-        if step == "spawn_darkbeard" then
-            SetTask("MainTask", "Soul Guitar | Tìm thấy Fist of Darkness! Đang gọi Râu Đen...")
-            local arena = CFrame.new(3780, 22.5, -3494) 
-            if CaculateDistance(arena) > 15 then
-                TweenController.Create(arena)
-            else
-                FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call("Fist of Darkness")
-                TweenController.Create(arena * CFrame.new(0, -5, 0)) 
-            end
-        elseif step == "farm_chest" then
-            SetTask("MainTask", "Soul Guitar | Sea 2: Nhặt rương tìm Fist of Darkness gọi Râu Đen...")
-            local chest = workspace:FindFirstChild("Chest1") or workspace:FindFirstChild("Chest2") or workspace:FindFirstChild("Chest3")
-            if chest then
-                if CaculateDistance(chest.CFrame) > 15 then
-                    TweenController.Create(chest.CFrame)
-                else
-                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, chest, 0)
-                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, chest, 1)
-                    task.wait(0.5)
-                end
-            else
-                SetTask("MainTask", "Soul Guitar | Hết rương, đang Hop Server...")
-                task.wait(1) Hop()
-            end
-        end
-    end)
-
     FunctionsHandler.SoulGuitar:RegisterMethod("Refresh", function()
         if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or ScriptStorage.PlayerData.Level < 2300 then return end
-        
-        -- Thiếu Dark Frag thì phải check biển
-        if not ScriptStorage.Backpack['Dark Fragment'] then
-            if SeaIndex ~= 2 then return "travel_sea2" end
-            return nil -- Nhường sân cho ChestFarm ở trên chạy
-        end
-        
-        -- Đã có Dark Frag, check Ectoplasm
         local ecto = (ScriptStorage.Backpack['Ectoplasm'] or {Count = 0})["Count"]
-        if ecto < 250 then 
-            if SeaIndex ~= 2 then return "travel_sea2" end
-            return "farm_ecto" 
-        end 
-        
-        -- Đủ cả 2, về Sea 3 làm Quest
-        if SeaIndex ~= 3 then return "travel_sea3" end 
+        if ecto < 250 then return 1 end 
+        if not ScriptStorage.Backpack['Dark Fragment'] then return end 
+        if SeaIndex ~= 3 then return end 
         
         SoulGuitarProcess = Remotes.CommF_:InvokeServer("GuitarPuzzleProgress", 'Check')
         if not SoulGuitarProcess then
@@ -811,15 +757,25 @@ function hoangtuveu()
         elseif (ScriptStorage.Backpack["Bones"] or {Count = 0})['Count'] >= 500 then return 8 end
     end)
     FunctionsHandler.SoulGuitar:RegisterMethod('Start', function(step)
-        if step == "travel_sea2" then
-            SetTask("MainTask", "Soul Guitar | Về Sea 2 để tìm Dark Fragment / Ectoplasm")
-            Remotes.CommF_:InvokeServer("TravelDressrosa")
-        elseif step == "travel_sea3" then
-            SetTask("MainTask", "Soul Guitar | Về Sea 3 để giải đố nhận súng")
-            Remotes.CommF_:InvokeServer("TravelZou")
-        elseif step == "farm_ecto" then
-            SetTask("MainTask", "Soul Guitar | Cursed Ship: Farm Ectoplasm (" .. ((ScriptStorage.Backpack['Ectoplasm'] or {Count=0}).Count) .. "/250)")
-            CombatController.Attack({"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"})
+        if step == 1 then
+            if SeaIndex ~= 2 then
+                SetTask("MainTask", 'Soul Guitar | Về Sea 2 farm Ectoplasm')
+                return Remotes.CommF_:InvokeServer("TravelDressrosa")
+            else
+                SetTask("MainTask", "Soul Guitar | Farm Ectoplasm (Nhặt Rương + Đánh Quái)")
+                local chest = workspace:FindFirstChild("Chest1") or workspace:FindFirstChild("Chest2") or workspace:FindFirstChild("Chest3")
+                if chest then
+                    if CaculateDistance(chest.CFrame) > 15 then
+                        TweenController.Create(chest.CFrame)
+                    else
+                        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, chest, 0)
+                        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, chest, 1)
+                        task.wait(0.5)
+                    end
+                else
+                    CombatController.Attack({"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"})
+                end
+            end
         elseif step == 7 then
             SetTask("MainTask", 'Soul Guitar | Activating Gravestone Event')
             if CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 then TweenController.Create(CFrame.new(-8654.0, 140, 6167)) else SoulGuitarProcess = Remotes.CommF_:InvokeServer("gravestoneEvent", 2, true) end
@@ -1036,6 +992,14 @@ function hoangtuveu()
         end
     end)
 
+    -- [ ĐÃ FIX LỖI CRASH: KHỞI TẠO GODHUMAN ĐẦY ĐỦ PHƯƠNG THỨC ]
+    FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
+    function FunctionsHandler.Godhuman:RegisterMethod(name, func)
+        self.Methods[name] = {Call = func}
+    end
+    function FunctionsHandler.Godhuman:Get(key) return self[key] end
+    function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
+
     FunctionsHandler.Godhuman:RegisterMethod("Refresh", function()
         if ScriptStorage.Backpack["Godhuman"] then return end
         local req = {
@@ -1110,6 +1074,24 @@ function hoangtuveu()
             if ScriptStorage.Tools['Special Microchip'] and summon_spot and summon_spot:FindFirstChild("RaidSummon2") then
                 FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Special Microchip')
                 fireclickdetector(summon_spot.RaidSummon2.Button.Main.ClickDetector)
+            end
+        end
+    end)
+
+    FunctionsHandler.Wenlocktoad:RegisterMethod("Refresh", function()
+        if ScriptStorage.PlayerData.RaceLevel ~= 2 or ScriptStorage.PlayerData.Level < 1000 or ScriptStorage.PlayerData.Beli < 2000000 or SeaIndex ~= 2 then return end
+        if Remotes.CommF_:InvokeServer("Wenlocktoad", "1") == -2 then ScriptStorage.PlayerData.RaceLevel = 3 return false end
+        return true
+    end)
+    FunctionsHandler.Wenlocktoad:RegisterMethod("Start", function()
+        SetTask('MainTask', "Up Tộc V3 | Nhiệm vụ Arowe")
+        local arowe = ScriptStorage.NPCs["Arowe"]
+        if arowe then
+            TweenController.Create(arowe:GetModelCFrame())
+            if CaculateDistance(arowe) < 15 then
+                Remotes.CommF_:InvokeServer("Wenlocktoad", "1")
+                task.wait(0.5) Remotes.CommF_:InvokeServer("Wenlocktoad", "2")
+                task.wait(0.5) Remotes.CommF_:InvokeServer("Wenlocktoad", "3")
             end
         end
     end)
@@ -1208,8 +1190,7 @@ function hoangtuveu()
         end
     end)
 
-    -- [ CẬP NHẬT: ƯU TIÊN SG TÌM NẮM ĐẤM -> GODHUMAN -> CDK ]
-    TasksOrder = {"AutoHopBoss", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "Tushita", "Yama", "RaidController", "Wenlocktoad", "LevelFarm"}
+    TasksOrder = {"AutoHopBoss", "SoulGuitar", "Godhuman", "CursedDualKatana", "Tushita", "Yama", "RaidController", "Wenlocktoad", "LevelFarm"}
     
     ParsingTimes = 0
     function RefreshTasksData()
