@@ -758,7 +758,7 @@ function hoangtuveu()
                 TweenController.Create(arena * CFrame.new(0, -5, 0)) 
             end
         elseif step == "farm_chest" then
-            SetTask("MainTask", "Soul Guitar | Sea 2: Nhặt rương tìm Fist of Darkness gọi Râu Đen...")
+            SetTask("MainTask", "Soul Guitar | Sea 2: Nhặt rương tìm Fist gọi Râu Đen...")
             local chest = workspace:FindFirstChild("Chest1") or workspace:FindFirstChild("Chest2") or workspace:FindFirstChild("Chest3")
             if chest then
                 if CaculateDistance(chest.CFrame) > 15 then TweenController.Create(chest.CFrame) else
@@ -864,7 +864,7 @@ function hoangtuveu()
         end
     end)
 
-    -- [ ĐÃ FIX: HỆ THỐNG GODHUMAN HOÀN CHỈNH, TỰ ĐỘNG LẤY VÕ ĐỂ ĐO MASTERY ]
+    -- [ ĐÃ FIX TẬN GỐC: LOGIC GODHUMAN THÔNG MINH, KHÔNG KẸT BALO ]
     function FunctionsHandler.Godhuman:RegisterMethod(name, func)
         self.Methods[name] = {Call = func}
     end
@@ -882,36 +882,47 @@ function hoangtuveu()
             {"Dragon Talon", "BuyDragonTalon"}
         }
         
-        -- Dò tìm Melee đang cầm trên tay hoặc trong Balo
+        _G.MeleeMastery = _G.MeleeMastery or {}
+        _G.EquipAttempts = _G.EquipAttempts or {}
+
+        -- Tìm võ đang cầm trên tay
         local currentMelee = nil
         for _, tool in pairs(h.Character:GetChildren()) do if tool:IsA("Tool") and tool.ToolTip == "Melee" then currentMelee = tool end end
         if not currentMelee then
             for _, tool in pairs(h.Backpack:GetChildren()) do if tool:IsA("Tool") and tool.ToolTip == "Melee" then currentMelee = tool end end
         end
         
-        _G.CheckedMelees = _G.CheckedMelees or {}
+        -- Lưu thông thạo của võ đang cầm
+        if currentMelee and currentMelee:FindFirstChild("Level") then
+            _G.MeleeMastery[currentMelee.Name] = currentMelee.Level.Value
+            _G.EquipAttempts[currentMelee.Name] = 0 -- Reset số lần thử nếu đã cầm thành công
+        end
 
         for _, v in ipairs(req) do
             local mName = v[1]
             local mBuy = v[2]
+            local mastery = _G.MeleeMastery[mName]
             
-            -- Nếu võ này chưa đủ 400 thì kiểm tra
-            if not _G.CheckedMelees[mName] then
+            -- Nếu chưa từng check Mastery của võ này
+            if not mastery then
+                _G.EquipAttempts[mName] = (_G.EquipAttempts[mName] or 0) + 1
+                if _G.EquipAttempts[mName] > 10 then return nil end -- Kẹt quá 10 lần (do thiếu tiền mua) -> Nhường cho CDK!
+                return {"equip_and_check", mName, mBuy}
+            end
+            
+            -- Nếu Mastery chưa đủ 400
+            if mastery < 400 then
                 if currentMelee and currentMelee.Name == mName then
-                    local mastery = currentMelee:FindFirstChild("Level") and currentMelee.Level.Value or 0
-                    if mastery < 400 then
-                        return {"farm", mName, mastery}
-                    else
-                        _G.CheckedMelees[mName] = true -- Đánh dấu đã xong 400
-                    end
+                    return {"farm", mName, mastery}
                 else
-                    -- Chưa cầm trên tay -> Gửi lệnh trang bị để lấy số Mastery
-                    return {"equip", mName, mBuy}
+                    _G.EquipAttempts[mName] = (_G.EquipAttempts[mName] or 0) + 1
+                    if _G.EquipAttempts[mName] > 10 then return nil end -- Fail-safe
+                    return {"equip_and_check", mName, mBuy}
                 end
             end
         end
         
-        -- Nếu tất cả đã 400, kiểm tra nguyên liệu
+        -- Nếu 9 võ đã đủ 400 -> Kiểm tra nguyên liệu
         local mats = {
             {"Fish Tail", 20, {"Fishman Raider", "Fishman Captain"}},
             {"Magma Ore", 20, {"Magma Ninja", "Magma Admiral"}},
@@ -924,19 +935,18 @@ function hoangtuveu()
             for _, item in pairs(ScriptStorage.Backpack) do
                 if item.Name == mat[1] then count = item.Count or 0 break end
             end
-            if count < mat[2] then
-                return {"farm_mat", mat[1], count, mat[2], mat[3]}
-            end
+            if count < mat[2] then return {"farm_mat", mat[1], count, mat[2], mat[3]} end
         end
 
         return {"godhuman_buy"}
     end)
 
     FunctionsHandler.Godhuman:RegisterMethod("Start", function(step)
-        if step[1] == "equip" then
-            SetTask("MainTask", "Godhuman | Lấy " .. step[2] .. " ra để kiểm tra Mastery...")
-            Remotes.CommF_:InvokeServer(step[3], true)
-            task.wait(1)
+        if step[1] == "equip_and_check" then
+            SetTask("MainTask", "Godhuman | Đang gọi võ " .. step[2] .. " để check Mastery...")
+            Remotes.CommF_:InvokeServer(step[3]) -- Mua (nếu có đủ tiền)
+            Remotes.CommF_:InvokeServer(step[3], true) -- Trang bị
+            task.wait(1.5)
         elseif step[1] == "farm" then
             SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
             FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call(step[2])
@@ -947,14 +957,11 @@ function hoangtuveu()
         elseif step[1] == "farm_mat" then
             local matName = step[2]
             SetTask("MainTask", "Godhuman | Farm nguyên liệu: " .. matName .. " (" .. step[3] .. "/" .. step[4] .. ")")
-            
-            -- Xử lý bay liên Sea để tìm nguyên liệu
             if matName == "Magma Ore" or matName == "Mystic Droplet" then
                 if SeaIndex ~= 2 then Remotes.CommF_:InvokeServer("TravelDressrosa") return end
             elseif matName == "Fish Tail" or matName == "Dragon Scale" then
                 if SeaIndex ~= 3 then Remotes.CommF_:InvokeServer("TravelZou") return end
             end
-            
             CombatController.Attack(step[5])
         elseif step[1] == "godhuman_buy" then
             SetTask("MainTask", "Godhuman | Đủ điều kiện! Đang mua Godhuman tại Cổ Thụ!")
