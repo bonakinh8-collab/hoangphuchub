@@ -635,8 +635,16 @@ function hoangtuveu()
             CombatController.Attack(monName)
         end
     end)
-	FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
+	-- [ KHỞI TẠO NÃO BỘ CHO CHESTFARM VÀ GODHUMAN TRƯỚC KHI DÙNG ]
+    FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
+    function FunctionsHandler.ChestFarm:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
+    function FunctionsHandler.ChestFarm:Get(key) return self[key] end
+    function FunctionsHandler.ChestFarm:Set(key, val) self[key] = val end
+
     FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
+    function FunctionsHandler.Godhuman:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
+    function FunctionsHandler.Godhuman:Get(key) return self[key] end
+    function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
 
     FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
@@ -864,13 +872,6 @@ function hoangtuveu()
         end
     end)
 
-    -- [ ĐÃ FIX TẬN GỐC: LOGIC GODHUMAN THÔNG MINH, KHÔNG KẸT BALO ]
-    function FunctionsHandler.Godhuman:RegisterMethod(name, func)
-        self.Methods[name] = {Call = func}
-    end
-    function FunctionsHandler.Godhuman:Get(key) return self[key] end
-    function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
-
     FunctionsHandler.Godhuman:RegisterMethod("Refresh", function()
         if ScriptStorage.Backpack["Godhuman"] or ScriptStorage.Tools["Godhuman"] then return end
         
@@ -885,17 +886,15 @@ function hoangtuveu()
         _G.MeleeMastery = _G.MeleeMastery or {}
         _G.EquipAttempts = _G.EquipAttempts or {}
 
-        -- Tìm võ đang cầm trên tay
         local currentMelee = nil
         for _, tool in pairs(h.Character:GetChildren()) do if tool:IsA("Tool") and tool.ToolTip == "Melee" then currentMelee = tool end end
         if not currentMelee then
             for _, tool in pairs(h.Backpack:GetChildren()) do if tool:IsA("Tool") and tool.ToolTip == "Melee" then currentMelee = tool end end
         end
         
-        -- Lưu thông thạo của võ đang cầm
         if currentMelee and currentMelee:FindFirstChild("Level") then
             _G.MeleeMastery[currentMelee.Name] = currentMelee.Level.Value
-            _G.EquipAttempts[currentMelee.Name] = 0 -- Reset số lần thử nếu đã cầm thành công
+            _G.EquipAttempts[currentMelee.Name] = 0 
         end
 
         for _, v in ipairs(req) do
@@ -903,26 +902,23 @@ function hoangtuveu()
             local mBuy = v[2]
             local mastery = _G.MeleeMastery[mName]
             
-            -- Nếu chưa từng check Mastery của võ này
             if not mastery then
                 _G.EquipAttempts[mName] = (_G.EquipAttempts[mName] or 0) + 1
-                if _G.EquipAttempts[mName] > 10 then return nil end -- Kẹt quá 10 lần (do thiếu tiền mua) -> Nhường cho CDK!
+                if _G.EquipAttempts[mName] > 10 then return nil end 
                 return {"equip_and_check", mName, mBuy}
             end
             
-            -- Nếu Mastery chưa đủ 400
             if mastery < 400 then
                 if currentMelee and currentMelee.Name == mName then
                     return {"farm", mName, mastery}
                 else
                     _G.EquipAttempts[mName] = (_G.EquipAttempts[mName] or 0) + 1
-                    if _G.EquipAttempts[mName] > 10 then return nil end -- Fail-safe
+                    if _G.EquipAttempts[mName] > 10 then return nil end 
                     return {"equip_and_check", mName, mBuy}
                 end
             end
         end
         
-        -- Nếu 9 võ đã đủ 400 -> Kiểm tra nguyên liệu
         local mats = {
             {"Fish Tail", 20, {"Fishman Raider", "Fishman Captain"}},
             {"Magma Ore", 20, {"Magma Ninja", "Magma Admiral"}},
@@ -944,8 +940,8 @@ function hoangtuveu()
     FunctionsHandler.Godhuman:RegisterMethod("Start", function(step)
         if step[1] == "equip_and_check" then
             SetTask("MainTask", "Godhuman | Đang gọi võ " .. step[2] .. " để check Mastery...")
-            Remotes.CommF_:InvokeServer(step[3]) -- Mua (nếu có đủ tiền)
-            Remotes.CommF_:InvokeServer(step[3], true) -- Trang bị
+            Remotes.CommF_:InvokeServer(step[3])
+            Remotes.CommF_:InvokeServer(step[3], true) 
             task.wait(1.5)
         elseif step[1] == "farm" then
             SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
