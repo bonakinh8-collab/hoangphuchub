@@ -894,8 +894,9 @@ function hoangtuveu()
                 local masterNpc = ScriptStorage.NPCs["Crypt Master"]
                 if masterNpc then
                     TweenController.Create(masterNpc:GetModelCFrame())
-                    if CaculateDistance(masterNpc) < 15 then
-                        fireproximityprompt(masterNpc:FindFirstChildOfClass("ProximityPrompt"))
+                    if CaculateDistance(masterNpc:GetModelCFrame()) < 15 then
+                        local p = masterNpc:FindFirstChildOfClass("ProximityPrompt", true)
+                        if p then fireproximityprompt(p) end
                         Remotes.CommF_:InvokeServer("CDKQuest", "Npc")
                     end
                 end
@@ -939,51 +940,53 @@ function hoangtuveu()
                 end
             elseif step[1] == "Good" then
                 if step[2] == 1 then 
-                    -- [ ĐÃ FIX LỖI 1: LẮP RADAR TÌM VÀ BAY ĐẾN TẬN MẶT 3 ÔNG BOAT DEALER ]
-                    SetTask("MainTask", "CDK | Tushita 1: Tìm 3 Boat Dealer...")
+                    -- [ ĐÃ FIX TRIỆT ĐỂ: KHÔNG DÙNG HUMANOIDROOTPART NỮA ĐỂ TRÁNH NPC BỊ LỖI ]
                     Remotes.CommF_:InvokeServer("CDKQuest", "DockLegend")
+                    _G.TalkedDealers = _G.TalkedDealers or {}
+                    local foundDealer = nil
                     
-                    local dealers = {}
                     for _, v in pairs(workspace.NPCs:GetChildren()) do
-                        if (v.Name == "Boat Dealer" or v.Name == "Luxury Boat Dealer") and v:FindFirstChild("HumanoidRootPart") then
-                            table.insert(dealers, v)
+                        if string.find(v.Name, "Boat Dealer") or string.find(v.Name, "Luxury Boat Dealer") then
+                            local d_id = v.Name .. "_" .. math.floor(v:GetModelCFrame().X)
+                            if not _G.TalkedDealers[d_id] then
+                                foundDealer = {npc = v, id = d_id}
+                                break
+                            end
                         end
                     end
 
-                    for i = 1, math.min(3, #dealers) do
-                        local targetNPC = dealers[i]
-                        SetTask("MainTask", "CDK | Tushita 1: Tới Boat Dealer " .. i .. "/3")
-                        -- Vòng lặp chờ bay đến tận nơi mới thôi
-                        repeat
-                            task.wait()
-                            TweenController.Create(targetNPC.HumanoidRootPart.CFrame)
-                        until CaculateDistance(targetNPC.HumanoidRootPart.CFrame) < 15
-
-                        local prompt = targetNPC:FindFirstChildOfClass("ProximityPrompt", true)
-                        if prompt then
-                            prompt.HoldDuration = 0
-                            fireproximityprompt(prompt)
-                            task.wait(2) -- Chờ nói chuyện xong
+                    if foundDealer then
+                        SetTask("MainTask", "CDK | Tushita 1: Bay tới " .. foundDealer.npc.Name)
+                        local dest = foundDealer.npc:GetModelCFrame()
+                        TweenController.Create(dest)
+                        if CaculateDistance(dest) < 15 then
+                            local prompt = foundDealer.npc:FindFirstChildOfClass("ProximityPrompt", true)
+                            if prompt then
+                                prompt.HoldDuration = 0
+                                fireproximityprompt(prompt)
+                                task.wait(1)
+                            end
+                            _G.TalkedDealers[foundDealer.id] = true
                         end
+                    else
+                        SetTask("MainTask", "CDK | Tushita 1: Đang reset danh sách NPC...")
+                        _G.TalkedDealers = {}
+                        task.wait(1)
                     end
 
                 elseif step[2] == 2 then 
-                    -- [ ĐÃ FIX LỖI 2: THÊM LOGIC ĐÁNH HẢI TẶC ĐỂ KHÔNG BỊ TREO TẠI LÂU ĐÀI ]
                     SetTask("MainTask", "CDK | Tushita 2: Đợi Pirate Raid ở Lâu Đài...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
-                    
                     local castlePos = CFrame.new(-5556, 314, -2988)
                     if CaculateDistance(castlePos) > 50 then
                         TweenController.Create(castlePos)
                     else
-                        -- Tới nơi rồi thì càn quét quái vật
                         for _, mon in pairs(GetMonAsSortedRange()) do
                             if string.find(mon.Name, "Pirate") or string.find(mon.Name, "Diablo") then
                                 CombatController.Attack(mon.Name)
                             end
                         end
                     end
-
                 elseif step[2] == 3 then 
                     SetTask("MainTask", "CDK | Tushita 3: Giết Cake Queen / Vô Heaven...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "Soulless")
