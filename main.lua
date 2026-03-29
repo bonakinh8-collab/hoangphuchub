@@ -651,59 +651,18 @@ function hoangtuveu()
     end
 
     -- =====================================================================
-    -- [ HỆ THỐNG "HACK QUYỀN" COMBAT CONTROLLER VÀ AUTO HAKI + BRING MOB ]
+    -- [ HACK NHẸ QUYỀN ĐỔI VŨ KHÍ (KHÔNG CAN THIỆP VẬT LÝ/BRING MOB) ]
     -- =====================================================================
-    
-    -- 1. Trấn lột quyền Equip Vũ Khí của Hub
     if not _G.EquipHooked then
         _G.EquipHooked = true
         local oldEquip = FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call
         FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call = function(self, weaponName)
-            -- Nếu có lệnh ép vũ khí (ForceWeapon), tráo vũ khí ngay lập tức!
             if _G.ForceWeapon and _G.ForceWeapon ~= "" then
                 weaponName = _G.ForceWeapon
             end
             return oldEquip(self, weaponName)
         end
     end
-
-    -- 2. Vòng lặp ngầm: Bật Haki và Hút Quái (Bring Mob)
-    task.spawn(function()
-        while task.wait() do
-            if _G.Stop then return end
-            pcall(function()
-                local char = game.Players.LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
-                    
-                    -- CHỈ BẬT HAKI VÀ GOM QUÁI KHI ĐANG CÀY MASTERY (Khi có ForceWeapon)
-                    if _G.ForceWeapon then
-                        -- Tự động gầm lên bật Haki nếu chưa có
-                        if not char:FindFirstChild("HasBuso") then
-                            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                            game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.J, false, game)
-                            task.wait(0.1)
-                            game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.J, false, game)
-                        end
-                        
-                        -- Bring Mob (Hút quái trong phạm vi 350 mét)
-                        local hrp = char.HumanoidRootPart
-                        for _, v in pairs(workspace.Enemies:GetChildren()) do
-                            if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
-                                if (v.HumanoidRootPart.Position - hrp.Position).Magnitude < 350 then
-                                    v.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -5)
-                                    v.HumanoidRootPart.Size = Vector3.new(50, 50, 50) -- Phóng to Hitbox
-                                    v.HumanoidRootPart.CanCollide = false
-                                    v.Humanoid.WalkSpeed = 0
-                                    v.Humanoid.JumpPower = 0
-                                end
-                            end
-                        end
-                    end
-
-                end
-            end)
-        end
-    end)
     -- =====================================================================
 
     FunctionsHandler.Saber:RegisterMethod('Refresh', function()
@@ -733,7 +692,7 @@ function hoangtuveu()
         return plateList
     end)
     FunctionsHandler.Saber:RegisterMethod('Start', function()
-        _G.ForceWeapon = nil -- Tắt ép vũ khí
+        _G.ForceWeapon = nil
         local step = FunctionsHandler.Saber:Get("CurrentProgressLevel")
         if step == 1 then
             for i, p in pairs(FunctionsHandler.Saber.Methods.GetQuestplates:Call()) do
@@ -1005,11 +964,20 @@ function hoangtuveu()
             Remotes.CommF_:InvokeServer(step[3], true) 
             task.wait(1.5)
         elseif step[1] == "farm" then
-            -- [ BẬT ÉP VŨ KHÍ ] -> Bắt CombatController phải dùng võ này, tự Haki, tự gom quái
             _G.ForceWeapon = step[2]
             SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
+            
+            -- [ BẬT HAKI MỘT LẦN TRƯỚC KHI ĐÁNH ]
+            pcall(function()
+                local char = game.Players.LocalPlayer.Character
+                if char and not char:FindFirstChild("HasBuso") then
+                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
+                end
+            end)
+
             local bone_pos = CFrame.new(-9473, 142, 5567)
             if CaculateDistance(bone_pos) > 1000 then TweenController.Create(bone_pos) else
+                -- Để CombatController của Source tự lo việc gom quái và đánh
                 CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
             end
         elseif step[1] == "farm_mat" then
@@ -1104,14 +1072,22 @@ function hoangtuveu()
                     currentMastery = step[3]
                 end
 
-                -- [ BẬT ÉP VŨ KHÍ TỐI THƯỢNG ] -> Chặn mồm CombatController
                 _G.ForceWeapon = weaponName
-
                 SetTask("MainTask", "CDK | Farm Mastery " .. weaponName .. " (" .. currentMastery .. "/350)")
+                
+                -- [ BẬT HAKI MỘT LẦN TRƯỚC KHI ĐÁNH ]
+                pcall(function()
+                    local char = game.Players.LocalPlayer.Character
+                    if char and not char:FindFirstChild("HasBuso") then
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
+                    end
+                end)
+
                 local bone_pos = CFrame.new(-9473, 142, 5567)
                 if CaculateDistance(bone_pos) > 1000 then 
                     TweenController.Create(bone_pos) 
                 else
+                    -- Để CombatController của Source tự lo việc gom quái và đánh
                     CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
                 end
             elseif step[1] == "talk_crypt_master" then
@@ -1173,6 +1149,7 @@ function hoangtuveu()
                         end
                     else _G.CDK_DealerIndex = 1 end
                 elseif step[2] == 2 then 
+                    _G.ForceWeapon = nil
                     SetTask("MainTask", "CDK | Tushita 2: Đợi Pirate Raid ở Lâu Đài...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
                     local castlePos = CFrame.new(-5556, 314, -2988)
@@ -1182,6 +1159,7 @@ function hoangtuveu()
                         end
                     end
                 elseif step[2] == 3 then 
+                    _G.ForceWeapon = nil
                     SetTask("MainTask", "CDK | Tushita 3: Giết Cake Queen...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "Soulless")
                     if workspace.Enemies:FindFirstChild("Cake Queen") then CombatController.Attack("Cake Queen") end
@@ -1214,7 +1192,6 @@ function hoangtuveu()
     end)
 
     FunctionsHandler.RaidController:RegisterMethod("Refresh", function()
-        if not Config.Settings.AutoRaid then return end -- Tắt Raid nếu k cần
         local p_lvl = ScriptStorage.PlayerData.Level
         local p_frag = ScriptStorage.PlayerData.Fragments
         if p_lvl < 1300 or SeaIndex == 1 then return end
@@ -1364,9 +1341,7 @@ function hoangtuveu()
                 pcall(function()
                     if SeaIndex == 3 then
                         local bones = (ScriptStorage.Backpack["Bones"] or {Count = 0}).Count
-                        if bones >= 50 then
-                            Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
-                        end
+                        if bones >= 50 then Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1) end
                     end
                 end)
             end
