@@ -817,27 +817,27 @@ function hoangtuveu()
         end
     end)
 
-    -- [ ĐÃ FIX LỖI TỪ CHỐI GẶP CRYPT MASTER ]
+    -- [ CẬP NHẬT: LOGIC TỰ ĐỌC THƯ CDK SAU KHI PHÁ CỬA ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
         if ScriptStorage.PlayerData.Level < 2200 then return end
-        
-        -- LƯU Ý: Nếu ông chưa đủ 350 Mastery ở Yama và Tushita, nó sẽ dừng ở dòng này!
         if bp["Cursed Dual Katana"] or not bp.Tushita or (bp.Tushita.Mastery or 0) < 350 or not bp.Yama or (bp.Yama.Mastery or 0) < 350 then return end
         if SeaIndex ~= 3 then return end
         
         local prog = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
-        
-        -- [ SỬA CHỖ NÀY: Trả về lệnh để Start thực hiện thay vì trả về nil ]
-        if not prog or prog == 'uwu' then
-            return {"talk_crypt_master"}
-        end
+        if not prog or prog == 'uwu' then return {"talk_crypt_master"} end
         
         if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then return {"break"} end
+        
+        -- Nếu cửa đã vỡ nhưng chưa nhận Trial nào -> Ra lệnh tự động đọc thư!
+        if not prog.Opened then
+            if type(prog.Good) == "number" and prog.Good <= 3 then return {"burn"} end
+            if type(prog.Evil) == "number" and prog.Evil <= 3 then return {"burn 2"} end
+            return {"boss"} -- Làm xong hết thì gọi Boss cuối
+        end
+        
         local mapType = {Good = 'Tushita', Evil = 'Yama'}
-        if prog.Good == 4 and prog.Evil == 4 then return {'burn 2'} end
-        if prog.Good == 3 or prog.Evil == 3 then return {"burn"} end
         if prog.Opened then
             for side, val in pairs(prog) do
                 if side ~= 'Opened' and side ~= "Finished" and val < 3 then
@@ -893,10 +893,8 @@ function hoangtuveu()
 
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
         if type(step) == "table" then
-            SetTask("MainTask", "CDK Quest | Đang làm nhiệm vụ: " .. tostring(step[1]) .. " - Bước: " .. tostring(step[2]))
-            
-            -- [ SỬA CHỖ NÀY: Nhận lệnh bay đến NPC Master ]
             if step[1] == "talk_crypt_master" then
+                SetTask("MainTask", "CDK Quest | Nói chuyện với Crypt Master...")
                 local masterNpc = ScriptStorage.NPCs["Crypt Master"]
                 if masterNpc then
                     TweenController.Create(masterNpc:GetModelCFrame())
@@ -906,21 +904,33 @@ function hoangtuveu()
                     end
                 end
             elseif step[1] == "break" then
+                SetTask("MainTask", "CDK Quest | Phá vỡ bức tường bí mật!")
                 local door = workspace.Map.Turtle.Cursed:FindFirstChild("Breakable")
                 if door then
                     TweenController.Create(door.CFrame)
                     local mob = workspace.Enemies:FindFirstChild("Cursed Skeleton")
-                    if mob and mob:FindFirstChild("HumanoidRootPart") then
-                        mob.HumanoidRootPart.CFrame = door.CFrame 
-                    end
+                    if mob and mob:FindFirstChild("HumanoidRootPart") then mob.HumanoidRootPart.CFrame = door.CFrame end
                     CombatController.Attack("Cursed Skeleton")
                     task.delay(3, function() pcall(function() door:Destroy() end) end)
                 end
             elseif step[1] == "burn" or step[1] == "burn 2" then
+                SetTask("MainTask", "CDK Quest | Tương tác với cuộn " .. (step[1] == "burn" and "Thiện (Tushita)" or "Ác (Yama)"))
                 local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(step[1] == "burn" and "GoodScroll" or "EvilScroll")
                 if scroll then 
                     TweenController.Create(scroll.CFrame) 
                     fireproximityprompt(scroll:FindFirstChildOfClass("ProximityPrompt")) 
+                end
+            elseif step[1] == "boss" then
+                SetTask("MainTask", "CDK Quest | Tiêu diệt Cursed Skeleton Boss để lấy CDK!")
+                local boss = workspace.Enemies:FindFirstChild("Cursed Skeleton Boss") or game.ReplicatedStorage:FindFirstChild("Cursed Skeleton Boss")
+                if boss then
+                    CombatController.Attack("Cursed Skeleton Boss")
+                else
+                    local ped = workspace.Map.Turtle.Cursed:FindFirstChild("Pedestal")
+                    if ped then
+                        TweenController.Create(ped.CFrame)
+                        fireclickdetector(ped.ClickDetector)
+                    end
                 end
             elseif step[1] == "Good" then
                 if step[2] == 1 then 
@@ -950,7 +960,12 @@ function hoangtuveu()
                 elseif step[2] == 3 then 
                     SetTask("MainTask", "CDK | Yama 3: Triệu hồi Reaper / Vô Hell...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "FearTheReaper")
-                    TweenController.Create(CFrame.new(-9473, 142, 5567)) 
+                    local reaper = workspace.Enemies:FindFirstChild("Soul Reaper")
+                    if reaper then
+                        TweenController.Create(reaper.HumanoidRootPart.CFrame)
+                    else
+                        TweenController.Create(CFrame.new(-9473, 142, 5567)) 
+                    end
                     FunctionsHandler.CursedDualKatana.Methods.DoDimension:Call("Hell")
                 end
             end
