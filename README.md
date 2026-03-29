@@ -13,7 +13,6 @@ function hoangtuveu()
     local h = game.Players.LocalPlayer
     repeat task.wait() until h:GetMouse()
     repeat task.wait() until game:GetService("CoreGui")
-
     local InitTime = os.time()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
     local W = {Instances = {}}
@@ -605,6 +604,7 @@ function hoangtuveu()
         return W_s .. '-' .. W_s
     end
 	FunctionsHandler.LevelFarm:RegisterMethod("Start", function(floor)
+    FunctionsHandler.LevelFarm:Register()
         if SeaIndex == 3 then
             if (ScriptStorage.Backpack.Bones or {Count = 0}).Count >= 50 then
                 if os.time() > (BonesCooldown or 0) then
