@@ -635,50 +635,15 @@ function hoangtuveu()
             CombatController.Attack(monName)
         end
     end)
-	-- [ KHỞI TẠO NÃO BỘ CHỐNG CRASH CHO CÁC MODULE MỚI ]
-    if not FunctionsHandler.ChestFarm or not FunctionsHandler.ChestFarm.RegisterMethod then
-        FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
-        function FunctionsHandler.ChestFarm:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
-        function FunctionsHandler.ChestFarm:Get(key) return self[key] end
-        function FunctionsHandler.ChestFarm:Set(key, val) self[key] = val end
-    end
-
-    if not FunctionsHandler.Godhuman or not FunctionsHandler.Godhuman.RegisterMethod then
-        FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
-        function FunctionsHandler.Godhuman:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
-        function FunctionsHandler.Godhuman:Get(key) return self[key] end
-        function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
-    end
-
-    -- [ HỆ THỐNG GOM QUÁI, BẬT HAKI & ÉP VŨ KHÍ TỪ SOURCE GỐC ]
-    if not _G.BringAndEquip then
-        _G.BringAndEquip = function(weaponName, targetPos, mobList)
-            pcall(function()
-                local char = game.Players.LocalPlayer.Character
-                -- 1. Tự động bật Haki (Aura) nếu chưa bật
-                if char and not char:FindFirstChild("HasBuso") then
-                    game.ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
-                end
-                
-                -- 2. Ép cầm đúng vũ khí (Tushita/Yama/Melee)
-                local wep = game.Players.LocalPlayer.Backpack:FindFirstChild(weaponName)
-                if wep and char:FindFirstChild("Humanoid") then
-                    char.Humanoid:EquipTool(wep)
-                end
-                
-                -- 3. Gom Quái (Bring Mob) + Phóng to Hitbox
-                for _, v in pairs(workspace.Enemies:GetChildren()) do
-                    if table.find(mobList, v.Name) and v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                        if (v.HumanoidRootPart.Position - targetPos.Position).Magnitude < 400 then
-                            v.HumanoidRootPart.CFrame = targetPos
-                            v.HumanoidRootPart.CanCollide = false
-                            v.HumanoidRootPart.Size = Vector3.new(50, 50, 50) -- Phóng to quái để chém AOE
-                            v.Humanoid.WalkSpeed = 0
-                            v.Humanoid.JumpPower = 0
-                        end
-                    end
-                end
-            end)
+	-- [ VÁ NÃO CHỐNG CRASH CHO TOÀN BỘ HỆ THỐNG (FIX F9 VĨNH VIỄN) ]
+    local SafeModules = {"Saber", "Yama", "Tushita", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "RaidController", "Wenlocktoad", "AutoHopBoss"}
+    for _, mod in pairs(SafeModules) do
+        FunctionsHandler[mod] = FunctionsHandler[mod] or {Initalized = true, Methods = {}}
+        FunctionsHandler[mod].Methods = FunctionsHandler[mod].Methods or {}
+        if type(FunctionsHandler[mod].RegisterMethod) ~= "function" then
+            FunctionsHandler[mod].RegisterMethod = function(self, name, func) self.Methods[name] = {Call = func} end
+            FunctionsHandler[mod].Get = function(self, key) return self[key] end
+            FunctionsHandler[mod].Set = function(self, key, val) self[key] = val end
         end
     end
 
@@ -855,10 +820,7 @@ function hoangtuveu()
             Remotes.CommF_:InvokeServer("TravelZou")
         elseif step == "farm_ecto" then
             SetTask("MainTask", "Soul Guitar | Cursed Ship: Farm Ectoplasm (" .. ((ScriptStorage.Backpack['Ectoplasm'] or {Count=0}).Count) .. "/250)")
-            local mobList = {"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"}
-            -- Thêm Gom quái cho Cursed Ship luôn
-            _G.BringAndEquip("Melee", game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame, mobList)
-            CombatController.Attack(mobList)
+            CombatController.Attack({"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"})
         elseif step == 7 then
             SetTask("MainTask", 'Soul Guitar | Activating Gravestone Event')
             if CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 then TweenController.Create(CFrame.new(-8654.0, 140, 6167)) else SoulGuitarProcess = Remotes.CommF_:InvokeServer("gravestoneEvent", 2, true) end
@@ -985,11 +947,8 @@ function hoangtuveu()
         elseif step[1] == "farm" then
             SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
             local bone_pos = CFrame.new(-9473, 142, 5567)
-            local mobList = {"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"}
             if CaculateDistance(bone_pos) > 1000 then TweenController.Create(bone_pos) else
-                -- [ ĐÃ FIX ]: Gom quái, bật Haki, ép cầm võ đang farm
-                _G.BringAndEquip(step[2], bone_pos, mobList)
-                CombatController.Attack(mobList)
+                CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
             end
         elseif step[1] == "farm_mat" then
             local matName = step[2]
@@ -999,7 +958,6 @@ function hoangtuveu()
             elseif matName == "Fish Tail" or matName == "Dragon Scale" then
                 if SeaIndex ~= 3 then Remotes.CommF_:InvokeServer("TravelZou") return end
             end
-            _G.BringAndEquip("Melee", game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame, step[5])
             CombatController.Attack(step[5])
         elseif step[1] == "godhuman_buy" then
             SetTask("MainTask", "Godhuman | Đủ điều kiện! Đang mua Godhuman tại Cổ Thụ!")
@@ -1085,16 +1043,11 @@ function hoangtuveu()
                 end
 
                 SetTask("MainTask", "CDK | Farm Mastery " .. weaponName .. " (" .. currentMastery .. "/350)")
-                
                 local bone_pos = CFrame.new(-9473, 142, 5567)
-                local mobList = {"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"}
-                
                 if CaculateDistance(bone_pos) > 1000 then 
                     TweenController.Create(bone_pos) 
                 else
-                    -- [ ĐÃ FIX ]: Chạy hàm gom quái, hút tất cả lại, bật Haki, tay cầm đúng kiếm đang farm
-                    _G.BringAndEquip(weaponName, bone_pos, mobList)
-                    CombatController.Attack(mobList)
+                    CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"})
                 end
             elseif step[1] == "talk_crypt_master" then
                 SetTask("MainTask", "CDK Quest | Nhận phép mở cửa từ Crypt Master...")
@@ -1344,6 +1297,67 @@ function hoangtuveu()
                 end)
             end
         end
+    end)
+
+    -- [ VÒNG LẶP TIM MẠCH (HEARTBEAT): ÉP KIẾM, HÚT QUÁI, TỰ HAKI 60 LẦN/GIÂY ]
+    task.spawn(function()
+        local rs = game:GetService("RunService")
+        rs.Heartbeat:Connect(function()
+            if _G.Stop then return end
+            pcall(function()
+                local mainText = tostring(GetText('MainTask') or "")
+                local char = game.Players.LocalPlayer.Character
+                if not char or not char:FindFirstChild("Humanoid") then return end
+
+                -- Luôn bật Haki khi đang Farm
+                if string.find(mainText, "Farm") or string.find(mainText, "Cày") then
+                    if not char:FindFirstChild("HasBuso") then
+                        game.ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
+                    end
+                end
+
+                -- Trấn lột CombatController, ép tay cầm Kiếm Tushita/Yama
+                if string.find(mainText, "CDK | Farm Mastery") then
+                    local wepName = string.find(mainText, "Tushita") and "Tushita" or "Yama"
+                    local wep = game.Players.LocalPlayer.Backpack:FindFirstChild(wepName)
+                    if wep then char.Humanoid:EquipTool(wep) end
+                    
+                    -- Hút toàn bộ quái lại 1 điểm (Bring Mob)
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        for _, v in pairs(workspace.Enemies:GetChildren()) do
+                            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                                if (v.HumanoidRootPart.Position - hrp.Position).Magnitude < 350 then
+                                    v.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -5)
+                                    v.HumanoidRootPart.Size = Vector3.new(60, 60, 60)
+                                    v.HumanoidRootPart.CanCollide = false
+                                    v.Humanoid.WalkSpeed = 0
+                                    v.Humanoid.JumpPower = 0
+                                end
+                            end
+                        end
+                    end
+                end
+
+                -- Gom quái cho Godhuman
+                if string.find(mainText, "Godhuman | Cày") then
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        for _, v in pairs(workspace.Enemies:GetChildren()) do
+                            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                                if (v.HumanoidRootPart.Position - hrp.Position).Magnitude < 350 then
+                                    v.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -5)
+                                    v.HumanoidRootPart.Size = Vector3.new(60, 60, 60)
+                                    v.HumanoidRootPart.CanCollide = false
+                                    v.Humanoid.WalkSpeed = 0
+                                    v.Humanoid.JumpPower = 0
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end)
     end)
 
     TasksOrder = {"AutoHopBoss", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "Tushita", "Yama", "RaidController", "Wenlocktoad", "LevelFarm"}
