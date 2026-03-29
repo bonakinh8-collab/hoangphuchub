@@ -817,7 +817,6 @@ function hoangtuveu()
         end
     end)
 
-    -- [ ĐÃ FIX LỖI KẸT TƯƠNG TÁC CUỘN THƯ ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
@@ -831,17 +830,13 @@ function hoangtuveu()
         
         if prog.Good == 4 and prog.Evil == 4 then return {"boss"} end
 
-        -- Kiểm tra Cuộn Thiện (Tushita)
         if type(prog.Good) == "number" and prog.Good < 4 then
             local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("GoodScroll")
-            -- Nếu cuộn giấy chưa cháy (còn nút bấm tương tác) -> Phải đọc nó!
             if scroll and scroll:FindFirstChildOfClass("ProximityPrompt") then return {"burn"} end
-            -- Nếu cuộn giấy đã cháy -> Nhiệm vụ đang chạy -> Tiến hành làm nhiệm vụ!
             local stepNum = prog.Good == 0 and 1 or prog.Good
             return {"Good", stepNum}
         end
 
-        -- Kiểm tra Cuộn Ác (Yama)
         if type(prog.Evil) == "number" and prog.Evil < 4 then
             local scroll = workspace.Map.Turtle.Cursed:FindFirstChild("EvilScroll")
             if scroll and scroll:FindFirstChildOfClass("ProximityPrompt") then return {"burn 2"} end
@@ -915,7 +910,6 @@ function hoangtuveu()
                     task.delay(3, function() pcall(function() door:Destroy() end) end)
                 end
             elseif step[1] == "burn" or step[1] == "burn 2" then
-                -- [ FIX Ở ĐÂY: Dừng lại và Ép tương tác với cuộn thư ]
                 local scrollName = step[1] == "burn" and "GoodScroll" or "EvilScroll"
                 SetTask("MainTask", "CDK Quest | Tương tác với " .. scrollName)
                 local scroll = workspace.Map.Turtle.Cursed:FindFirstChild(scrollName)
@@ -925,10 +919,8 @@ function hoangtuveu()
                     else
                         local prompt = scroll:FindFirstChildOfClass("ProximityPrompt")
                         if prompt then
-                            -- Ép HoldDuration = 0 để chạm phát ăn luôn
                             prompt.HoldDuration = 0
                             fireproximityprompt(prompt)
-                            -- Chờ 1.5 giây để Server cập nhật trạng thái nhiệm vụ, tránh spam
                             task.wait(1.5) 
                         end
                     end
@@ -947,12 +939,51 @@ function hoangtuveu()
                 end
             elseif step[1] == "Good" then
                 if step[2] == 1 then 
+                    -- [ ĐÃ FIX LỖI 1: LẮP RADAR TÌM VÀ BAY ĐẾN TẬN MẶT 3 ÔNG BOAT DEALER ]
                     SetTask("MainTask", "CDK | Tushita 1: Tìm 3 Boat Dealer...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "DockLegend")
+                    
+                    local dealers = {}
+                    for _, v in pairs(workspace.NPCs:GetChildren()) do
+                        if (v.Name == "Boat Dealer" or v.Name == "Luxury Boat Dealer") and v:FindFirstChild("HumanoidRootPart") then
+                            table.insert(dealers, v)
+                        end
+                    end
+
+                    for i = 1, math.min(3, #dealers) do
+                        local targetNPC = dealers[i]
+                        SetTask("MainTask", "CDK | Tushita 1: Tới Boat Dealer " .. i .. "/3")
+                        -- Vòng lặp chờ bay đến tận nơi mới thôi
+                        repeat
+                            task.wait()
+                            TweenController.Create(targetNPC.HumanoidRootPart.CFrame)
+                        until CaculateDistance(targetNPC.HumanoidRootPart.CFrame) < 15
+
+                        local prompt = targetNPC:FindFirstChildOfClass("ProximityPrompt", true)
+                        if prompt then
+                            prompt.HoldDuration = 0
+                            fireproximityprompt(prompt)
+                            task.wait(2) -- Chờ nói chuyện xong
+                        end
+                    end
+
                 elseif step[2] == 2 then 
+                    -- [ ĐÃ FIX LỖI 2: THÊM LOGIC ĐÁNH HẢI TẶC ĐỂ KHÔNG BỊ TREO TẠI LÂU ĐÀI ]
                     SetTask("MainTask", "CDK | Tushita 2: Đợi Pirate Raid ở Lâu Đài...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "SenseOfDuty")
-                    TweenController.Create(CFrame.new(-5556, 314, -2988))
+                    
+                    local castlePos = CFrame.new(-5556, 314, -2988)
+                    if CaculateDistance(castlePos) > 50 then
+                        TweenController.Create(castlePos)
+                    else
+                        -- Tới nơi rồi thì càn quét quái vật
+                        for _, mon in pairs(GetMonAsSortedRange()) do
+                            if string.find(mon.Name, "Pirate") or string.find(mon.Name, "Diablo") then
+                                CombatController.Attack(mon.Name)
+                            end
+                        end
+                    end
+
                 elseif step[2] == 3 then 
                     SetTask("MainTask", "CDK | Tushita 3: Giết Cake Queen / Vô Heaven...")
                     Remotes.CommF_:InvokeServer("CDKQuest", "Soulless")
