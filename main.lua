@@ -1012,17 +1012,26 @@ function hoangtuveu()
         end
     end
 
-SetText('MainTextLabel', "HoangPhucHub: Đang đồng bộ dữ liệu...")
+    SetText('MainTextLabel', "HoangPhucHub: Đang ép game tải dữ liệu...")
     
-    -- [ CHỐT AN TOÀN ] Bắt buộc phải lấy xong Level mới cho chạy tiếp
+    -- [ PHÁ ẤN ] Ép hệ thống chờ thư mục Data của game xuất hiện
+    h:WaitForChild("Data", 9e9)
+    
+    -- Vòng lặp lấy dữ liệu Level (Không có Level tuyệt đối không cho chạy Quest)
     repeat 
         task.wait(0.5) 
-        pcall(RefreshPlayerData) 
-    until ScriptStorage.PlayerData.Level
+        pcall(function()
+            for _, a_v in pairs(h.Data:GetChildren()) do 
+                ScriptStorage.PlayerData[a_v.Name] = a_v.Value 
+            end
+        end)
+    until ScriptStorage.PlayerData.Level ~= nil
     
-    AddPoint()
+    SetText('MainTextLabel', "HoangPhucHub: Đã có Level, xuất chiến!")
+
+    pcall(function() AddPoint() end)
     pcall(function() J_quest:RefreshQuest() end)
-    RefreshInventory()
+    pcall(function() RefreshInventory() end)
 
     h.Idled:Connect(function()
         game:GetService("VirtualUser"):CaptureController()
@@ -1030,7 +1039,7 @@ SetText('MainTextLabel', "HoangPhucHub: Đang đồng bộ dữ liệu...")
     end)
 
     task.spawn(function()
-        while task.wait(1) do -- Chỉnh thành 1s cho nhẹ máy, không cần spam
+        while task.wait(1) do
             if not _G.Stop then
                 pcall(RefreshPlayerData)
                 local elapsed = os.time() - InitTime
@@ -1049,8 +1058,8 @@ SetText('MainTextLabel', "HoangPhucHub: Đang đồng bộ dữ liệu...")
     while task.wait() do
         local success, err = xpcall(RefreshTasksData, debug.traceback)
         if not success and err then 
-            warn("HoangPhucHub Error: ", err) 
-            task.wait(1) -- Tạm nghỉ 1s nếu bị lỗi lặp để chống crash game
+            warn("HoangPhucHub Error: ", err)
+            task.wait(1) 
         end
     end
 end
