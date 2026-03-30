@@ -595,7 +595,7 @@ function hoangtuveu()
     local W = 30
     lastChange = tick()
     CaculateCircreDirection = function(a)
-        lastChange = lastChange or tick() -- [ DÒNG CHỐNG CRASH ]
+        lastChange = lastChange or tick() -- <<< NHÉT VÀO TRONG BỤNG HÀM NHƯ NÀY NÈ!
         if W > 50000 then W = 60 end
         W = W + ((tick() - lastChange) > .4 and 80 or 0)
         if tick() - lastChange > .4 then lastChange = tick() end
