@@ -652,12 +652,14 @@ function hoangtuveu()
     -- Bắt CombatController phải dùng vũ khí mình muốn thay vì Melee
     -- =====================================================================
     task.spawn(function()
+        -- [ ĐÃ FIX ]: Chờ hệ thống load đầy đủ hàm EquipTool.Call mới Hook để tránh lỗi nil Line 16
         repeat task.wait(0.5) until FunctionsHandler and FunctionsHandler.LocalPlayerController and FunctionsHandler.LocalPlayerController.Methods and FunctionsHandler.LocalPlayerController.Methods.EquipTool and FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call
         
         if not _G.EquipHooked then
             _G.EquipHooked = true
             local oldEquip = FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call
             FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call = function(self, weaponName)
+                if type(oldEquip) ~= "function" then return end -- Khóa an toàn chống Crash nil
                 if _G.TargetWeapon and _G.TargetWeapon ~= "" then
                     return oldEquip(self, _G.TargetWeapon)
                 end
@@ -992,7 +994,7 @@ function hoangtuveu()
                 pcall(function() J_quest:RefreshQuest() end)
             else
                 SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
-                local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob and FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+                local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
                 if mobToFarm then CombatController.Attack(mobToFarm) else CombatController.Attack("Reborn Skeleton") end
             end
 
@@ -1008,7 +1010,7 @@ function hoangtuveu()
             
             -- Để LevelFarm tự chọn bãi quái
             pcall(function() J_quest:RefreshQuest() end)
-            local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob and FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+            local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
             if mobToFarm then CombatController.Attack(mobToFarm) end
 
         elseif step[1] == "godhuman_buy" then
@@ -1095,7 +1097,7 @@ function hoangtuveu()
                     pcall(function() J_quest:RefreshQuest() end)
                 else
                     SetTask("MainTask", "CDK | Farm Mastery " .. weaponName .. " (" .. currentMastery .. "/350)")
-                    local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob and FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+                    local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
                     if mobToFarm then CombatController.Attack(mobToFarm) else CombatController.Attack("Reborn Skeleton") end
                 end
 
@@ -1199,164 +1201,4 @@ function hoangtuveu()
             end
         end
     end)
-
-    -- [ MODULE AUTO RAID ]
-    FunctionsHandler.RaidController:RegisterMethod("Refresh", function()
-        local p_lvl = ScriptStorage.PlayerData.Level
-        local p_frag = ScriptStorage.PlayerData.Fragments
-        if p_lvl < 1300 or SeaIndex == 1 then return end
-        if p_lvl < 1500 and p_frag > 2000 then return end
-        if p_lvl < MaxLevel and p_frag > 5000 then return end
-        if p_lvl >= MaxLevel and p_frag > 10000 then return end
-        for _, item in pairs(ScriptStorage.Backpack) do
-            if string.find(FruitIdToName(item.Name), " Fruit") and item.Value and item.Value < 1000000 then return item end
-        end
-        local isl
-        for _, loc in pairs(workspace['_WorldOrigin'].Locations:GetChildren()) do
-            if string.find(loc.Name, 'Island ') and CaculateDistance(loc.Position, Vector3.new(0, 0, 0)) > 7000 then
-                if CaculateDistance(loc.Position) < 2000 then isl = loc break end
-            end
-        end
-        return isl or ScriptStorage.Tools["Special Microchip"]
-    end)
-    FunctionsHandler.RaidController:RegisterMethod("Start", function(data)
-        _G.TargetWeapon = nil
-        if typeof(data) == "Instance" and data:IsA("Part") then
-            SetTask('MainTask', "Auto Raid | Dọn dẹp Đảo " .. data.Name)
-            local hit = false
-            for _, mon in pairs(GetMonAsSortedRange()) do
-                if mon and mon:FindFirstChild("HumanoidRootPart") and mon.Humanoid.Health > 0 and CaculateDistance(mon.HumanoidRootPart.Position) < 1000 then
-                    hit = true CombatController.Attack(mon.Name)
-                end
-            end
-            if not hit then TweenController.Create(data.Position + Vector3.new(0, 100, 0)) end
-        else
-            SetTask('MainTask', "Auto Raid | Chuẩn bị Raid Flame")
-            if not ScriptStorage.Tools['Special Microchip'] and type(data) == "table" then
-                Remotes.CommF_:InvokeServer('LoadFruit', data.Name)
-                Remotes.CommF_:InvokeServer("RaidsNpc", 'Select', 'Flame')
-            end
-            local raid_loc = ({nil, 'Circle Island', "Boat Castle"})[SeaIndex]
-            local summon_spot = ScriptStorage.Map[raid_loc]
-            if summon_spot then TweenController.Create(summon_spot:GetModelCFrame()) end
-            if ScriptStorage.Tools['Special Microchip'] and summon_spot and summon_spot:FindFirstChild("RaidSummon2") then
-                FunctionsHandler.LocalPlayerController.Methods.EquipTool:Call('Special Microchip')
-                fireclickdetector(summon_spot.RaidSummon2.Button.Main.ClickDetector)
-            end
-        end
-    end)
-
-    -- [ MODULE UP TỘC V3 ]
-    FunctionsHandler.Wenlocktoad:RegisterMethod("Refresh", function()
-        if ScriptStorage.PlayerData.RaceLevel ~= 2 or ScriptStorage.PlayerData.Level < 1000 or ScriptStorage.PlayerData.Beli < 2000000 or SeaIndex ~= 2 then return end
-        if Remotes.CommF_:InvokeServer("Wenlocktoad", "1") == -2 then ScriptStorage.PlayerData.RaceLevel = 3 return false end
-        return true
-    end)
-    FunctionsHandler.Wenlocktoad:RegisterMethod("Start", function()
-        _G.TargetWeapon = nil
-        SetTask('MainTask', "Up Tộc V3 | Nhiệm vụ Arowe")
-        local arowe = ScriptStorage.NPCs["Arowe"]
-        if arowe then
-            TweenController.Create(arowe:GetModelCFrame())
-            if CaculateDistance(arowe) < 15 then
-                Remotes.CommF_:InvokeServer("Wenlocktoad", "1")
-                task.wait(0.5) Remotes.CommF_:InvokeServer("Wenlocktoad", "2")
-                task.wait(0.5) Remotes.CommF_:InvokeServer("Wenlocktoad", "3")
-            end
-        end
-    end)
-
-    -- [ MODULE SĂN BOSS VIP ]
-    FunctionsHandler.AutoHopBoss:RegisterMethod("Refresh", function()
-        local bp = ScriptStorage.Backpack
-        if Config.Items.DarkFragment and not bp['Dark Fragment'] and SeaIndex == 2 then
-            if ScriptStorage.Enemies["Darkbeard"] then return "Darkbeard" end
-        end
-        local thieuTushita = Config.Items.CursedDualKatana and not bp['Tushita']
-        local thieuMu = Config.Items.ValkyrieHelm and not bp['Valkyrie Helm']
-        if (thieuTushita or thieuMu) and SeaIndex == 3 then
-            if ScriptStorage.Enemies["rip_indra True Form"] then return "rip_indra True Form" end
-        end
-        if Config.Items.DoughKing and not bp['Pale Scarf'] and SeaIndex == 3 then
-            if ScriptStorage.Enemies["Dough King"] then return "Dough King" end
-        end
-        return false
-    end)
-    FunctionsHandler.AutoHopBoss:RegisterMethod("Start", function(mode)
-        _G.TargetWeapon = nil
-        SetTask("MainTask", "VIP Săn Boss | Phát hiện Boss " .. mode .. " trong Server, đấm ngay!")
-        if mode == "rip_indra True Form" and not ScriptStorage.Backpack['Tushita'] then
-            TweenController.Create(CFrame.new(5714, 20, 256))
-            if ScriptStorage.Tools["Holy Torch"] then
-                for i = 1, 5 do Remotes.CommF_:InvokeServer("TushitaProgress", "Torch", i) end
-            end
-        else
-            CombatController.Attack(mode)
-        end
-    end)
-
-    local notifier = {Listeners = {}}
-    getgenv().NotificationCallBack = (function(msg)
-        for key, func in pairs(notifier.Listeners) do
-            if string.find(string.lower(msg), string.lower(key)) then func(msg) end
-        end
-    end)
-    function notifier:RegisterNotifyListener(key, func) notifier.Listeners[key] = func end
-    notifier:RegisterNotifyListener("level", function() AddPoint() end)
-
-    local old_notify
-    old_notify = hookfunction(require(game.ReplicatedStorage.Notification).new, function(title, msg)
-        getgenv().NotificationCallBack(tostring(tostring(title or '') .. tostring(msg or "")))
-        return old_notify(title, msg)
-    end)
-
-    function GetServers()
-        if LastServersDataPulled and os.time() - LastServersDataPulled < 60 then return CachedServers end
-        for k_idx = 1, 100, 1 do
-            local W_res = game.ReplicatedStorage:WaitForChild("__ServerBrowser"):InvokeServer(k_idx)
-            if W_res and type(W_res) == "table" then
-                LastServersDataPulled = os.time()
-                CachedServers = W_res
-                return W_res
-            end
-        end
-    end
-
-    function Hop()
-        local h_list = GetServers()
-        local X_filtered = {}
-        if h_list then
-            for w_id, D_data in pairs(h_list) do table.insert(X_filtered, {JobId = w_id, Players = D_data.Count}) end
-            if #X_filtered > 0 then
-                game.ReplicatedStorage:WaitForChild('__ServerBrowser'):InvokeServer("teleport", X_filtered[math.random(1, #X_filtered)].JobId)
-            end
-        end
-    end
-
-    Storage = {WRITE_DELAY = .5, Data = {}}
-    local k_file_path = ".storage_u_" .. tostring(h)
-    function Storage:Set(h_k, X_v) self.Data[h_k] = X_v end
-    function Storage:Get(h_k) return self.Data[h_k] end
-    function Storage:Save() pcall(function() writefile(k_file_path, game:GetService("HttpService"):JSONEncode(self.Data)) end) end
-    pcall(function() Storage.Data = game:GetService("HttpService"):JSONDecode(readfile(k_file_path) or '{}') end)
-    task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
-
-    -- [ AUTO RANDOM TRÁI ÁC QUỶ VÀ ĐỔI XƯƠNG NGẦM ]
-    task.spawn(function()
-        while task.wait(5) do
-            if not _G.Stop then
-                pcall(function()
-                    local tick = Remotes.CommF_:InvokeServer("Cousin", "GetTick")
-                    if type(tick) == "number" and tick == 0 then
-                        Remotes.CommF_:InvokeServer("Cousin", "Buy")
-                    end
-                end)
-                pcall(function()
-                    if SeaIndex == 3 then
-                        local bones = (ScriptStorage.Backpack["Bones"] or {Count = 0}).Count
-                        if bones >= 50 then Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1) end
-                    end
-                end)
-            end
-        end
-    end)
+hoangtuveu()
