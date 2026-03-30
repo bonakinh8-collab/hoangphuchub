@@ -2973,24 +2973,25 @@ function hoangtuveu()
     SetTask("MainTask", 'n/a')
     SetTask("SubTask", 'n/a')
 ParsingTimes = 0
-function RefreshTasksData()
-    for _, taskName in ipairs(TasksOrder) do
-        local module = FunctionsHandler[taskName]
-        if module and module.Initalized then
-            local refresh = module.Methods.Refresh
-            local start = module.Methods.Start
-            if refresh then
-                local result = refresh:Call(ParsingTimes < 100)
-                ParsingTimes = ParsingTimes + 1
-                if result and ParsingTimes > 100 then
-                    ScriptStorage.Interface.SetText('DebugLine', taskName)
-                    start:Call(result)
-                    break
+    function RefreshTasksData()
+        for _, taskName in ipairs(TasksOrder) do
+            local module = FunctionsHandler[taskName]
+            if module and module.Initalized then
+                local refresh = module.Methods.Refresh
+                local start = module.Methods.Start
+                if refresh then
+                    local result = refresh:Call(ParsingTimes < 100)
+                    ParsingTimes = ParsingTimes + 1
+                    if result and ParsingTimes > 100 then
+                        ScriptStorage.Interface.SetText('DebugLine', taskName)
+                        start:Call(result)
+                        break
+                    end
                 end
             end
         end
     end
-end
+    SetText('MainTextLabel', "Refreshing Player Items..")
             else
                 local k = h.Methods.Refresh
                 local X = h.Methods.Start
