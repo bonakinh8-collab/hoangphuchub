@@ -615,43 +615,21 @@ function hoangtuveu()
 
         if floor == 1 then CombatController.Attack("Sky Bandit")
         elseif floor == 2 then CombatController.Attack('God\'s Guard')
-        elseif floor == 4 then
-            local monName, npcPos, questId, qIndex, questTitle = J_quest:GetCurrentQuest()
-            local claimQuest, _ = J_quest:GetCurrentClaimQuest()
-            if claimQuest then
-                if claimQuest ~= questTitle then J_quest:AbandonQuest() end
-            else
-                if not npcPos then J_quest:RefreshQuest() return end
-                TweenController.Create(npcPos + Vector3.new(0, 5, 3))
-                SetTask("MainTask", "Level Farming | Lấy Quest: " .. monName)
-                if CaculateDistance(npcPos) < 10 then
-                    task.wait(1)
-                    J_quest:StartQuest(questId, qIndex)
-                    task.wait(1)
-                end
-                return
-            end
-            SetTask('MainTask', 'Level Farming | Đang cày cấp với: ' .. monName)
-            CombatController.Attack(monName)
+        elseif floor == 4 then-- [ KHỞI TẠO NÃO BỘ CHỐNG CRASH CHO TOÀN BỘ MODULE ]
+    local SafeModules = {"Saber", "Yama", "Tushita", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "RaidController", "Wenlocktoad", "AutoHopBoss"}
+    for _, mod in pairs(SafeModules) do
+        FunctionsHandler[mod] = FunctionsHandler[mod] or {Initalized = true, Methods = {}}
+        if not FunctionsHandler[mod].RegisterMethod then
+            FunctionsHandler[mod].Methods = FunctionsHandler[mod].Methods or {}
+            FunctionsHandler[mod].RegisterMethod = function(self, name, func) self.Methods[name] = {Call = func} end
+            FunctionsHandler[mod].Get = function(self, key) return self[key] end
+            FunctionsHandler[mod].Set = function(self, key, val) self[key] = val end
         end
-    end)
-	-- [ KHỞI TẠO NÃO BỘ CHỐNG CRASH CHO CÁC MODULE MỚI ]
-    if not FunctionsHandler.ChestFarm or not FunctionsHandler.ChestFarm.RegisterMethod then
-        FunctionsHandler.ChestFarm = {Initalized = true, Methods = {}}
-        function FunctionsHandler.ChestFarm:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
-        function FunctionsHandler.ChestFarm:Get(key) return self[key] end
-        function FunctionsHandler.ChestFarm:Set(key, val) self[key] = val end
-    end
-
-    if not FunctionsHandler.Godhuman or not FunctionsHandler.Godhuman.RegisterMethod then
-        FunctionsHandler.Godhuman = {Initalized = true, Methods = {}}
-        function FunctionsHandler.Godhuman:RegisterMethod(name, func) self.Methods[name] = {Call = func} end
-        function FunctionsHandler.Godhuman:Get(key) return self[key] end
-        function FunctionsHandler.Godhuman:Set(key, val) self[key] = val end
     end
 
     -- =====================================================================
-    -- [ HACK TARGET VŨ KHÍ (ÉP COMBAT CONTROLLER CẦM KIẾM/VÕ) ]
+    -- [ HACK TARGET VŨ KHÍ TỪ SOURCE GỐC ]
+    -- Bắt CombatController phải dùng vũ khí mình muốn thay vì Melee
     -- =====================================================================
     if not _G.EquipHooked then
         _G.EquipHooked = true
@@ -663,8 +641,22 @@ function hoangtuveu()
             return oldEquip(self, weaponName)
         end
     end
-    -- =====================================================================
 
+    -- Hàm check Quest (Kiểm tra xem đang có nhiệm vụ không)
+    local function HasQuest()
+        local pGui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+        if pGui and pGui:FindFirstChild("Main") and pGui.Main:FindFirstChild("Quest") then
+            return pGui.Main.Quest.Visible and pGui.Main.Quest.Container.QuestName.Text ~= ""
+        end
+        return false
+    end
+
+    function CheckFullMoon()
+        if Lighting.Sky.MoonTextureId ~= 'http://www.roblox.com/asset/?id=970914431' then return end
+        return Lighting.ClockTime > 18 or Lighting.ClockTime < 5
+    end
+
+    -- [ MODULE SABER ]
     FunctionsHandler.Saber:RegisterMethod('Refresh', function()
         if not Config.Items.Saber or ScriptStorage.Backpack.Saber or ScriptStorage.PlayerData.Level < 200 then return end
         local prog = Remotes.CommF_:InvokeServer('ProQuestProgress')
@@ -722,6 +714,7 @@ function hoangtuveu()
         end
     end)
 
+    -- [ MODULE YAMA ]
     FunctionsHandler.Yama:RegisterMethod('Refresh', function()
         if SeaIndex ~= 3 or ScriptStorage.Backpack.Yama then return end
         if not FunctionsHandler.Yama:Get("EliteCount") then
@@ -740,6 +733,7 @@ function hoangtuveu()
         end
     end)
 
+    -- [ MODULE TUSHITA ]
     FunctionsHandler.Tushita:RegisterMethod("Refresh", function()
         if ScriptStorage.Backpack.Tushita or ScriptStorage.PlayerData.Level < 2000 or SeaIndex ~= 3 then return end
         TushitaProgress = TushitaProgress or Remotes.CommF_:InvokeServer("TushitaProgress")
@@ -764,11 +758,7 @@ function hoangtuveu()
         end
     end)
 
-    function CheckFullMoon()
-        if Lighting.Sky.MoonTextureId ~= 'http://www.roblox.com/asset/?id=970914431' then return end
-        return Lighting.ClockTime > 18 or Lighting.ClockTime < 5
-    end
-
+    -- [ MODULE CHEST FARM (TÌM FIST GỌI RÂU ĐEN) ]
     FunctionsHandler.ChestFarm:RegisterMethod("Refresh", function()
         if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or ScriptStorage.PlayerData.Level < 2300 then return end
         if SeaIndex == 2 and not ScriptStorage.Backpack['Dark Fragment'] then
@@ -804,18 +794,23 @@ function hoangtuveu()
         end
     end)
 
+    -- [ MODULE SOUL GUITAR ]
     FunctionsHandler.SoulGuitar:RegisterMethod("Refresh", function()
         if not Config.Items.SoulGuitar or ScriptStorage.Backpack['Skull Guitar'] or ScriptStorage.PlayerData.Level < 2300 then return end
+        
         if not ScriptStorage.Backpack['Dark Fragment'] then
             if SeaIndex ~= 2 then return "travel_sea2" end
             return nil 
         end
+        
         local ecto = (ScriptStorage.Backpack['Ectoplasm'] or {Count = 0})["Count"]
         if ecto < 250 then 
             if SeaIndex ~= 2 then return "travel_sea2" end
             return "farm_ecto" 
         end 
+        
         if SeaIndex ~= 3 then return "travel_sea3" end 
+        
         SoulGuitarProcess = Remotes.CommF_:InvokeServer("GuitarPuzzleProgress", 'Check')
         if not SoulGuitarProcess then
             Remotes.CommF_:InvokeServer("gravestoneEvent", 2)
@@ -839,23 +834,7 @@ function hoangtuveu()
             Remotes.CommF_:InvokeServer("TravelZou")
         elseif step == "farm_ecto" then
             SetTask("MainTask", "Soul Guitar | Cursed Ship: Farm Ectoplasm (" .. ((ScriptStorage.Backpack['Ectoplasm'] or {Count=0}).Count) .. "/250)")
-            
-            pcall(function()
-                local char = game.Players.LocalPlayer.Character
-                if char and not char:FindFirstChild("HasBuso") then
-                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                end
-            end)
-
-            local mList = {"Ship Deckhand", "Ship Engineer", 'Ship Steward', "Ship Officer"}
-            local targetMob = "Ship Deckhand"
-            pcall(function()
-                for _, mon in pairs(GetMonAsSortedRange()) do
-                    if table.find(mList, mon.Name) then targetMob = mon.Name break end
-                end
-            end)
-            
-            CombatController.Attack(targetMob)
+            CombatController.Attack("Ship Deckhand")
         elseif step == 7 then
             SetTask("MainTask", 'Soul Guitar | Activating Gravestone Event')
             if CaculateDistance(CFrame.new(-8654.0, 140, 6167)) > 5 then TweenController.Create(CFrame.new(-8654.0, 140, 6167)) else SoulGuitarProcess = Remotes.CommF_:InvokeServer("gravestoneEvent", 2, true) end
@@ -908,12 +887,13 @@ function hoangtuveu()
         end
     end)
 
+    -- [ MODULE GODHUMAN ]
     FunctionsHandler.Godhuman:RegisterMethod("Refresh", function()
         if ScriptStorage.Backpack["Godhuman"] or ScriptStorage.Tools["Godhuman"] then return end
         
         local req = {
             {"Black Leg", "BuyBlackLeg"}, {"Electro", "BuyElectro"}, 
-            {"Fishman Karate", "BuyFishmanKarate"}, {"Dragon Claw", "BuyDragonClaw"},
+            {"Fishman Karate", "BuyFishmanKarate"}, {"Dragon Breath", "BuyDragonBreath"},
             {"Superhuman", "BuySuperhuman"}, {"Death Step", "BuyDeathStep"}, 
             {"Sharkman Karate", "BuySharkmanKarate"}, {"Electric Claw", "BuyElectricClaw"}, 
             {"Dragon Talon", "BuyDragonTalon"}
@@ -956,10 +936,10 @@ function hoangtuveu()
         end
         
         local mats = {
-            {"Fish Tail", 20, {"Fishman Raider", "Fishman Captain"}},
-            {"Magma Ore", 20, {"Magma Ninja", "Magma Admiral"}},
-            {"Dragon Scale", 10, {"Dragon Crew Warrior", "Dragon Crew Archer"}},
-            {"Mystic Droplet", 10, {"Water Fighter", "Sea Soldier"}}
+            {"Fish Tail", 20},
+            {"Magma Ore", 20},
+            {"Dragon Scale", 10},
+            {"Mystic Droplet", 10}
         }
         
         for _, mat in pairs(mats) do
@@ -967,7 +947,7 @@ function hoangtuveu()
             for _, item in pairs(ScriptStorage.Backpack) do
                 if item.Name == mat[1] then count = item.Count or 0 break end
             end
-            if count < mat[2] then return {"farm_mat", mat[1], count, mat[2], mat[3]} end
+            if count < mat[2] then return {"farm_mat", mat[1], count, mat[2]} end
         end
 
         return {"godhuman_buy"}
@@ -981,31 +961,17 @@ function hoangtuveu()
             task.wait(1.5)
         elseif step[1] == "farm" then
             _G.TargetWeapon = step[2]
-            SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
             
-            pcall(function()
-                local char = game.Players.LocalPlayer.Character
-                if char and not char:FindFirstChild("HasBuso") then
-                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                end
-            end)
-
-            local bone_pos = CFrame.new(-9473, 142, 5567)
-            local mList = {"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"}
-            local targetMob = "Reborn Skeleton"
-            
-            -- Truyền ĐÚNG 1 STRING cho CombatController để không bị kẹt lỗi
-            pcall(function()
-                for _, mon in pairs(GetMonAsSortedRange()) do
-                    if table.find(mList, mon.Name) then targetMob = mon.Name break end
-                end
-            end)
-
-            if CaculateDistance(bone_pos) > 1000 then 
-                TweenController.Create(bone_pos) 
+            -- [ LOGIC CHUẨN GỐC ]: Kiểm tra Quest -> J_quest -> Lấy Mob LevelFarm
+            if not HasQuest() then
+                SetTask("MainTask", "Godhuman | Đang lấy Quest cho " .. step[2] .. "...")
+                pcall(function() J_quest:RefreshQuest() end)
             else
-                CombatController.Attack(targetMob) 
+                SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
+                local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+                if mobToFarm then CombatController.Attack(mobToFarm) else CombatController.Attack("Reborn Skeleton") end
             end
+
         elseif step[1] == "farm_mat" then
             _G.TargetWeapon = nil
             local matName = step[2]
@@ -1016,14 +982,11 @@ function hoangtuveu()
                 if SeaIndex ~= 3 then Remotes.CommF_:InvokeServer("TravelZou") return end
             end
             
-            local targetMob = step[5][1]
-            pcall(function()
-                for _, mon in pairs(GetMonAsSortedRange()) do
-                    if table.find(step[5], mon.Name) then targetMob = mon.Name break end
-                end
-            end)
-            
-            CombatController.Attack(targetMob)
+            -- Để LevelFarm tự chọn bãi quái
+            pcall(function() J_quest:RefreshQuest() end)
+            local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+            if mobToFarm then CombatController.Attack(mobToFarm) end
+
         elseif step[1] == "godhuman_buy" then
             _G.TargetWeapon = nil
             SetTask("MainTask", "Godhuman | Đủ điều kiện! Đang mua Godhuman tại Cổ Thụ!")
@@ -1034,6 +997,7 @@ function hoangtuveu()
         end
     end)
 
+    -- [ MODULE CURSED DUAL KATANA ]
     FunctionsHandler.CursedDualKatana:RegisterMethod("Refresh", function()
         if not Config.Items.CursedDualKatana then return end
         local bp = ScriptStorage.Backpack
@@ -1043,9 +1007,8 @@ function hoangtuveu()
         local tushitaMastery = bp.Tushita and (bp.Tushita.Mastery or 0) or 0
         local yamaMastery = bp.Yama and (bp.Yama.Mastery or 0) or 0
         
-        if not bp.Tushita or tushitaMastery < 350 or not bp.Yama or yamaMastery < 350 then 
-            return {"mastery", tushitaMastery, yamaMastery} 
-        end
+        if not bp.Tushita or tushitaMastery < 350 then return {"mastery", "Tushita", tushitaMastery} end
+        if not bp.Yama or yamaMastery < 350 then return {"mastery", "Yama", yamaMastery} end
 
         local prog = Remotes.CommF_:InvokeServer("CDKQuest", 'Progress')
         if type(prog) ~= "table" then return {"talk_crypt_master"} end
@@ -1096,43 +1059,22 @@ function hoangtuveu()
     FunctionsHandler.CursedDualKatana:RegisterMethod("Start", function(step)
         if type(step) == "table" then
             if step[1] == "mastery" then
-                local weaponName = ""
-                local currentMastery = 0
-                if step[2] < 350 then 
-                    weaponName = "Tushita" 
-                    currentMastery = step[2]
-                else 
-                    weaponName = "Yama" 
-                    currentMastery = step[3]
-                end
+                local weaponName = step[2]
+                local currentMastery = step[3]
 
+                -- ÉP COMBAT CẦM KIẾM TUSHITA/YAMA
                 _G.TargetWeapon = weaponName
-                SetTask("MainTask", "CDK | Farm Mastery " .. weaponName .. " (" .. currentMastery .. "/350)")
                 
-                -- Bật Haki xịn
-                pcall(function()
-                    local char = game.Players.LocalPlayer.Character
-                    if char and not char:FindFirstChild("HasBuso") then
-                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                    end
-                end)
-
-                local bone_pos = CFrame.new(-9473, 142, 5567)
-                local mList = {"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Possessed Mummy"}
-                local targetMob = "Reborn Skeleton"
-                
-                -- Tìm chuẩn 1 String tên quái để truyền cho Combat gốc
-                pcall(function()
-                    for _, mon in pairs(GetMonAsSortedRange()) do
-                        if table.find(mList, mon.Name) then targetMob = mon.Name break end
-                    end
-                end)
-
-                if CaculateDistance(bone_pos) > 1000 then 
-                    TweenController.Create(bone_pos) 
+                -- [ LOGIC CHUẨN GỐC ]: Lấy Quest -> J_quest -> Lấy Mob LevelFarm
+                if not HasQuest() then
+                    SetTask("MainTask", "CDK | Đang lấy Quest để cày Mastery " .. weaponName .. "...")
+                    pcall(function() J_quest:RefreshQuest() end)
                 else
-                    CombatController.Attack(targetMob)
+                    SetTask("MainTask", "CDK | Farm Mastery " .. weaponName .. " (" .. currentMastery .. "/350)")
+                    local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+                    if mobToFarm then CombatController.Attack(mobToFarm) else CombatController.Attack("Reborn Skeleton") end
                 end
+
             elseif step[1] == "talk_crypt_master" then
                 _G.TargetWeapon = nil
                 SetTask("MainTask", "CDK Quest | Nhận phép mở cửa từ Crypt Master...")
@@ -1234,6 +1176,7 @@ function hoangtuveu()
         end
     end)
 
+    -- [ MODULE AUTO RAID ]
     FunctionsHandler.RaidController:RegisterMethod("Refresh", function()
         local p_lvl = ScriptStorage.PlayerData.Level
         local p_frag = ScriptStorage.PlayerData.Fragments
@@ -1279,6 +1222,7 @@ function hoangtuveu()
         end
     end)
 
+    -- [ MODULE UP TỘC V3 ]
     FunctionsHandler.Wenlocktoad:RegisterMethod("Refresh", function()
         if ScriptStorage.PlayerData.RaceLevel ~= 2 or ScriptStorage.PlayerData.Level < 1000 or ScriptStorage.PlayerData.Beli < 2000000 or SeaIndex ~= 2 then return end
         if Remotes.CommF_:InvokeServer("Wenlocktoad", "1") == -2 then ScriptStorage.PlayerData.RaceLevel = 3 return false end
@@ -1298,6 +1242,7 @@ function hoangtuveu()
         end
     end)
 
+    -- [ MODULE SĂN BOSS VIP ]
     FunctionsHandler.AutoHopBoss:RegisterMethod("Refresh", function()
         local bp = ScriptStorage.Backpack
         if Config.Items.DarkFragment and not bp['Dark Fragment'] and SeaIndex == 2 then
@@ -1372,6 +1317,7 @@ function hoangtuveu()
     pcall(function() Storage.Data = game:GetService("HttpService"):JSONDecode(readfile(k_file_path) or '{}') end)
     task.spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
 
+    -- [ AUTO RANDOM TRÁI ÁC QUỶ VÀ ĐỔI XƯƠNG NGẦM ]
     task.spawn(function()
         while task.wait(5) do
             if not _G.Stop then
@@ -1391,7 +1337,8 @@ function hoangtuveu()
         end
     end)
 
-    TasksOrder = {"AutoHopBoss", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "Tushita", "Yama", "RaidController", "Wenlocktoad", "LevelFarm"}
+    -- [ HỆ THỐNG ĐIỀU PHỐI TASKS THEO ƯU TIÊN ]
+    TasksOrder = {"AutoHopBoss", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "Saber", "Tushita", "Yama", "RaidController", "Wenlocktoad", "LevelFarm"}
     
     ParsingTimes = 0
     function RefreshTasksData()
@@ -1467,3 +1414,22 @@ function hoangtuveu()
     end
 end
 hoangtuveu()
+            local monName, npcPos, questId, qIndex, questTitle = J_quest:GetCurrentQuest()
+            local claimQuest, _ = J_quest:GetCurrentClaimQuest()
+            if claimQuest then
+                if claimQuest ~= questTitle then J_quest:AbandonQuest() end
+            else
+                if not npcPos then J_quest:RefreshQuest() return end
+                TweenController.Create(npcPos + Vector3.new(0, 5, 3))
+                SetTask("MainTask", "Level Farming | Lấy Quest: " .. monName)
+                if CaculateDistance(npcPos) < 10 then
+                    task.wait(1)
+                    J_quest:StartQuest(questId, qIndex)
+                    task.wait(1)
+                end
+                return
+            end
+            SetTask('MainTask', 'Level Farming | Đang cày cấp với: ' .. monName)
+            CombatController.Attack(monName)
+        end
+    end)
