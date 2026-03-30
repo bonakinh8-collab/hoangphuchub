@@ -3037,7 +3037,6 @@ ParsingTimes = 0
             end
         end
     end
-
     SetText('MainTextLabel', "Refreshing Player Items..")
     AddPoint()
     J:RefreshQuest()
