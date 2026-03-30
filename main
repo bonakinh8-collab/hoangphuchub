@@ -29,7 +29,7 @@ function hoangtuveu()
     if Config.Configuration.blackscreen then
         game:GetService('Lighting').ExposureCompensation = -math.huge
     end
-    X.Name = 'NameHub'
+    X.Name = 'HoangPhucHub'
     X.Parent = h
     X.AnchorPoint = Vector2.new(0.5, 0.5)
     X.Position = UDim2.new(0.5, 0, 0.3, 0)
