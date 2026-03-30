@@ -48,7 +48,7 @@ function hoangtuveu()
     local y = Instance.new("UIStroke")
     local L = Instance.new("TextLabel")
     local b = {}
-    h.Name = "ARYA"
+    h.Name = "HoangPhucHub"
     h.Parent = game:GetService('CoreGui')
     h.Enabled = true
     h.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -72,7 +72,7 @@ function hoangtuveu()
     X.BorderColor3 = Color3.fromRGB(0, 0, 0)
     X.BorderSizePixel = 0
     X.Font = Enum.Font.FredokaOne
-    X.Text = "ARYA"
+    X.Text = "HoangPhucHub"
     local C = Instance.new("UIStroke")
     C.Parent = X
     C.Color = Color3.fromRGB(0, 0, 0)
@@ -1314,7 +1314,7 @@ function hoangtuveu()
                 end
             elseif not X then
                 if (os.time() - LastFound) > 200 then
-                    alert('ARYA', 'Error while farming, rejoin')
+                    alert('HoangPhucHub', 'Error while farming, rejoin')
                     game.Players.LocalPlayer:Kick('Rejoining..')
                     return
                 end
@@ -2876,7 +2876,7 @@ function hoangtuveu()
     k:RegisterNotifyListener("scroll reacts", function() DoneCdkTick = os.time() end)
     k:RegisterNotifyListener("elite", function()
         FunctionsHandler.Yama:Set('EliteCount', Remotes.CommF_:InvokeServer("EliteHunter", "Progress"))
-        alert("[ARYA ] ", "Elite defeated: " .. tostring(FunctionsHandler.Yama:Get("EliteCount") or 'n/a'))
+        alert("[HoangPhucHub ] ", "Elite defeated: " .. tostring(FunctionsHandler.Yama:Get("EliteCount") or 'n/a'))
     end)
     k:RegisterNotifyListener('the raid with', function()
         if ScriptStorage.PlayerData.Level < MaxLevel then return end
