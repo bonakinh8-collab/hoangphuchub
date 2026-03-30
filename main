@@ -26,10 +26,10 @@ function hoangtuveu()
     
     -- Gắn an toàn: Ưu tiên CoreGui, nếu bị Studio chặn thì gắn tạm vào PlayerGui
     local success, err = pcall(function()
-        screenGui.Parent = game:GetService('CoreGui')
+    screenGui.Parent = game:GetService('CoreGui')
     end)
-    if not success then
-        screenGui.Parent = player:WaitForChild("PlayerGui")
+    if Config.Configuration
+    screenGui.Parent = player:WaitForChild("PlayerGui")
     end
 
     screenGui.Enabled = true
@@ -975,7 +975,7 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
     end
 
     spawn(function()
-    pcall(loadstring(game:HttpGet(
+    pcall(loadstring(game:HttpGet()
     local W = game:HttpGet('')
     ScriptStorage.MobRegions = {}
     for W, W in game:GetService("ReplicatedStorage").FortBuilderReplicatedSpawnPositionsFolder:GetChildren() do
