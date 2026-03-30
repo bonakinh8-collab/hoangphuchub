@@ -615,7 +615,27 @@ function hoangtuveu()
 
         if floor == 1 then CombatController.Attack("Sky Bandit")
         elseif floor == 2 then CombatController.Attack('God\'s Guard')
-        elseif floor == 4 then-- [ KHỞI TẠO NÃO BỘ CHỐNG CRASH CHO TOÀN BỘ MODULE ]
+        elseif floor == 4 then
+            local monName, npcPos, questId, qIndex, questTitle = J_quest:GetCurrentQuest()
+            local claimQuest, _ = J_quest:GetCurrentClaimQuest()
+            if claimQuest then
+                if claimQuest ~= questTitle then J_quest:AbandonQuest() end
+            else
+                if not npcPos then J_quest:RefreshQuest() return end
+                TweenController.Create(npcPos + Vector3.new(0, 5, 3))
+                SetTask("MainTask", "Level Farming | Lấy Quest: " .. monName)
+                if CaculateDistance(npcPos) < 10 then
+                    task.wait(1)
+                    J_quest:StartQuest(questId, qIndex)
+                    task.wait(1)
+                end
+                return
+            end
+            SetTask('MainTask', 'Level Farming | Đang cày cấp với: ' .. monName)
+            CombatController.Attack(monName)
+        end
+    end)
+-- [ KHỞI TẠO NÃO BỘ CHỐNG CRASH CHO TOÀN BỘ MODULE ]
     local SafeModules = {"Saber", "Yama", "Tushita", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "RaidController", "Wenlocktoad", "AutoHopBoss"}
     for _, mod in pairs(SafeModules) do
         FunctionsHandler[mod] = FunctionsHandler[mod] or {Initalized = true, Methods = {}}
@@ -631,16 +651,20 @@ function hoangtuveu()
     -- [ HACK TARGET VŨ KHÍ TỪ SOURCE GỐC ]
     -- Bắt CombatController phải dùng vũ khí mình muốn thay vì Melee
     -- =====================================================================
-    if not _G.EquipHooked then
-        _G.EquipHooked = true
-        local oldEquip = FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call
-        FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call = function(self, weaponName)
-            if _G.TargetWeapon and _G.TargetWeapon ~= "" then
-                return oldEquip(self, _G.TargetWeapon)
+    task.spawn(function()
+        repeat task.wait(0.5) until FunctionsHandler and FunctionsHandler.LocalPlayerController and FunctionsHandler.LocalPlayerController.Methods and FunctionsHandler.LocalPlayerController.Methods.EquipTool and FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call
+        
+        if not _G.EquipHooked then
+            _G.EquipHooked = true
+            local oldEquip = FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call
+            FunctionsHandler.LocalPlayerController.Methods.EquipTool.Call = function(self, weaponName)
+                if _G.TargetWeapon and _G.TargetWeapon ~= "" then
+                    return oldEquip(self, _G.TargetWeapon)
+                end
+                return oldEquip(self, weaponName)
             end
-            return oldEquip(self, weaponName)
         end
-    end
+    end)
 
     -- Hàm check Quest (Kiểm tra xem đang có nhiệm vụ không)
     local function HasQuest()
@@ -968,7 +992,7 @@ function hoangtuveu()
                 pcall(function() J_quest:RefreshQuest() end)
             else
                 SetTask("MainTask", "Godhuman | Cày thông thạo: " .. step[2] .. " (" .. step[3] .. "/400)")
-                local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+                local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob and FunctionsHandler.LevelFarm.Methods.GetMob:Call()
                 if mobToFarm then CombatController.Attack(mobToFarm) else CombatController.Attack("Reborn Skeleton") end
             end
 
@@ -984,7 +1008,7 @@ function hoangtuveu()
             
             -- Để LevelFarm tự chọn bãi quái
             pcall(function() J_quest:RefreshQuest() end)
-            local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+            local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob and FunctionsHandler.LevelFarm.Methods.GetMob:Call()
             if mobToFarm then CombatController.Attack(mobToFarm) end
 
         elseif step[1] == "godhuman_buy" then
@@ -1071,7 +1095,7 @@ function hoangtuveu()
                     pcall(function() J_quest:RefreshQuest() end)
                 else
                     SetTask("MainTask", "CDK | Farm Mastery " .. weaponName .. " (" .. currentMastery .. "/350)")
-                    local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob:Call()
+                    local mobToFarm = FunctionsHandler.LevelFarm.Methods.GetMob and FunctionsHandler.LevelFarm.Methods.GetMob:Call()
                     if mobToFarm then CombatController.Attack(mobToFarm) else CombatController.Attack("Reborn Skeleton") end
                 end
 
@@ -1334,102 +1358,5 @@ function hoangtuveu()
                     end
                 end)
             end
-        end
-    end)
-
-    -- [ HỆ THỐNG ĐIỀU PHỐI TASKS THEO ƯU TIÊN ]
-    TasksOrder = {"AutoHopBoss", "ChestFarm", "SoulGuitar", "Godhuman", "CursedDualKatana", "Saber", "Tushita", "Yama", "RaidController", "Wenlocktoad", "LevelFarm"}
-    
-    ParsingTimes = 0
-    function RefreshTasksData()
-        if _G.Stop then return end
-        
-        local taskHandled = false
-        for _, taskName in pairs(TasksOrder) do
-            local handler = FunctionsHandler[taskName]
-            if handler and handler.Initalized then
-                local status = handler.Methods.Refresh and handler.Methods.Refresh:Call(ParsingTimes < 100)
-                ParsingTimes = ParsingTimes + 1
-                if status and ParsingTimes > 100 then
-                    SetText('DebugLine', "Module: " .. taskName)
-                    local success, err = pcall(function() handler.Methods.Start:Call(status) end)
-                    if not success then SetText('MainTextLabel', "<font color='#FF0000'>LỖI: " .. tostring(err) .. "</font>") task.wait(3) end
-                    taskHandled = true
-                    return
-                end
-            end
-        end
-
-        if not taskHandled and ScriptStorage.PlayerData.Level >= 2800 and SeaIndex == 3 and ParsingTimes > 100 then
-            _G.TargetWeapon = nil
-            SetTask('MainTask', "Hệ Thống | Rảnh rỗi: Đứng rình Boss tại Mansion!")
-            local mansion_pos = CFrame.new(-12464, 332, -7254)
-            if CaculateDistance(mansion_pos) > 30 and not MonResult then TweenController.Create(mansion_pos) end
-        end
-    end
-
-    SetText('MainTextLabel', "HoangPhucHub: Đang ép game tải dữ liệu...")
-    h:WaitForChild("Data", 9e9)
-    
-    repeat 
-        task.wait(0.5) 
-        pcall(function() for _, a_v in pairs(h.Data:GetChildren()) do ScriptStorage.PlayerData[a_v.Name] = a_v.Value end end)
-    until ScriptStorage.PlayerData.Level ~= nil
-    
-    SetText('MainTextLabel', "HoangPhucHub: Đã có Level, xuất chiến!")
-
-    pcall(function() AddPoint() end)
-    pcall(function() J_quest:RefreshQuest() end)
-    pcall(function() RefreshInventory() end)
-
-    h.Idled:Connect(function()
-        game:GetService("VirtualUser"):CaptureController()
-        game:GetService("VirtualUser"):ClickButton2(Vector2.new())
-    end)
-
-    task.spawn(function()
-        while task.wait(1) do
-            if not _G.Stop then
-                pcall(RefreshPlayerData)
-                local elapsed = os.time() - InitTime
-                local total = elapsed + OldSessionTime
-                pcall(function() writefile(".tdif-" .. h.Name, tostring(total)) end)
-                SetText('LiveTime', "Tổng: " .. DispTime(total, true) .. ' | Lần này: ' .. DispTime(elapsed, true))
-            end
-        end
-    end)
-
-    task.spawn(function()
-        task.wait(Config.Configuration.AutoHopDelay)
-        if not Config.Configuration.AutoHop then Hop() end
-    end)
-
-    while task.wait() do
-        local success, err = xpcall(RefreshTasksData, debug.traceback)
-        if not success and err then 
-            warn("HoangPhucHub Error: ", err)
-            SetText('MainTextLabel', "<font color='#FF0000'>CRASH: " .. tostring(err) .. "</font>")
-            task.wait(2) 
-        end
-    end
-end
-hoangtuveu()
-            local monName, npcPos, questId, qIndex, questTitle = J_quest:GetCurrentQuest()
-            local claimQuest, _ = J_quest:GetCurrentClaimQuest()
-            if claimQuest then
-                if claimQuest ~= questTitle then J_quest:AbandonQuest() end
-            else
-                if not npcPos then J_quest:RefreshQuest() return end
-                TweenController.Create(npcPos + Vector3.new(0, 5, 3))
-                SetTask("MainTask", "Level Farming | Lấy Quest: " .. monName)
-                if CaculateDistance(npcPos) < 10 then
-                    task.wait(1)
-                    J_quest:StartQuest(questId, qIndex)
-                    task.wait(1)
-                end
-                return
-            end
-            SetTask('MainTask', 'Level Farming | Đang cày cấp với: ' .. monName)
-            CombatController.Attack(monName)
         end
     end)
