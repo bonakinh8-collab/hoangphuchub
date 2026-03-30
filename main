@@ -25,7 +25,7 @@ function hoangtuveu()
     if Config.Configuration.FpsBoost then
         spawn(function()
             pcall(loadstring(game:HttpGet(
-                "https://raw.githubusercontent.com/sucvatthieunang/Trackstat/refs/heads/main/cac")))
+                "")))
         end)
     end
     if Config.Configuration.blackscreen then
@@ -953,9 +953,9 @@ function hoangtuveu()
 
     spawn(function()
         pcall(loadstring(game:HttpGet(
-            "https://raw.githubusercontent.com/sucvatthieunang/Trackstat/refs/heads/main/cac")))
+            "")))
     end)
-    local W = game:HttpGet('https://raw.githubusercontent.com/sucvatthieunang/Trackstat/refs/heads/main/boss')
+    local W = game:HttpGet('')
     ScriptStorage.MobRegions = {}
     for W, W in game:GetService("ReplicatedStorage").FortBuilderReplicatedSpawnPositionsFolder:GetChildren() do
         ScriptStorage.MobRegions[tostring(W)] = ScriptStorage.MobRegions[tostring(W)] or {}
@@ -2972,16 +2972,25 @@ function hoangtuveu()
     local k = {}
     SetTask("MainTask", 'n/a')
     SetTask("SubTask", 'n/a')
-    ParsingTimes = 0
-    function RefreshTasksData()
-        if _G.Stop then return end
-        for W, W in TasksOrder do
-            local h = FunctionsHandler[W]
-            if not h.Initalized then
-                if not k[W] then
-                    print("[ Debug ] Task", Name, "is not registered yet")
-                    k[W] = true
+ParsingTimes = 0
+function RefreshTasksData()
+    for _, taskName in ipairs(TasksOrder) do
+        local module = FunctionsHandler[taskName]
+        if module and module.Initalized then
+            local refresh = module.Methods.Refresh
+            local start = module.Methods.Start
+            if refresh then
+                local result = refresh:Call(ParsingTimes < 100)
+                ParsingTimes = ParsingTimes + 1
+                if result and ParsingTimes > 100 then
+                    ScriptStorage.Interface.SetText('DebugLine', taskName)
+                    start:Call(result)
+                    break
                 end
+            end
+        end
+    end
+end
             else
                 local k = h.Methods.Refresh
                 local X = h.Methods.Start
