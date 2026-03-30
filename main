@@ -974,9 +974,11 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         return Remotes.CommF_:InvokeServer("StartQuest", W, a)
     end
 
-    spawn(function()
-    pcall(loadstring(game:HttpGet()
-    local W = game:HttpGet('')
+    if Config.Configuration.FpsBoost then
+        spawn(function()
+            pcall(loadstring(game:HttpGet(
+        end)
+    end
     ScriptStorage.MobRegions = {}
     for W, W in game:GetService("ReplicatedStorage").FortBuilderReplicatedSpawnPositionsFolder:GetChildren() do
         ScriptStorage.MobRegions[tostring(W)] = ScriptStorage.MobRegions[tostring(W)] or {}
