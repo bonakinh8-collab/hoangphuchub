@@ -13,7 +13,6 @@ function hoangtuveu()
     local screenGui = Instance.new('ScreenGui')
     local titleLabel = Instance.new('TextLabel')
     local titleStroke = Instance.new("UIStroke")
-    
     local toggleFrame = Instance.new("Frame")
     local toggleStroke = Instance.new("UIStroke")
     local toggleBtn = Instance.new("ImageButton") 
