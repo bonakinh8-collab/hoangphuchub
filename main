@@ -3,109 +3,137 @@ function hoangtuveu()
     local W = { Instances = {} }
     local K = true
     local a = false
-    local h = game.Players.LocalPlayer
+    local player = game.Players.LocalPlayer 
+    
     repeat
         task.wait()
-    until game.CoreGui
-    local h = Instance.new('ScreenGui')
-    local X = Instance.new('TextLabel')
-    local w = Instance.new("UIStroke")
-    local w = Instance.new('UIStroke')
-    local w = Instance.new("TextLabel")
-    local w = Instance.new("ImageButton")
-    local D = Instance.new("Frame")
-    local y = Instance.new("UIStroke")
-    local L = Instance.new("TextLabel")
+    until game:GetService('CoreGui')
+
+    -- 1. Khai báo các thành phần UI với tên rõ ràng
+    local screenGui = Instance.new('ScreenGui')
+    local titleLabel = Instance.new('TextLabel')
+    local titleStroke = Instance.new("UIStroke")
+    
+    local toggleFrame = Instance.new("Frame")
+    local toggleStroke = Instance.new("UIStroke")
+    local toggleBtn = Instance.new("ImageButton") 
+    local toggleIcon = Instance.new("TextLabel")
+    local frameCorner = Instance.new('UICorner') 
     local b = {}
-    h.Name = "HoangPhucHub"
-    h.Parent = game:GetService('CoreGui')
-    h.Enabled = true
-    h.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    h.IgnoreGuiInset = true
-    if Config.Configuration.FpsBoost then
+
+    -- 2. Thiết lập ScreenGui chính
+    screenGui.Name = "HoangPhucHub"
+    
+    -- Gắn an toàn: Ưu tiên CoreGui, nếu bị Studio chặn thì gắn tạm vào PlayerGui
+    local success, err = pcall(function()
+        screenGui.Parent = game:GetService('CoreGui')
+    end)
+    if not success then
+        screenGui.Parent = player:WaitForChild("PlayerGui")
+    end
+
+    screenGui.Enabled = true
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.IgnoreGuiInset = true
+    
+    -- 3. Kiểm tra an toàn cho Config
+    if getgenv().Config and getgenv().Config.Configuration and getgenv().Config.Configuration.FpsBoost then
         spawn(function()
-            pcall(loadstring(game:HttpGet(
-                "")))
+            -- Code boost FPS của bạn
         end)
     end
-    if Config.Configuration.blackscreen then
+    
+    if getgenv().Config and getgenv().Config.Configuration and getgenv().Config.Configuration.blackscreen then
         game:GetService('Lighting').ExposureCompensation = -math.huge
     end
-    X.Name = 'NameHub'
-    X.Parent = h
-    X.AnchorPoint = Vector2.new(0.5, 0.5)
-    X.Position = UDim2.new(0.5, 0, 0.3, 0)
-    X.Size = UDim2.new(1, 0, 0, 80)
-    X.BackgroundTransparency = 0.999
-    X.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    X.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    X.BorderSizePixel = 0
-    X.Font = Enum.Font.FredokaOne
-    X.Text = "HoangPhucHub"
-    local C = Instance.new("UIStroke")
-    C.Parent = X
-    C.Color = Color3.fromRGB(0, 0, 0)
-    C.Thickness = 1
-    X.TextColor3 = Color3.fromRGB(9, 255, 248)
-    X.TextSize = 50
-    D.Name = 'ToggleContainer'
-    D.Parent = h
-    D.AnchorPoint = Vector2.new(1, 0)
-    D.Position = UDim2.new(1, -20.0, 0, 20)
-    D.Size = UDim2.new(0, 50, 0, 50)
-    D.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    D.BackgroundTransparency = 0.2
-    D.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    D.BorderSizePixel = 0
-    D.ClipsDescendants = true
-    local C = Instance.new('UICorner')
-    C.CornerRadius = UDim.new(1, 0)
-    C.Parent = D
-    y.Parent = D
-    y.Color = Color3.fromRGB(9, 255, 248)
-    y.Thickness = 2
-    w.Name = 'ToggleButton'
-    w.Parent = D
-    w.AnchorPoint = Vector2.new(0.5, 0.5)
-    w.Position = UDim2.new(0.5, 0, 0.5, 0)
-    w.Size = UDim2.new(1, 0, 1, 0)
-    w.BackgroundTransparency = 1
-    w.BorderSizePixel = 0
-    L.Name = "ToggleIcon"
-    L.Parent = D
-    L.AnchorPoint = Vector2.new(0.5, 0.5)
-    L.Position = UDim2.new(0.5, 0, 0.5, 0)
-    L.Size = UDim2.new(0.7, 0, 0.7, 0)
-    L.BackgroundTransparency = 1
-    L.BorderSizePixel = 0
-    L.Font = Enum.Font.GothamBold
-    L.Text = "😀😶"
-    L.TextColor3 = Color3.fromRGB(255, 255, 255)
-    L.TextSize = 24
-    L.TextScaled = true
-    local function C(p, o, z)
-        local z = Instance.new("UIStroke")
-        local v = Instance.new('TextLabel')
-        v.Name = "hmph ><"
-        v.Parent = h
-        v.AnchorPoint = Vector2.new(0.5, 0.5)
-        v.Position = o
-        v.Size = UDim2.new(0, 200, 0, 30)
-        v.BackgroundTransparency = 0.999
-        v.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        v.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        v.BorderSizePixel = 0
-        v.Font = Enum.Font.FredokaOne
-        v.Text = p
-        v.TextColor3 = Color3.fromRGB(255, 255, 255)
-        v.TextSize = 13
-        v.RichText = true
-        z.Parent = v
-        z.Color = Color3.fromRGB(0, 0, 0)
-        z.Thickness = 1
-        return v
+    
+    -- 4. Thiết lập Title (Chữ HoangPhucHub ở giữa màn hình)
+    titleLabel.Name = 'HoangPhucHub'
+    titleLabel.Parent = screenGui
+    titleLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+    titleLabel.Position = UDim2.new(0.5, 0, 0.3, 0)
+    titleLabel.Size = UDim2.new(1, 0, 0, 80)
+    titleLabel.BackgroundTransparency = 0.999
+    titleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    titleLabel.BorderSizePixel = 0
+    titleLabel.Font = Enum.Font.FredokaOne
+    titleLabel.Text = "HoangPhucHub"
+    titleLabel.TextColor3 = Color3.fromRGB(9, 255, 248)
+    titleLabel.TextSize = 50
+    
+    titleStroke.Parent = titleLabel
+    titleStroke.Color = Color3.fromRGB(0, 0, 0)
+    titleStroke.Thickness = 1
+    
+    -- 5. Thiết lập nút Toggle (Góc phải màn hình)
+    toggleFrame.Name = 'ToggleContainer'
+    toggleFrame.Parent = screenGui
+    toggleFrame.AnchorPoint = Vector2.new(1, 0)
+    toggleFrame.Position = UDim2.new(1, -20.0, 0, 20)
+    toggleFrame.Size = UDim2.new(0, 50, 0, 50)
+    toggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    toggleFrame.BackgroundTransparency = 0.2
+    toggleFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    toggleFrame.BorderSizePixel = 0
+    toggleFrame.ClipsDescendants = true
+    
+    frameCorner.CornerRadius = UDim.new(1, 0)
+    frameCorner.Parent = toggleFrame
+    
+    toggleStroke.Parent = toggleFrame
+    toggleStroke.Color = Color3.fromRGB(9, 255, 248)
+    toggleStroke.Thickness = 2
+    
+    toggleBtn.Name = 'ToggleButton'
+    toggleBtn.Parent = toggleFrame
+    toggleBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+    toggleBtn.Position = UDim2.new(0.5, 0, 0.5, 0)
+    toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    toggleBtn.BackgroundTransparency = 1
+    toggleBtn.BorderSizePixel = 0
+    
+    toggleIcon.Name = "ToggleIcon"
+    toggleIcon.Parent = toggleFrame
+    toggleIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+    toggleIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    toggleIcon.Size = UDim2.new(0.7, 0, 0.7, 0)
+    toggleIcon.BackgroundTransparency = 1
+    toggleIcon.BorderSizePixel = 0
+    toggleIcon.Font = Enum.Font.GothamBold
+    toggleIcon.Text = "😀😶"
+    toggleIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleIcon.TextSize = 24
+    toggleIcon.TextScaled = true
+    
+    -- 6. Hàm tạo TextLabel (đã đổi tên và sửa lại cho khỏi trùng lặp)
+    local function createCustomLabel(textStr, positionUDim2)
+        local txtStroke = Instance.new("UIStroke")
+        local txtLabel = Instance.new('TextLabel')
+        
+        txtLabel.Name = "hmph ><"
+        txtLabel.Parent = screenGui
+        txtLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+        txtLabel.Position = positionUDim2
+        txtLabel.Size = UDim2.new(0, 200, 0, 30)
+        txtLabel.BackgroundTransparency = 0.999
+        txtLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        txtLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        txtLabel.BorderSizePixel = 0
+        txtLabel.Font = Enum.Font.FredokaOne
+        txtLabel.Text = textStr
+        txtLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        txtLabel.TextSize = 13
+        txtLabel.RichText = true
+        
+        txtStroke.Parent = txtLabel
+        txtStroke.Color = Color3.fromRGB(0, 0, 0)
+        txtStroke.Thickness = 1
+        
+        return txtLabel
     end
-    MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
+end
+MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
     W.Instances.MainTextLabel = MainTextLabel
     for p, o in pairs(J) do W.Instances[o] = C("...", UDim2.new(0.5, 0, 0.45 + (.05 * p), 0)) end
     local J = {}
@@ -1058,10 +1086,10 @@ function hoangtuveu()
     local X = game:GetService("Workspace")
     local X = game:GetService("VirtualInputManager")
     local X = a.LocalPlayer
-    local X = h:WaitForChild('Modules')
-    local w = X:WaitForChild("Net")
-    local X = w:WaitForChild("RE/RegisterAttack")
-    local X = w:WaitForChild('RE/RegisterHit')
+    local X = h:WaitForChild('Modules', 5)
+    local w = X and X:WaitForChild("Net", 5)
+    local regAttack = w and w:WaitForChild("RE/RegisterAttack", 3)
+    local regHit = w and w:WaitForChild('RE/RegisterHit', 3)
     local X = w:WaitForChild('RE/ShootGunEvent')
     local X = h:WaitForChild("Remotes"):WaitForChild('Validator2')
     local h = game.ReplicatedStorage.Modules
@@ -2974,23 +3002,33 @@ function hoangtuveu()
     SetTask("SubTask", 'n/a')
 ParsingTimes = 0
 function RefreshTasksData()
-    for _, taskName in ipairs(TasksOrder) do
-        local module = FunctionsHandler[taskName]
-        if module and module.Initalized then
-            local refresh = module.Methods.Refresh
-            local start = module.Methods.Start
-            if refresh then
-                local result = refresh:Call(ParsingTimes < 100)
-                ParsingTimes = ParsingTimes + 1
-                if result and ParsingTimes > 100 then
-                    ScriptStorage.Interface.SetText('DebugLine', taskName)
-                    start:Call(result)
-                    break
+        if _G.Stop then return end
+        for _, taskName in ipairs(TasksOrder) do
+            local module = FunctionsHandler[taskName]
+            if module then
+                if not module.Initalized then
+                    if not k[taskName] then
+                        print("[ Debug ] Task", taskName, "is not registered yet")
+                        k[taskName] = true
+                    end
+                else
+                    local refresh = module.Methods.Refresh
+                    local start = module.Methods.Start
+                    if refresh then
+                        local result = refresh:Call(ParsingTimes < 100)
+                        ParsingTimes = ParsingTimes + 1
+                        if result and ParsingTimes > 100 then
+                            CurrentTask = taskName
+                            ScriptStorage.Interface.SetText('DebugLine', taskName)
+                            start:Call(result)
+                            break
+                        end
+                    end
                 end
             end
         end
     end
-end
+    SetText('MainTextLabel', "Refreshing Player Items..")
             else
                 local k = h.Methods.Refresh
                 local X = h.Methods.Start
@@ -3008,7 +3046,6 @@ end
             end
         end
     end
-
     SetText('MainTextLabel', "Refreshing Player Items..")
     AddPoint()
     J:RefreshQuest()
