@@ -1,133 +1,110 @@
 function hoangtuveu()
-    local J = { 'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine' }
-    local W = { Instances = {} }
+    local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
+    local W = {Instances = {}}
     local K = true
     local a = false
-    local player = game.Players.LocalPlayer 
-    
+    local h = game.Players.LocalPlayer
     repeat
         task.wait()
-    until game:GetService('CoreGui')
-
-    -- 1. Khai báo các thành phần UI với tên rõ ràng
-    local screenGui = Instance.new('ScreenGui')
-    local titleLabel = Instance.new('TextLabel')
-    local titleStroke = Instance.new("UIStroke")
-    local toggleFrame = Instance.new("Frame")
-    local toggleStroke = Instance.new("UIStroke")
-    local toggleBtn = Instance.new("ImageButton") 
-    local toggleIcon = Instance.new("TextLabel")
-    local frameCorner = Instance.new('UICorner') 
+    until game.CoreGui
+    local h = Instance.new('ScreenGui')
+    local X = Instance.new('TextLabel')
+    local w = Instance.new("UIStroke")
+    local w = Instance.new('UIStroke')
+    local w = Instance.new("TextLabel")
+    local w = Instance.new("ImageButton")
+    local D = Instance.new("Frame")
+    local y = Instance.new("UIStroke")
+    local L = Instance.new("TextLabel")
     local b = {}
-
-    -- 2. Thiết lập ScreenGui chính
-    screenGui.Name = "HoangPhucHub"
-    
-    -- Gắn an toàn: Ưu tiên CoreGui, nếu bị Studio chặn thì gắn tạm vào PlayerGui
-    local success, err = pcall(function()
-    screenGui.Parent = game:GetService('CoreGui')
-    end)
-    if Config.Configuration
-    screenGui.Parent = player:WaitForChild("PlayerGui")
+    h.Name = "ARYA"
+    h.Parent = game:GetService('CoreGui')
+    h.Enabled = true
+    h.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    h.IgnoreGuiInset = true
+    if Config.Configuration.FpsBoost then
+        spawn(function()
+            pcall(loadstring(game:HttpGet("")))
+        end)
     end
-
-    screenGui.Enabled = true
-    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    screenGui.IgnoreGuiInset = true
-    
-    end
-    
-    if getgenv().Config and getgenv().Config.Configuration and getgenv().Config.Configuration.blackscreen then
+    if Config.Configuration.blackscreen then
         game:GetService('Lighting').ExposureCompensation = -math.huge
     end
-    
-    -- 4. Thiết lập Title (Chữ HoangPhucHub ở giữa màn hình)
-    titleLabel.Name = 'HoangPhucHub'
-    titleLabel.Parent = screenGui
-    titleLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-    titleLabel.Position = UDim2.new(0.5, 0, 0.3, 0)
-    titleLabel.Size = UDim2.new(1, 0, 0, 80)
-    titleLabel.BackgroundTransparency = 0.999
-    titleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    titleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    titleLabel.BorderSizePixel = 0
-    titleLabel.Font = Enum.Font.FredokaOne
-    titleLabel.Text = "HoangPhucHub"
-    titleLabel.TextColor3 = Color3.fromRGB(9, 255, 248)
-    titleLabel.TextSize = 50
-    
-    titleStroke.Parent = titleLabel
-    titleStroke.Color = Color3.fromRGB(0, 0, 0)
-    titleStroke.Thickness = 1
-    
-    -- 5. Thiết lập nút Toggle (Góc phải màn hình)
-    toggleFrame.Name = 'ToggleContainer'
-    toggleFrame.Parent = screenGui
-    toggleFrame.AnchorPoint = Vector2.new(1, 0)
-    toggleFrame.Position = UDim2.new(1, -20.0, 0, 20)
-    toggleFrame.Size = UDim2.new(0, 50, 0, 50)
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    toggleFrame.BackgroundTransparency = 0.2
-    toggleFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    toggleFrame.BorderSizePixel = 0
-    toggleFrame.ClipsDescendants = true
-    
-    frameCorner.CornerRadius = UDim.new(1, 0)
-    frameCorner.Parent = toggleFrame
-    
-    toggleStroke.Parent = toggleFrame
-    toggleStroke.Color = Color3.fromRGB(9, 255, 248)
-    toggleStroke.Thickness = 2
-    
-    toggleBtn.Name = 'ToggleButton'
-    toggleBtn.Parent = toggleFrame
-    toggleBtn.AnchorPoint = Vector2.new(0.5, 0.5)
-    toggleBtn.Position = UDim2.new(0.5, 0, 0.5, 0)
-    toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-    toggleBtn.BackgroundTransparency = 1
-    toggleBtn.BorderSizePixel = 0
-    
-    toggleIcon.Name = "ToggleIcon"
-    toggleIcon.Parent = toggleFrame
-    toggleIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-    toggleIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    toggleIcon.Size = UDim2.new(0.7, 0, 0.7, 0)
-    toggleIcon.BackgroundTransparency = 1
-    toggleIcon.BorderSizePixel = 0
-    toggleIcon.Font = Enum.Font.GothamBold
-    toggleIcon.Text = "😀😶"
-    toggleIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleIcon.TextSize = 24
-    toggleIcon.TextScaled = true
-    
-    -- 6. Hàm tạo TextLabel (đã đổi tên và sửa lại cho khỏi trùng lặp)
-    local function createCustomLabel(textStr, positionUDim2)
-        local txtStroke = Instance.new("UIStroke")
-        local txtLabel = Instance.new('TextLabel')
-        
-        txtLabel.Name = "hmph ><"
-        txtLabel.Parent = screenGui
-        txtLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-        txtLabel.Position = positionUDim2
-        txtLabel.Size = UDim2.new(0, 200, 0, 30)
-        txtLabel.BackgroundTransparency = 0.999
-        txtLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        txtLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        txtLabel.BorderSizePixel = 0
-        txtLabel.Font = Enum.Font.FredokaOne
-        txtLabel.Text = textStr
-        txtLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        txtLabel.TextSize = 13
-        txtLabel.RichText = true
-        
-        txtStroke.Parent = txtLabel
-        txtStroke.Color = Color3.fromRGB(0, 0, 0)
-        txtStroke.Thickness = 1
-        
-        return txtLabel
+    X.Name = 'NameHub'
+    X.Parent = h
+    X.AnchorPoint = Vector2.new(0.5, 0.5)
+    X.Position = UDim2.new(0.5, 0, 0.3, 0)
+    X.Size = UDim2.new(1, 0, 0, 80)
+    X.BackgroundTransparency = 0.999
+    X.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    X.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    X.BorderSizePixel = 0
+    X.Font = Enum.Font.FredokaOne
+    X.Text = "ARYA"
+    local C = Instance.new("UIStroke")
+    C.Parent = X
+    C.Color = Color3.fromRGB(0, 0, 0)
+    C.Thickness = 1
+    X.TextColor3 = Color3.fromRGB(9, 255, 248)
+    X.TextSize = 50
+    D.Name = 'ToggleContainer'
+    D.Parent = h
+    D.AnchorPoint = Vector2.new(1, 0)
+    D.Position = UDim2.new(1, -20.0, 0, 20)
+    D.Size = UDim2.new(0, 50, 0, 50)
+    D.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    D.BackgroundTransparency = 0.2
+    D.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    D.BorderSizePixel = 0
+    D.ClipsDescendants = true
+    local C = Instance.new('UICorner')
+    C.CornerRadius = UDim.new(1, 0)
+    C.Parent = D
+    y.Parent = D
+    y.Color = Color3.fromRGB(9, 255, 248)
+    y.Thickness = 2
+    w.Name = 'ToggleButton'
+    w.Parent = D
+    w.AnchorPoint = Vector2.new(0.5, 0.5)
+    w.Position = UDim2.new(0.5, 0, 0.5, 0)
+    w.Size = UDim2.new(1, 0, 1, 0)
+    w.BackgroundTransparency = 1
+    w.BorderSizePixel = 0
+    L.Name = "ToggleIcon"
+    L.Parent = D
+    L.AnchorPoint = Vector2.new(0.5, 0.5)
+    L.Position = UDim2.new(0.5, 0, 0.5, 0)
+    L.Size = UDim2.new(0.7, 0, 0.7, 0)
+    L.BackgroundTransparency = 1
+    L.BorderSizePixel = 0
+    L.Font = Enum.Font.GothamBold
+    L.Text = "😀😶"
+    L.TextColor3 = Color3.fromRGB(255, 255, 255)
+    L.TextSize = 24
+    L.TextScaled = true
+    local function C(p, o, z)
+        local z = Instance.new("UIStroke")
+        local v = Instance.new('TextLabel')
+        v.Name = "hmph ><"
+        v.Parent = h
+        v.AnchorPoint = Vector2.new(0.5, 0.5)
+        v.Position = o
+        v.Size = UDim2.new(0, 200, 0, 30)
+        v.BackgroundTransparency = 0.999
+        v.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        v.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        v.BorderSizePixel = 0
+        v.Font = Enum.Font.FredokaOne
+        v.Text = p
+        v.TextColor3 = Color3.fromRGB(255, 255, 255)
+        v.TextSize = 13
+        v.RichText = true
+        z.Parent = v
+        z.Color = Color3.fromRGB(0, 0, 0)
+        z.Thickness = 1
+        return v
     end
-end
-MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
+    MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
     W.Instances.MainTextLabel = MainTextLabel
     for p, o in pairs(J) do W.Instances[o] = C("...", UDim2.new(0.5, 0, 0.45 + (.05 * p), 0)) end
     local J = {}
@@ -145,13 +122,12 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         self.blurIntensity = 0
         return self
     end
-
     function J:SetIntensity(C)
         C = math.clamp(C, 0, 0.95)
         self.blurIntensity = C
         local p = game:GetService('TweenService')
         local o = TweenInfo.new(0.3, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
-        local z = p:Create(self.blurFrame, o, { BackgroundTransparency = 1 - C })
+        local z = p:Create(self.blurFrame, o, {BackgroundTransparency = 1 - C})
         z:Play()
         if not self.blurEffect then
             self.blurEffect = Instance.new("BlurEffect")
@@ -159,23 +135,21 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             self.blurEffect.Parent = game.Lighting
             self.blurEffect.Enabled = true
         end
-        local z = p:Create(self.blurEffect, o, { Size = C * 30 })
+        local z = p:Create(self.blurEffect, o, {Size = C * 30})
         z:Play()
         for z, z in pairs(b) do
             if z and z.Parent then
-                local v = p:Create(z, o, { BackgroundTransparency = z._originalTransparency + (C * 0.5) })
+                local v = p:Create(z, o, {BackgroundTransparency = z._originalTransparency + (C * 0.5)})
                 v:Play()
             end
         end
     end
-
     function J:RegisterUI(C)
         if C and C:IsA('GuiObject') then
             C._originalTransparency = C.BackgroundTransparency
             table.insert(b, C)
         end
     end
-
     local b = J:Create()
     function SetText(J, C)
         task.spawn(function()
@@ -197,7 +171,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             o:Play()
         end)
     end
-
     local J = game:GetService("Lighting").ExposureCompensation
     function ToggleUI(J)
         a = J or not a
@@ -243,9 +216,7 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         K = a
     end
-
     function W.RegisterForBlur(J) b:RegisterUI(J) end
-
     w.MouseButton1Click:Connect(function() ToggleUI() end)
     w.MouseEnter:Connect(function()
         local J = game:GetService('TweenService')
@@ -281,7 +252,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         K = J
     end
-
     local function J() end
     J()
     ToggleUI(true)
@@ -508,14 +478,12 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             end)
         end
     end
-
     function CheckMeleeBurstMove(W)
         if W.Name == "Black Leg" or W.Name == "Death Step" then
             local a = PlayerGui.Main.Skills:WaitForChild(W.Name, 9)
             ResearchMoves(a:WaitForChild("V"))
         end
     end
-
     function RefreshMelees(W)
         local a = ''
         for h, X in ScriptStorage.Melees do a = a .. h .. ": " .. X .. " " end
@@ -523,7 +491,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         if W then return a end
         if ScriptStorage.Interface then SetText('Melees', a) end
     end
-
     function MeleeCheck(W)
         print('Melee check', W)
         if W and typeof(W) == "Instance" and W:IsA("Tool") then
@@ -548,7 +515,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             end
         end
     end
-
     SetText('MainTextLabel', 'Refreshing Player Data')
     MeleeCheck(LocalPlayer.Character:FindFirstChildOfClass('Tool'))
     RefreshPlayerData()
@@ -589,7 +555,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             AddPoint()
         end)
     end
-
     RegisterLocalPlayerEventsConnection(LocalPlayer)
     game.Players.LocalPlayer.CharacterAdded:Connect(function(W)
         print('[ Debug ] re-registering events')
@@ -777,12 +742,10 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             return string.format('%x', W)
         end)
     end
-
     function CheckIsPlayerAlive(W)
         W = W or LocalPlayer; return W and W.Character and W.Character.Humanoid and W.Character.HumanoidRootPart and
             W.Character.Head and W.Character.Humanoid.Health > 0
     end
-
     function ConvertTo(W, a) return W.new(a.X, a.Y, a.Z) end
 
     function CaculateDistance(W, a)
@@ -791,7 +754,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         local h, X = ConvertTo(Vector3, W), ConvertTo(Vector3, a)
         return (h - X).magnitude
     end
-
     function DispTime(W, a)
         W = tonumber(W)
         if not W then return "[err]" end
@@ -802,7 +764,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         if a then return (h .. "day, " .. X .. "hrs, " .. w .. "min, " .. D .. 'sec.') end
         return (h .. 'day, ' .. X .. "hrs.")
     end
-
     function GetCurrentDateTime()
         local W = os.date("*t")
         local a = W.hour
@@ -819,16 +780,13 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         local a = string.format('%s, %s %d %d', h, y, X, D)
         return W .. a
     end
-
     function RandomArguments(...)
         local W = { ... }; return W[math.random(0, #W)]
     end
-
     function RoundVector3Down(W)
         return Vector3.new(math.floor(W.X / 10) * 10, math.floor(W.Y / 10) * 10,
             math.floor(W.Z / 10) * 10)
     end
-
     local W = 30
     lastChange = tick()
     CaculateCircreDirection = function(a)
@@ -858,7 +816,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             end)
         return W
     end
-
     print(1.5)
     function GetMeleeIdByName(W) for a, h in MeleesTable do if h == W then return MeleesId[a] end end end
 
@@ -871,7 +828,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         for a, a in workspace.NPCs:GetChildren() do if a.Name == W then return a.HumanoidRootPart.CFrame end end
     end
-
     function BuyMelee(W, a)
         if W == "DragonClaw" and workspace.NPCs:FindFirstChild('Sabi') then
             if a then
@@ -890,7 +846,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         return Remotes.CommF_:InvokeServer("Buy" .. W)
     end
-
     function SendKey(J, W)
         (function()
             game:GetService("VirtualInputManager"):SendKeyEvent(true, J, false, game)
@@ -903,25 +858,21 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         local W = string.match(J, "((%u)[^%-]+)$")
         return W .. ' Fruit'
     end
-
     function Split(J, W)
         if W == nil then W = "%s" end
         local a = {}
         for h in string.gmatch(J, '([^' .. W .. ']+)') do table.insert(a, h) end
         return a
     end
-
     function FruitNameToId(J)
         local W = Split(J)[1]
         return W .. '-' .. W
     end
-
     local J = { CurrentLevel = 2, DoubleQuest = true, CurrentQuests = {}, BlacklistedQuestIds = { BartiloQuest = 1, CitizenQuest = 1, Trainees = 1, MarineQuest = 1, ImpelQuest = 1 } }
     local W = require(game.ReplicatedStorage.GuideModule).Data.NPCList
     repeat task.wait() until game.Players.LocalPlayer.DataLoaded and ScriptStorage
     J.Quests = require(game.ReplicatedStorage.Quests)
     function J.Set(W, a, h) W[a] = h end
-
     function J.RefreshQuest(W)
         while not ScriptStorage.PlayerData.Level do
             task.wait(1)
@@ -952,14 +903,11 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             W.CurrentQuests[W.CurrentLevel].LevelReq <= ScriptStorage.PlayerData.Level and W.CurrentLevel or 1
         for h in W.CurrentQuests[a].Task do return h, W.CurrentNpc, W.CurrentQuestId, a, W.CurrentQuests[a].Name end
     end
-
     function J.MarkAsCompleted(W) W.CurrentLevel = W.CurrentLevel == 2 and 1 or 2 end
-
     function J.AbandonQuest()
         print('Abandon Quest')
         Remotes.CommF_:InvokeServer("AbandonQuest")
     end
-
     function J.GetCurrentClaimQuest(W)
         local W = game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible and
             game.Players.LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text:gsub(
@@ -967,7 +915,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         return (type(W) == "string" and string.gsub(W, "Military ", "Mil. ") or W),
             game.Players.LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text
     end
-
     function J.StartQuest(W, a)
         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer('ColorsDealer', "2")
         return Remotes.CommF_:InvokeServer("StartQuest", W, a)
@@ -1001,7 +948,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         HumanoidRootPart.CFrame = a.CFrame + Vector3.new(0, 3, 0)
     end
-
     function GetPortal(a)
         local h, X = 9e9, nil
         for w, w in Portals do
@@ -1016,7 +962,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             return task.wait()
         end
     end
-
     function GetEntries(a)
         local h, X = 9e9, nil
         for w, w in W do
@@ -1028,14 +973,12 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         if X then if os.time() - 0 > 30 then for W = 1, 10, 1 do task.wait() end end end
     end
-
     function TweenController.Tween2(W, a)
         TweenInstance2 = Services.TweenService:Create(W,
             TweenInfo.new(CaculateDistance(W.CFrame, a) / 50, Enum.EasingStyle.Linear),
             { CFrame = ConvertTo(CFrame, a) - Vector3.new(0, 0, 0) })
         TweenInstance2:Play()
     end
-
     function TweenController.Create(W)
         if not W or TweenDebounce then return end
         local a = typeof(W) ~= 'CFrame' and ConvertTo(CFrame, W) or W
@@ -1070,7 +1013,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             TweenInfo.new(W / (W < 18 and 25 or 330), Enum.EasingStyle.Linear), { CFrame = a })
         TweenInstance:Play()
     end
-
     local W = {}
     local a = game:GetService('Players')
     local h = game:GetService("RunService")
@@ -1097,7 +1039,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         return bladehits
     end
-
     function Getplayerhit()
         bladehits = {}
         for X, X in pairs(workspace.Characters:GetChildren()) do
@@ -1107,7 +1048,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         return bladehits
     end
-
     local X = (Services.ReplicatedStorage.Modules.Net)
     local w = require(X):RemoteEvent("RegisterAttack", true)
     local D = require(X):RemoteEvent("RegisterHit", true)
@@ -1125,7 +1065,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
         D:FireServer(unpack(y))
     end
-
     task.spawn(function()
         while task.wait(.06) do if _G.FastAttack == os.time() then pcall(function() h:Attack() end) end end
     end)
@@ -1185,12 +1124,10 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             end)()
         end)
     end
-
     function Sort1(h)
         return h and h:FindFirstChild("HumanoidRootPart") and
             math.floor(CaculateDistance(h.HumanoidRootPart.CFrame))
     end
-
     function CombatController.Search(h)
         local X = {}
         local w = false
@@ -1212,7 +1149,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             if h then return h end
         end
     end
-
     function CombatController.Attack(h, X, w, D)
         if ScriptStorage.Tools["Sweet Chalice"] and getsenv(game.ReplicatedStorage.GuideModule)["_G"]['InCombat'] then
             TweenController.Create(Vector3.new(0, 0, 0))
@@ -1328,7 +1264,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             end
         end
     end
-
     LevelFarmTTL = 0
     LastTravel = os.time()
     FunctionsHandler = { Initalized = false }
@@ -1345,23 +1280,18 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
                             w.Methods[D] = { Name = D, Callback = y, Call = function(w, ...) return w.Callback(...) end, Events = {} }
                             return true
                         end
-
                         setmetatable(Result.Constants,
                             { __newindex = function() assert(false, 'cannot change constant value!') end })
                         if h.Constants[Key] then
                             function Result.SaveConstant(w, w, w) return assert(false, 'constant name was used before!') end
-
                             rawset(h.Constants, Key, Value)
                         end
                         function Result.Set(h, w, D)
                             h.CacheListener[w] = D
                             return D
                         end
-
                         function Result.Get(h, w) return h.Constants[w] or h.RealCache[w] end
-
                         function Result.AddVariableChangeListener(h, w, D) h.Events[w] = D end
-
                         Result.CacheListener.__parent = Result
                         setmetatable(Result.CacheListener, {
                             __newindex = function(h, w, D)
@@ -1385,7 +1315,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             assert(not (X and h > X), "timed out")
         end
     end
-
     function GetCurrentClaimQuest(h)
         local h = game.Players.LocalPlayer.PlayerGui.Main.Quest.Visible and
             game.Players.LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text:gsub(
@@ -1393,7 +1322,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         return (type(h) == "string" and string.gsub(h, "Military ", "Mil. ") or h),
             game.Players.LocalPlayer.PlayerGui.Main.Quest.Container.QuestTitle.Title.Text
     end
-
     FunctionsHandler.LocalPlayerController.Register()
     FunctionsHandler.ExpRedeem:Register()
     FunctionsHandler.LevelFarm:Register()
@@ -2131,7 +2059,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             for h, h in k do if k.Name == "Special Microchip" then return k end end
         end
     end
-
     FunctionsHandler.RaidController:RegisterMethod("Refresh", function()
         local k = ScriptStorage.PlayerData.Level
         local h = ScriptStorage.PlayerData.Fragments
@@ -2854,7 +2781,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         end
     end)
     function k:RegisterNotifyListener(W, h) k.Listeners[W] = h end
-
     k:RegisterNotifyListener('go!', function() LastRaidAlert = os.time() end)
     k:RegisterNotifyListener('raid', function() LastRaidAlert2 = os.time() end)
     k:RegisterNotifyListener("been spotted approaching",
@@ -2884,7 +2810,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
     end)
     if SeaIndex ~= 1 then end
     function IfTableHaveIndex(k) for W in k do return true end end
-
     print(1)
     function GetServers()
         if LastServersDataPulled then
@@ -2899,7 +2824,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
             end
         end
     end
-
     spawn(function()
         GetServers()
         while task.wait(180) do GetServers() end
@@ -2929,7 +2853,6 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
         print('Teleporting to', ServerData.JobId, "..")
         game:GetService("ReplicatedStorage"):WaitForChild('__ServerBrowser'):InvokeServer("teleport", ServerData.JobId)
     end
-
     LowHop = function(k, k)
         local k = {}
         local W = game:HttpGet('https://games.roblox.com/v1/games/' ..
@@ -2955,16 +2878,11 @@ MainTextLabel = C(" ", UDim2.new(0.5, 0, 0.4, 0))
     LocalPlayer = game.Players.LocalPlayer
     local k = ".storage_u_" .. tostring(LocalPlayer)
     function Decode(W) return Services.HttpService:JSONDecode(W) end
-
     function Encode(W) return Services.HttpService:JSONEncode(W) end
-
     print(5)
     function Storage.Set(W, h, X) W.Data[h] = X end
-
     function Storage.Get(W, h) return W.Data[h] end
-
     function Storage.Save(W) writefile(k, Encode(W.Data)) end
-
     if not isfile(k) then
         writefile(k, "{}")
         task.wait(1)
@@ -3077,7 +2995,6 @@ function RefreshTasksData()
             end
         end
     end
-
     task.spawn(function()
         while task.wait() do
             if not _G.Stop then
