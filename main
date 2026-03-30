@@ -17,7 +17,7 @@ function hoangtuveu()
     local y = Instance.new("UIStroke")
     local L = Instance.new("TextLabel")
     local b = {}
-    h.Name = "HoangPhucHub"
+    h.Name = "HoangPhuc"
     h.Parent = game:GetService('CoreGui')
     h.Enabled = true
     h.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
