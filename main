@@ -36,11 +36,6 @@ function hoangtuveu()
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.IgnoreGuiInset = true
     
-    -- 3. Kiểm tra an toàn cho Config
-    if getgenv().Config and getgenv().Config.Configuration and getgenv().Config.Configuration.FpsBoost then
-        spawn(function()
-            -- Code boost FPS của bạn
-        end)
     end
     
     if getgenv().Config and getgenv().Config.Configuration and getgenv().Config.Configuration.blackscreen then
