@@ -24,13 +24,10 @@ function hoangtuveu()
     h.IgnoreGuiInset = true
     if Config.Configuration.FpsBoost then
         spawn(function()
-            pcall(loadstring(game:HttpGet("")))
-        end)
-    end
     if Config.Configuration.blackscreen then
         game:GetService('Lighting').ExposureCompensation = -math.huge
     end
-    X.Name = 'NameHub'
+    X.Name = 'HoangPhucHub'
     X.Parent = h
     X.AnchorPoint = Vector2.new(0.5, 0.5)
     X.Position = UDim2.new(0.5, 0, 0.3, 0)
@@ -40,7 +37,7 @@ function hoangtuveu()
     X.BorderColor3 = Color3.fromRGB(0, 0, 0)
     X.BorderSizePixel = 0
     X.Font = Enum.Font.FredokaOne
-    X.Text = "ARYA"
+    X.Text = "HoangPhucHub"
     local C = Instance.new("UIStroke")
     C.Parent = X
     C.Color = Color3.fromRGB(0, 0, 0)
