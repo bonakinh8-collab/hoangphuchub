@@ -2893,8 +2893,8 @@ function hoangtuveu()
     local k = {}
     SetTask("MainTask", 'n/a')
     SetTask("SubTask", 'n/a')
-ParsingTimes = 0
-function RefreshTasksData()
+    ParsingTimes = 0
+    function RefreshTasksData()
         if _G.Stop then return end
         for _, taskName in ipairs(TasksOrder) do
         local module = FunctionsHandler[taskName]
@@ -2907,27 +2907,18 @@ function RefreshTasksData()
                         else
                             local refresh = module.Methods.Refresh
                             local start = module.Methods.Start
-                            
                             -- Mặc giáp: Kiểm tra refresh có tồn tại hàm Call không
                             if refresh and refresh.Call then
                                 local result = refresh:Call(ParsingTimes < 100)     
-                            -- [ BYPASS BỎ QUA LONGMA NẾU CÓ KIẾM ]
-                            pcall(function()
-                                local backpack = game:GetService("Players").LocalPlayer.Backpack
-                                local char = game:GetService("Players").LocalPlayer.Character
-                                if taskName == "Tushita" and (backpack:FindFirstChild("Tushita") or (char and char:FindFirstChild("Tushita"))) then
-                                    result = false 
-                                end
-                                if taskName == "Yama" and (backpack:FindFirstChild("Yama") or (char and char:FindFirstChild("Yama"))) then
-                                    result = false 
-                                end
-                            end)
-                            -- [ HẾT BYPASS ]
+                            -- Mặc giáp: Kiểm tra refresh có tồn tại hàm Call không
+                            if refresh and refresh.Call then
+                                local result = refresh:Call(ParsingTimes < 100)
                                 ParsingTimes = ParsingTimes + 1
                                 if result and ParsingTimes > 100 then
                                     CurrentTask = taskName
-                                    
-                                    -- Mặc giáp: Ép chạy SetText an toàn bằng pcall
+                                ParsingTimes = ParsingTimes + 1
+                                if result and ParsingTimes > 100 then
+                                    CurrentTask = taskName
                                     pcall(function()
                                         if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
                                             ScriptStorage.Interface.SetText('DebugLine', taskName)
@@ -2935,12 +2926,10 @@ function RefreshTasksData()
                                             SetText('DebugLine', taskName)
                                         end
                                     end)
-                                    
                                     -- Mặc giáp: Kiểm tra start có tồn tại không rồi mới Call
                                     if start and start.Call then
                                         start:Call(result)
                                     end
-                                    
                                     return
                                 end
                             end
@@ -3059,24 +3048,28 @@ function RefreshTasksData()
                 local lplr = game:GetService("Players").LocalPlayer
                 local char = lplr.Character
                 local backpack = lplr.Backpack
-                -- Check: Có bật cày CDK ở Config không? Và đã có CDK trong rương chưa?
                 local wantsCDK = Config and Config.Items and Config.Items.CursedDualKatana
                 local hasCDK = backpack:FindFirstChild("Cursed Dual Katana") or (char and char:FindFirstChild("Cursed Dual Katana"))
                 if wantsCDK and not hasCDK then
-                    -- ĐANG CÀY CDK VÀ CHƯA CÓ -> ÉP CẦM TUSHITA HOẶC YAMA ĐỂ CHÉM
-                    local sword = backpack:FindFirstChild("Tushita") or backpack:FindFirstChild("Yama")
-                    if sword and char:FindFirstChild("Humanoid") then
-                        char.Humanoid:EquipTool(sword)
+                    -- Kiểm tra xem trên tay ĐÃ CẦM SẴN kiếm chưa
+                    local isHolding = char:FindFirstChild("Tushita") or char:FindFirstChild("Yama")
+                    if not isHolding then
+                        -- Chưa cầm thì mới móc từ Balo ra
+                        local sword = backpack:FindFirstChild("Tushita") or backpack:FindFirstChild("Yama")
+                        if sword and char:FindFirstChild("Humanoid") then
+                            char.Humanoid:EquipTool(sword)
+                        end
                     end
+                    -- Ép chém
                     if char:FindFirstChild("Tushita") or char:FindFirstChild("Yama") then
-                        game:GetService("VirtualUser"):ClickButton1(Vector2.new()) -- Ép click chém
+                        game:GetService("VirtualUser"):ClickButton1(Vector2.new())
                     end
-                    -- Noclip xuyên tường lúc farm kiếm
+                    -- Noclip xuyên tường
                     for _, part in pairs(char:GetDescendants()) do
                         if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
                     end
                 else
-                    -- ĐÃ CÓ CDK HOẶC KHÔNG BẬT CÀY CDK -> QUAY VỀ AUTO MELEE CHUẨN CỦA SCRIPT
+                    -- Trở về Melee
                     if FunctionsHandler and FunctionsHandler.MeleesController and FunctionsHandler.MeleesController.Methods and FunctionsHandler.MeleesController.Methods.Start then
                         FunctionsHandler.MeleesController.Methods.Start:Call()
                     end
