@@ -1,3 +1,14 @@
+task.spawn(function()
+    repeat task.wait() until game:IsLoaded()
+    local player = game:GetService("Players").LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    local mainGui = playerGui:WaitForChild("Main")
+    local chooseTeam = mainGui:WaitForChild("ChooseTeam")
+    repeat task.wait() until chooseTeam.Visible == true
+    task.wait(1)
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", Config.Team or "Pirates")
+    chooseTeam.Visible = false
+end)
 function hoangtuveu()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
     local W = {Instances = {}}
