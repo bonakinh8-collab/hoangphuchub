@@ -17,13 +17,11 @@ function hoangtuveu()
     local y = Instance.new("UIStroke")
     local L = Instance.new("TextLabel")
     local b = {}
-    h.Name = "ARYA"
+    h.Name = "HoangPhucHub"
     h.Parent = game:GetService('CoreGui')
     h.Enabled = true
     h.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     h.IgnoreGuiInset = true
-    if Config.Configuration.FpsBoost then
-        spawn(function()
     if Config.Configuration.blackscreen then
         game:GetService('Lighting').ExposureCompensation = -math.huge
     end
