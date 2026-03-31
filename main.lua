@@ -2557,8 +2557,20 @@ function hoangtuveu()
         if ScriptStorage.PlayerData.Level < 2200 then return end
         if k["Cursed Dual Katana"] or not k.Tushita or k.Tushita.Mastery < 350 or not k.Yama or k.Yama.Mastery < 350 then return end
         if SeaIndex ~= 3 then return end
-        local k = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
-        if not k or k == 'uwu' then return end
+    local k = CdkProgess or Remotes.CommF_:InvokeServer("CDKQuest", 'Progress') or 'uwu'
+    if not k or k == 'uwu' then 
+        -- NẾU CHƯA CÓ NHIỆM VỤ -> TỰ ĐỘNG GỌI SERVER ÉP NHẬN QUEST
+        pcall(function()
+            local remote = game:GetService("ReplicatedStorage").Remotes.CommF_
+            -- Gửi 2 lệnh phổ biến nhất để kích hoạt NPC Crypt Master
+            remote:InvokeServer("CDKQuest", "Start")
+            remote:InvokeServer("Talk", "Crypt Master")
+        end) 
+        -- Báo lên màn hình cho mày biết nó đang làm gì
+        if SetText then SetText('MainTask', "Auto Starting CDK Quest...") end
+        task.wait(2) -- Đợi server load data 2 giây
+        return 
+    end
         if workspace.Map.Turtle.Cursed:FindFirstChild("Breakable") then
             alert('Cursed Dual Katana', 'Open Door')
             return { "break" }
