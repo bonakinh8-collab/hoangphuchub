@@ -2616,40 +2616,40 @@ function hoangtuveu()
                 ForceToRollBone = true
                 return
             end
-       elseif W == 'Good' then
+             elseif W == 'Good' then
             if h == 2 then
-                -- Ải 2: Phục kích Hải Tặc (V11 - CHỐNG LIỆT CHÂN TẠI PORTAL)
-                local castlePos = Vector3.new(-5075, 315, -3150) -- Tọa độ trung tâm Castle
+                -- Ải 2: Phục kích Hải Tặc (V11 - Chống liệt chân tại Portal)
+                local castlePos = Vector3.new(-5075, 315, -3150)
                 local lplr = game:GetService("Players").LocalPlayer
                 local root = lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
+                
                 if not root then return end
+                
                 local distToCastle = (root.Position - castlePos).Magnitude
                 local foundPirate = false
-                -- 1. RADAR QUÉT QUÁI TRONG PHẠM VI LÂU ĐÀI
+                
                 pcall(function()
                     if workspace:FindFirstChild("Enemies") then
                         for _, mob in pairs(workspace.Enemies:GetChildren()) do
                             if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
                                 local name = mob.Name
                                 local mobDist = (mob.HumanoidRootPart.Position - castlePos).Magnitude
-                                -- Nếu quái Raid xuất hiện trong bán kính 800m quanh Castle
                                 if mobDist < 800 and name ~= "Beautiful Pirate" and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
                                     SetTask("SubTask", "CDK Quest / ĐANG DIỆT HẢI TẶC: " .. name)
                                     if CombatController and CombatController.Attack then
                                         CombatController.Attack(name)
                                     end
                                     foundPirate = true
-                                    _G.IsFlyingToCastle = false -- Có quái thì ngừng bay ngay lập tức
+                                    _G.IsFlyingToCastle = false
                                     break
                                 end
                             end
                         end
                     end
                 end)
-                -- 2. ĐIỀU KHIỂN DI CHUYỂN
+                
                 if not foundPirate then
                     if distToCastle > 150 then 
-                        -- Nếu cách xa hơn 150m thì mới bay ra Castle
                         SetTask("SubTask", "CDK Quest / Đang bay ra Castle phục kích...")
                         if not _G.IsFlyingToCastle then
                             _G.IsFlyingToCastle = true
@@ -2662,22 +2662,24 @@ function hoangtuveu()
                             end)
                         end
                     else
-                        -- ĐÃ TỚI CASTLE (DƯỚI 150M) -> ĐỨNG IM DÒ QUÁI, CẤM TWEEN LÀM LIỆT CHÂN
                         _G.IsFlyingToCastle = false
                         SetTask("SubTask", "CDK Quest / Đã tới Castle! Đang canh cửa Hải Tặc...")
-                        -- Giải phóng nhân vật để có thể tự do di chuyển/đánh quái
                         if root:FindFirstChild("BodyVelocity") then root.BodyVelocity:Destroy() end
                     end
                 end
                 return
+                
             elseif h == 3 then
-                -- Ải 3: Săn Lùng Cake Queen 
+                -- Ải 3: Săn Lùng Cake Queen (V12 - TRẢ LẠI RADAR VỆ TINH TOÀN CẦU)
                 local hasCakeQueen = false
+                
                 pcall(function()
-                    if workspace:FindFirstChild("Enemies") and workspace.Enemies:FindFirstChild("Cake Queen") then
+                    -- Chọc thẳng vào bộ nhớ ngầm của Script (Không bị giới hạn khoảng cách 10.000m)
+                    if ScriptStorage and ScriptStorage.Enemies and ScriptStorage.Enemies['Cake Queen'] then
                         hasCakeQueen = true
                     end
                 end)
+                
                 if not hasCakeQueen then
                     SetTask("SubTask", "CDK Quest / Đang nhảy Server tìm Cake Queen...")
                     Hop()
