@@ -2657,9 +2657,9 @@ function hoangtuveu()
                     end
                 end
                 return
-            elseif h == 3 then
+                elseif h == 3 then
                 -- ==========================================
-                -- ẢI 3: CAKE QUEEN (V17 - ÉP CẦM TUSHITA CHỐNG LỖI DIMENSION)
+                -- ẢI 3: CAKE QUEEN (V18 - KHÓA TỬ HUYỆT ÉP CẦM TUSHITA)
                 -- ==========================================
                 if not _G.CDK_H3_Entry_Reset then
                     _G.CDK_H3_Entry_Reset = true
@@ -2742,20 +2742,33 @@ function hoangtuveu()
                         end
                         SetTask("SubTask", "CDK Quest / ĐANG BĂM CAKE QUEEN BẰNG TUSHITA!!!")
                         
-                        -- LUỒNG ÉP CẦM KIẾM TUSHITA BẰNG MỌI GIÁ
-                        if not _G.WasAttackingBoss then
-                            _G.WasAttackingBoss = true 
-                            task.spawn(function()
-                                while _G.WasAttackingBoss and h == 3 do
-                                    task.wait(0.1)
+                        _G.WasAttackingBoss = true 
+                        
+                        -- LUỒNG BẠO CHÚA: TƯỚC VŨ KHÍ & ÉP CẦM TUSHITA 60 LẦN/GIÂY
+                        if not _G.TushitaLock then
+                            _G.TushitaLock = game:GetService("RunService").Heartbeat:Connect(function()
+                                if _G.WasAttackingBoss and h == 3 then
                                     pcall(function()
                                         local plr = game:GetService("Players").LocalPlayer
-                                        local tushita = plr.Backpack:FindFirstChild("Tushita") or plr.Character:FindFirstChild("Tushita")
-                                        if tushita and tushita.Parent == plr.Backpack then
-                                            -- Mày cất vào thì tao tự móc ra
-                                            plr.Character.Humanoid:EquipTool(tushita)
+                                        local char = plr.Character
+                                        if char and char:FindFirstChild("Humanoid") then
+                                            -- 1. Nếu đang cầm thứ rác rưởi nào không phải Tushita -> Giật lấy cất vào Balo
+                                            local currentTool = char:FindFirstChildOfClass("Tool")
+                                            if currentTool and currentTool.Name ~= "Tushita" then
+                                                currentTool.Parent = plr.Backpack
+                                            end
+                                            -- 2. Ép nhét Tushita vào tay
+                                            local tushita = plr.Backpack:FindFirstChild("Tushita")
+                                            if tushita then
+                                                char.Humanoid:EquipTool(tushita)
+                                            end
                                         end
                                     end)
+                                else
+                                    if _G.TushitaLock then
+                                        _G.TushitaLock:Disconnect()
+                                        _G.TushitaLock = nil
+                                    end
                                 end
                             end)
                         end
