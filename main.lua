@@ -2659,7 +2659,7 @@ function hoangtuveu()
                 return
             elseif h == 3 then
                 -- ==========================================
-                -- ẢI 3: CAKE QUEEN (V21 - MƯỢN NÃO HUB KẾT HỢP TỊCH THU VŨ KHÍ)
+                -- ẢI 3: CAKE QUEEN (V22 - CHUỘC LỖI TRẢ LẠI HÀM THẮP ĐUỐC)
                 -- ==========================================
                 if not _G.CDK_H3_Entry_Reset then
                     _G.CDK_H3_Entry_Reset = true
@@ -2667,7 +2667,7 @@ function hoangtuveu()
                     _G.CDK_H2_Flying = false
                     if _G.CDK_H2_Tween then _G.CDK_H2_Tween:Cancel() end
                     _G.WasAttackingBoss = false 
-                    _G.ToolsHidden = false -- Cờ báo hiệu tịch thu đồ
+                    _G.ToolsHidden = false 
                 end
 
                 local bossName = "Cake Queen"
@@ -2696,9 +2696,19 @@ function hoangtuveu()
                     end
 
                     if _G.WasAttackingBoss then
-                        SetTask("SubTask", "CDK Quest / Boss chết! Đợi 10s xem có bị hút vào Dimension không...")
-                        task.wait(10) 
+                        SetTask("SubTask", "CDK Quest / ĐÃ VÀO DIMENSION! GỌI LỆNH THẮP ĐUỐC!")
                         _G.WasAttackingBoss = false
+                        
+                        -- TRẢ LẠI LỆNH GỐC CỦA DEV MÀ TAO LỠ XÓA:
+                        pcall(function()
+                            if TweenController and TweenController.Cancel then TweenController:Cancel() end -- Dừng ngay vụ bay về Tiki
+                            if FunctionsHandler and FunctionsHandler.CursedDualKatana and FunctionsHandler.CursedDualKatana.Methods and FunctionsHandler.CursedDualKatana.Methods.DoDimension then
+                                FunctionsHandler.CursedDualKatana.Methods.DoDimension.Callback("Heavenly Dimension")
+                            end
+                            CdkProgress = nil -- Reset vòng lặp để Hub nhận diện đang ở Dimension
+                        end)
+                        
+                        task.wait(5)
                         return 
                     end
                     
@@ -2761,7 +2771,6 @@ function hoangtuveu()
                             _G.ToolsHidden = true
                             pcall(function()
                                 local plr = game:GetService("Players").LocalPlayer
-                                -- Gom hết đồ trong Balo và trên tay nhân vật đem giấu vào game.Lighting
                                 for _, tool in pairs(plr.Backpack:GetChildren()) do
                                     if tool:IsA("Tool") and tool.Name ~= "Tushita" then
                                         tool:SetAttribute("HiddenByScript", true)
@@ -2779,7 +2788,6 @@ function hoangtuveu()
                             end)
                         end
                         
-                        -- Ép cầm luôn cho chắc
                         pcall(function()
                             local plr = game:GetService("Players").LocalPlayer
                             local tushita = plr.Backpack:FindFirstChild("Tushita")
