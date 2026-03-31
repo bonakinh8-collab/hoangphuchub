@@ -3049,32 +3049,29 @@ function hoangtuveu()
                     end
                 end
             end)
+-- BỌC GIÁP ĐIỀU KHIỂN COMBAT V3 (TRẢ KIẾM VỀ BALO KHI ĐÃ MAX)
             pcall(function()
                 local lplr = game:GetService("Players").LocalPlayer
                 local char = lplr.Character
                 local backpack = lplr.Backpack
-                local wantsCDK = Config and Config.Items and Config.Items.CursedDualKatana
-                local hasCDK = backpack:FindFirstChild("Cursed Dual Katana") or (char and char:FindFirstChild("Cursed Dual Katana"))
-                if wantsCDK and not hasCDK then
-                    -- Kiểm tra xem trên tay ĐÃ CẦM SẴN kiếm chưa
-                    local isHolding = char:FindFirstChild("Tushita") or char:FindFirstChild("Yama")
+                -- CHỈ ép lôi kiếm ra chém khi thằng script ĐANG giao nhiệm vụ cày Tushita/Yama
+                if CurrentTask == "Tushita" or CurrentTask == "Yama" then
+                    local swordName = CurrentTask
+                    local isHolding = char:FindFirstChild(swordName)
                     if not isHolding then
-                        -- Chưa cầm thì mới móc từ Balo ra
-                        local sword = backpack:FindFirstChild("Tushita") or backpack:FindFirstChild("Yama")
+                        local sword = backpack:FindFirstChild(swordName)
                         if sword and char:FindFirstChild("Humanoid") then
                             char.Humanoid:EquipTool(sword)
                         end
                     end
-                    -- Ép chém
-                    if char:FindFirstChild("Tushita") or char:FindFirstChild("Yama") then
+                    if char:FindFirstChild(swordName) then
                         game:GetService("VirtualUser"):ClickButton1(Vector2.new())
                     end
-                    -- Noclip xuyên tường
                     for _, part in pairs(char:GetDescendants()) do
                         if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
                     end
                 else
-                    -- Trở về Melee
+                    -- ĐÃ MAX HOẶC ĐANG N/A -> CẤT KIẾM VÀO BALO ĐỂ AUTO CDK QUÉT ĐƯỢC
                     if FunctionsHandler and FunctionsHandler.MeleesController and FunctionsHandler.MeleesController.Methods and FunctionsHandler.MeleesController.Methods.Start then
                         FunctionsHandler.MeleesController.Methods.Start:Call()
                     end
