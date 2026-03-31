@@ -2910,9 +2910,20 @@ function RefreshTasksData()
                             
                             -- Mặc giáp: Kiểm tra refresh có tồn tại hàm Call không
                             if refresh and refresh.Call then
-                                local result = refresh:Call(ParsingTimes < 100)
+                                local result = refresh:Call(ParsingTimes < 100)     
+                            -- [ BYPASS BỎ QUA LONGMA NẾU CÓ KIẾM ]
+                            pcall(function()
+                                local backpack = game:GetService("Players").LocalPlayer.Backpack
+                                local char = game:GetService("Players").LocalPlayer.Character
+                                if taskName == "Tushita" and (backpack:FindFirstChild("Tushita") or (char and char:FindFirstChild("Tushita"))) then
+                                    result = false 
+                                end
+                                if taskName == "Yama" and (backpack:FindFirstChild("Yama") or (char and char:FindFirstChild("Yama"))) then
+                                    result = false 
+                                end
+                            end)
+                            -- [ HẾT BYPASS ]
                                 ParsingTimes = ParsingTimes + 1
-                                
                                 if result and ParsingTimes > 100 then
                                     CurrentTask = taskName
                                     
@@ -3058,19 +3069,43 @@ function RefreshTasksData()
                     end
                 end
             end)
-            
-            -- BỌC GIÁP VIP CHO MELEE CONTROLLER
             pcall(function()
-                if FunctionsHandler and FunctionsHandler.MeleesController and FunctionsHandler.MeleesController.Methods and FunctionsHandler.MeleesController.Methods.Start then
-                    FunctionsHandler.MeleesController.Methods.Start:Call()
+                local lplr = game:GetService("Players").LocalPlayer
+                local char = lplr.Character
+                local backpack = lplr.Backpack
+                
+                -- Check: Có bật cày CDK ở Config không? Và đã có CDK trong rương chưa?
+                local wantsCDK = Config and Config.Items and Config.Items.CursedDualKatana
+                local hasCDK = backpack:FindFirstChild("Cursed Dual Katana") or (char and char:FindFirstChild("Cursed Dual Katana"))
+                
+                if wantsCDK and not hasCDK then
+                    -- ĐANG CÀY CDK VÀ CHƯA CÓ -> ÉP CẦM TUSHITA HOẶC YAMA ĐỂ CHÉM
+                    local sword = backpack:FindFirstChild("Tushita") or backpack:FindFirstChild("Yama")
+                    if sword and char:FindFirstChild("Humanoid") then
+                        char.Humanoid:EquipTool(sword)
+                    end
+                    
+                    if char:FindFirstChild("Tushita") or char:FindFirstChild("Yama") then
+                        game:GetService("VirtualUser"):ClickButton1(Vector2.new()) -- Ép click chém
+                    end
+                    
+                    -- Noclip xuyên tường lúc farm kiếm
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
+                    end
+                else
+                    -- ĐÃ CÓ CDK HOẶC KHÔNG BẬT CÀY CDK -> QUAY VỀ AUTO MELEE CHUẨN CỦA SCRIPT
+                    if FunctionsHandler and FunctionsHandler.MeleesController and FunctionsHandler.MeleesController.Methods and FunctionsHandler.MeleesController.Methods.Start then
+                        FunctionsHandler.MeleesController.Methods.Start:Call()
+                    end
                 end
             end)
-            
+                end
+            end)
             -- Chạy chuỗi nhiệm vụ an toàn
             local success, err = xpcall(function()
                 if type(RefreshTasksData) == "function" then RefreshTasksData() end
             end, debug.traceback)
-            
             if not success then 
                 print("[ARYA LOG] Task Error Bypassed: ", err) 
             end
