@@ -2905,17 +2905,11 @@ function hoangtuveu()
                                 k[taskName] = true
                             end
                         else
-                            local refresh = module.Methods.Refresh
+        local refresh = module.Methods.Refresh
                             local start = module.Methods.Start
                             -- Mặc giáp: Kiểm tra refresh có tồn tại hàm Call không
                             if refresh and refresh.Call then
-                                local result = refresh:Call(ParsingTimes < 100)     
-                            -- Mặc giáp: Kiểm tra refresh có tồn tại hàm Call không
-                            if refresh and refresh.Call then
                                 local result = refresh:Call(ParsingTimes < 100)
-                                ParsingTimes = ParsingTimes + 1
-                                if result and ParsingTimes > 100 then
-                                    CurrentTask = taskName
                                 ParsingTimes = ParsingTimes + 1
                                 if result and ParsingTimes > 100 then
                                     CurrentTask = taskName
@@ -2931,21 +2925,21 @@ function hoangtuveu()
                                         start:Call(result)
                                     end
                                     return
-                                end
-                            end
-                        end
-                    end
+                                end -- Đóng if result
+                            end -- Đóng if refresh
+                        end -- Đóng if not module.Initialized / else
+                    end -- Đóng if module then
                 end -- Đóng vòng lặp for
-            end -- Đóng if _G.Stop
-        end -- Đóng function RefreshTasksData
-    pcall(function()
+            end -- ĐÓNG HÀM RefreshTasksData CHỐT SỔ!
+        -- ==== CÁC LỆNH SETTEXT VÀ BỌC GIÁP BÊN DƯỚI ====
+        pcall(function()
             if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
                 ScriptStorage.Interface.SetText('MainTextLabel', "Refreshing Player Items..")
             elseif type(SetText) == "function" then
                 SetText('MainTextLabel', "Refreshing Player Items..")
             end
         end)
- if type(AddPoint) == "function" then pcall(AddPoint) end
+        if type(AddPoint) == "function" then pcall(AddPoint) end
         -- Mặc giáp VIP cho J:RefreshQuest
         if type(J) == "table" and type(J.RefreshQuest) == "function" then
             pcall(function() J:RefreshQuest() end)
@@ -2976,7 +2970,6 @@ function hoangtuveu()
                 end)
             end
         end)
-        -- Bọc giáp VIP cho SetText cuối cùng
         pcall(function()
             if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
                 ScriptStorage.Interface.SetText("MainTextLabel", 'Loaded In ' .. tostring(math.floor(tick() - (StartTick or tick()))) .. 'ms!')
@@ -3084,5 +3077,7 @@ function hoangtuveu()
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
+
+end
 
 hoangtuveu()
