@@ -667,9 +667,9 @@ function hoangtuveu()
         ["Mystic Droplet"] = { 10, 2, { 'Sea Soldier', 'Water Fighter' }, { 'ForgottenQuest', 2, 1425, 'Forgotten Quest Giver' } }
     }
     SeaIndexes = { "Main", "Dressrosa", "Zou" }
-    TasksOrder = { "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation",
-        'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", 'ThirdSeaPuzzle',
-        "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
+    TasksOrder = { "Tushita", 'Yama', "CursedDualKatana", "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 
+    'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", 'ThirdSeaPuzzle', 
+    "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
     MaxLevel = 2800
     placeId = game.PlaceId
     if placeId == 85211729168715 or placeId == 2753915549 then
