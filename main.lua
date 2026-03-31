@@ -265,8 +265,8 @@ function hoangtuveu()
     alert("cac", "Endpoint reached")
     local J = 'https://files.lumitone.xyz/'
     pcall(function() r[3][r[2]] = os.time() end)
-    OldSessionTime = isfile('.tdif-' .. game.Players.LocalPlayer.Name) and
-        tonumber(readfile(".tdif-" .. game.Players.LocalPlayer.Name)) or 0
+    OldSessionTime = isfile("HoangPhucHub/.tdif-" .. game.Players.LocalPlayer.Name) and 
+    tonumber(readfile("HoangPhucHub/.tdif-" .. game.Players.LocalPlayer.Name)) or 0
     repeat
         task.wait()
         game.ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", Config.Team)
@@ -2872,7 +2872,7 @@ function hoangtuveu()
     Services = {}
     setmetatable(Services, { __index = function(k, k) return game:GetService(k) end })
     LocalPlayer = game.Players.LocalPlayer
-    local k = ".storage_u_" .. tostring(LocalPlayer)
+    local k = "HoangPhucHub/.storage_u_" .. tostring(LocalPlayer)
     function Decode(W) return Services.HttpService:JSONDecode(W) end
     function Encode(W) return Services.HttpService:JSONEncode(W) end
     print(5)
@@ -2994,42 +2994,44 @@ function hoangtuveu()
         -- Tạm thời bỏ qua hàm này để tránh lỗi văng game vớ vẩn
         return
     end
-    -- VÒNG LẶP UPDATE GIAO DIỆN & THỜI GIAN
-    task.spawn(function()
-        while task.wait(1) do
-            if not _G.Stop then
-                pcall(NearbyHopHandler)
-                -- Bọc giáp check nhân vật ngồi
-                pcall(function()
-                    local lplr = game:GetService("Players").LocalPlayer
-                    if lplr and lplr.Character then
-                        local hum = lplr.Character:FindFirstChild("Humanoid")
-                        if hum and hum.Sit then
-                            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-                        end
+-- VÒNG LẶP UPDATE GIAO DIỆN & THỜI GIAN
+            task.spawn(function()
+                while task.wait(1) do
+                    if not _G.Stop then
+                        pcall(NearbyHopHandler)
+                        -- Bọc giáp check nhân vật ngồi
+                        pcall(function()
+                            local lplr = game:GetService("Players").LocalPlayer
+                            if lplr and lplr.Character then
+                                local hum = lplr.Character:FindFirstChild("Humanoid")
+                                if hum and hum.Sit then
+                                    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                                end
+                            end
+                        end)
+                        -- Bọc giáp cập nhật thời gian & Ghi File
+                        pcall(function()
+                            if type(RefreshPlayerData) == "function" then RefreshPlayerData() end
+                            local startT = StartTick or os.time()
+                            local J = os.time() - startT
+                            local r_time = J + (OldSessionTime or 0)
+                            local lplr = game:GetService("Players").LocalPlayer
+                            if lplr then
+                                pcall(function()
+                                    if not isfolder("HoangPhucHub") then makefolder("HoangPhucHub") end
+                                    writefile("HoangPhucHub/.tdif-" .. lplr.Name, tostring(r_time))
+                                end)
+                            end
+                            if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
+                                ScriptStorage.Interface.SetText('LiveTime', "Time Elapsed: " .. tostring(r_time) .. "s")
+                            elseif type(SetText) == "function" then
+                                SetText('LiveTime', "Time Elapsed: " .. tostring(r_time) .. "s")
+                            end
+                            RefreshDebounce = os.time()
+                        end)
                     end
-                end)
-                -- Bọc giáp cập nhật thời gian (Fix dứt điểm lỗi r[3][r[2]])
-                pcall(function()
-                    if type(RefreshPlayerData) == "function" then RefreshPlayerData() end
-                    local startT = StartTick or os.time()
-                    local J = os.time() - startT
-                    local r_time = J + (OldSessionTime or 0)
-                    local lplr = game:GetService("Players").LocalPlayer
-                    if lplr then
-                        pcall(function() writefile(".tdif-" .. lplr.Name, tostring(r_time)) end)
-                    end
-                    if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
-                        ScriptStorage.Interface.SetText('LiveTime', "Time Elapsed: " .. tostring(r_time) .. "s")
-                    elseif type(SetText) == "function" then
-                        SetText('LiveTime', "Time Elapsed: " .. tostring(r_time) .. "s")
-                    end
-                    RefreshDebounce = os.time()
-                end)
-            end
-        end
-    end)
-    -- VÒNG LẶP FARM CHÍNH (Fix lỗi dòng 3040)
+                end
+            end)
     task.spawn(function()
         while task.wait() do
             pcall(function()
