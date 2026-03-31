@@ -1,34 +1,3 @@
-Config = {
-    Team = "Pirates",
-    Configuration = {
-        HopWhenIdle = false,
-        AutoHop = false,
-        AutoHopDelay = 10 * 10,
-        FpsBoost = false,
-        blackscreen = false
-    },
-    Items = {
-
-        -- Melees 
-        AutoFullyMelees = false,
-
-        -- Swords 
-        Saber = false,
-        CursedDualKatana = true,
-
-        -- Guns 
-        SoulGuitar = false,
-
-        -- Upgrades 
-
-        RaceV2 = false
-
-    },
-    Settings = {
-        StayInSea2UntilHaveDarkFragments = false
-    }
-}
-loadstring(game:HttpGet("https://raw.githubusercontent.com/bonakinh8-collab/hoangphuchub/refs/heads/main/main.lua"))()
 function hoangtuveu()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
     local W = {Instances = {}}
