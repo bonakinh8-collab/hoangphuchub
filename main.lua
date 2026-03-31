@@ -2605,40 +2605,60 @@ function hoangtuveu()
                 ForceToRollBone = true
                 return
             end
-        elseif W == 'Good' then
+       elseif W == 'Good' then
             if h == 2 then
-                -- Ải 2: Phục kích Hải Tặc tại Castle 
-                local castlePos = CFrame.new(-5075, 315, -3150)
+                -- Ải 2: Phục kích Hải Tặc (V11 - CHỐNG LIỆT CHÂN TẠI PORTAL)
+                local castlePos = Vector3.new(-5075, 315, -3150) -- Tọa độ trung tâm Castle
+                local lplr = game:GetService("Players").LocalPlayer
+                local root = lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+                local distToCastle = (root.Position - castlePos).Magnitude
                 local foundPirate = false
-                
+                -- 1. RADAR QUÉT QUÁI TRONG PHẠM VI LÂU ĐÀI
                 pcall(function()
                     if workspace:FindFirstChild("Enemies") then
                         for _, mob in pairs(workspace.Enemies:GetChildren()) do
                             if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
                                 local name = mob.Name
-                                local dist = (mob.HumanoidRootPart.Position - castlePos.Position).Magnitude
-                                if dist < 500 and name ~= "Beautiful Pirate" and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
-                                    SetTask("SubTask", "CDK Quest / ĐANG CHIẾN ĐẤU RAID: " .. name)
+                                local mobDist = (mob.HumanoidRootPart.Position - castlePos).Magnitude
+                                -- Nếu quái Raid xuất hiện trong bán kính 800m quanh Castle
+                                if mobDist < 800 and name ~= "Beautiful Pirate" and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
+                                    SetTask("SubTask", "CDK Quest / ĐANG DIỆT HẢI TẶC: " .. name)
                                     if CombatController and CombatController.Attack then
                                         CombatController.Attack(name)
                                     end
                                     foundPirate = true
+                                    _G.IsFlyingToCastle = false -- Có quái thì ngừng bay ngay lập tức
                                     break
                                 end
                             end
                         end
                     end
                 end)
-                
+                -- 2. ĐIỀU KHIỂN DI CHUYỂN
                 if not foundPirate then
-                    SetTask("SubTask", "CDK Quest / Đang bay ra Castle phục kích...")
-                    -- CHỮA BỆNH LIỆT CHÂN: Sửa đúng hàm Create của thằng Dev gốc
-                    if TweenController and TweenController.Create then
-                        TweenController.Create(castlePos)
+                    if distToCastle > 150 then 
+                        -- Nếu cách xa hơn 150m thì mới bay ra Castle
+                        SetTask("SubTask", "CDK Quest / Đang bay ra Castle phục kích...")
+                        if not _G.IsFlyingToCastle then
+                            _G.IsFlyingToCastle = true
+                            task.spawn(function()
+                                local TS = game:GetService("TweenService")
+                                local tween = TS:Create(root, TweenInfo.new(distToCastle/300, Enum.EasingStyle.Linear), {CFrame = CFrame.new(castlePos)})
+                                tween:Play()
+                                tween.Completed:Wait()
+                                _G.IsFlyingToCastle = false
+                            end)
+                        end
+                    else
+                        -- ĐÃ TỚI CASTLE (DƯỚI 150M) -> ĐỨNG IM DÒ QUÁI, CẤM TWEEN LÀM LIỆT CHÂN
+                        _G.IsFlyingToCastle = false
+                        SetTask("SubTask", "CDK Quest / Đã tới Castle! Đang canh cửa Hải Tặc...")
+                        -- Giải phóng nhân vật để có thể tự do di chuyển/đánh quái
+                        if root:FindFirstChild("BodyVelocity") then root.BodyVelocity:Destroy() end
                     end
                 end
                 return
-                
             elseif h == 3 then
                 -- Ải 3: Săn Lùng Cake Queen 
                 local hasCakeQueen = false
@@ -2647,9 +2667,8 @@ function hoangtuveu()
                         hasCakeQueen = true
                     end
                 end)
-                
                 if not hasCakeQueen then
-                    SetTask("SubTask", "CDK Quest / Server đéo có Cake Queen, đang Auto Hop...")
+                    SetTask("SubTask", "CDK Quest / Đang nhảy Server tìm Cake Queen...")
                     Hop()
                 else
                     SetTask("SubTask", "CDK Quest / ĐANG BĂM CAKE QUEEN!!!")
