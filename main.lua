@@ -1,26 +1,45 @@
 -- ==========================================
--- BỌC GIÁP AUTO-TEAM V3 (GIẢ LẬP CLICK CHUỘT THẬT)
+-- BỌC GIÁP AUTO-TEAM V4 (HỆ CHẬM MÀ CHẮC)
 -- ==========================================
 task.spawn(function()
+    -- 1. Cho nó đứng im thở 5 giây đúng ý mày luôn!
+    task.wait(5) 
+    
+    -- 2. Đợi game load xong tài nguyên chính
+    if not game:IsLoaded() then
+        game.Loaded:Wait()
+    end
+    
     local plr = game:GetService("Players").LocalPlayer
     local gui = plr:WaitForChild("PlayerGui")
-    local main = gui:WaitForChild("Main")
-    local chooseTeam = main:WaitForChild("ChooseTeam")
     
-    -- Đợi đến khi bảng Team thực sự load xong và hiện lên
-    repeat task.wait(0.5) until chooseTeam.Visible == true
+    -- 3. Đợi cái Main UI của HoangPhucHub xuất hiện (để tránh script chạy trước UI)
+    local main = gui:WaitForChild("Main", 20) -- Đợi tối đa 20s
+    if not main then return end
     
-    -- 1. Gửi API xin vào Team
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
-    
-    -- 2. DÙNG HÀM CỦA EXECUTOR ĐỂ ÉP GAME TỰ CLICK VÀO NÚT PIRATES (Kích hoạt Script Hub)
-    pcall(function()
-        for _, connection in pairs(getconnections(chooseTeam.Container.Pirates.Frame.TextButton.Activated)) do
-            connection.Function()
+    local chooseTeam = main:WaitForChild("ChooseTeam", 20)
+    if not chooseTeam then return end
+
+    -- 4. ÉP CHỌN TEAM (Dùng cả Remote lẫn Click ảo cho chắc kèo)
+    while task.wait(1) do
+        if plr.Team == nil or plr.Team.Name == "None" then
+            -- Gửi lệnh lên Server
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
+            
+            -- Giả lập Click vào nút Pirates để "đánh thức" Script chính
+            pcall(function()
+                local btn = chooseTeam.Container.Pirates.Frame.TextButton
+                for _, conn in pairs(getconnections(btn.Activated)) do
+                    conn.Function()
+                end
+            end)
+        else
+            break -- Có team rồi thì dừng
         end
-    end)
+    end
     
-    -- 3. Chỉ ẨN đi, TUYỆT ĐỐI KHÔNG DESTROY!
+    -- 5. Sau khi xong xuôi, ẩn cái bảng đi cho đẹp
+    task.wait(1)
     chooseTeam.Visible = false
 end)
 function hoangtuveu()
