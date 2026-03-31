@@ -2657,59 +2657,68 @@ function hoangtuveu()
                     end
                 end
                 return
-                
-elseif h == 3 then
+            elseif h == 3 then
                 -- ==========================================
-                -- ẢI 3: SĂN CAKE QUEEN (V15 - FIX KẸT MAP & LỖI MẤT DIMENSION)
+                -- ẢI 3: CAKE QUEEN (V17 - ÉP CẦM TUSHITA CHỐNG LỖI DIMENSION)
                 -- ==========================================
-                
-                -- Xóa kẹt chân từ các ải trước
                 if not _G.CDK_H3_Entry_Reset then
                     _G.CDK_H3_Entry_Reset = true
                     _G.CDK_H2_Entry_Reset = false
                     _G.CDK_H2_Flying = false
                     if _G.CDK_H2_Tween then _G.CDK_H2_Tween:Cancel() end
-                    _G.WasAttackingBoss = false -- Biến ghi nhớ "Vừa nãy tao có đang đấm Boss không?"
+                    _G.WasAttackingBoss = false 
                 end
 
                 local bossName = "Cake Queen"
                 local bossAliveInServer = false
                 local bossInWorkspace = false
                 
-                -- 1. Radar Vệ Tinh
                 pcall(function()
-                    if ScriptStorage and ScriptStorage.Enemies and ScriptStorage.Enemies[bossName] then
-                        bossAliveInServer = true
-                    end
+                    if ScriptStorage and ScriptStorage.Enemies and ScriptStorage.Enemies[bossName] then bossAliveInServer = true end
+                end)
+                pcall(function()
+                    if workspace:FindFirstChild("Enemies") and workspace.Enemies:FindFirstChild(bossName) then bossInWorkspace = true end
                 end)
                 
-                -- 2. Radar Mắt Thường
-                pcall(function()
-                    if workspace:FindFirstChild("Enemies") and workspace.Enemies:FindFirstChild(bossName) then
-                        bossInWorkspace = true
-                    end
-                end)
-                
-                -- XỬ LÝ LOGIC ĐÁNH BOSS & NHẢY SERVER
                 if not bossAliveInServer then
-                    -- NẾU TRƯỚC ĐÓ ĐANG ĐẤM BOSS MÀ GIỜ NÓ BIẾN MẤT -> ĐỢI GAME DỊCH CHUYỂN
                     if _G.WasAttackingBoss then
                         SetTask("SubTask", "CDK Quest / Boss chết! Đợi 10s xem có bị hút vào Dimension không...")
-                        task.wait(10) -- Nghỉ 10 giây chống nhảy Server láo!
+                        task.wait(10) 
                         _G.WasAttackingBoss = false
-                        return -- Dừng lặp để chờ
+                        return 
                     end
                     
-                    SetTask("SubTask", "CDK Quest / Server sạch bóng, đang Auto Hop...")
-                    Hop()
+                    SetTask("SubTask", "CDK Quest / Server sạch bóng, đang SUPER HOP...")
+                    if not _G.IsHoppingNow then
+                        _G.IsHoppingNow = true
+                        task.spawn(function()
+                            pcall(function()
+                                local req = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+                                local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
+                                local res = req({Url = url, Method = "GET"})
+                                if res and res.StatusCode == 200 then
+                                    local data = game:GetService("HttpService"):JSONDecode(res.Body)
+                                    local servers = {}
+                                    for _, v in pairs(data.data) do
+                                        if type(v) == "table" and v.playing and v.maxPlayers and v.id ~= game.JobId and v.playing < (v.maxPlayers - 2) then
+                                            table.insert(servers, v.id)
+                                        end
+                                    end
+                                    if #servers > 0 then
+                                        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer)
+                                    end
+                                end
+                            end)
+                            task.wait(5)
+                            _G.IsHoppingNow = false
+                        end)
+                    end
                 else
                     if not bossInWorkspace then
-                        -- FIX BUG LIỆT CHÂN Ở ĐẢO CẢNG (Tự bay ra Đảo Kem)
-                        SetTask("SubTask", "CDK Quest / Boss đang ở Đảo Kem, Mở khóa phản lực bay tới...")
+                        SetTask("SubTask", "CDK Quest / Boss đang ở Đảo Kem, Tự bay tới để load Map...")
                         local iceCreamPos = CFrame.new(-710, 382, -11150) 
                         local lplr = game:GetService("Players").LocalPlayer
                         local root = lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
-                        
                         if root then
                             local dist = (root.Position - iceCreamPos.Position).Magnitude
                             if dist > 300 then
@@ -2717,7 +2726,6 @@ elseif h == 3 then
                                     _G.CDK_H3_Flying = true
                                     _G.CDK_H3_Tween = game:GetService("TweenService"):Create(root, TweenInfo.new(dist/300, Enum.EasingStyle.Linear), {CFrame = iceCreamPos})
                                     _G.CDK_H3_Tween:Play()
-                                    
                                     task.spawn(function()
                                         local completed = false
                                         _G.CDK_H3_Tween.Completed:Connect(function() completed = true end)
@@ -2728,16 +2736,32 @@ elseif h == 3 then
                             end
                         end
                     else
-                        -- THẤY BOSS RỒI -> XUNG PHONG!
                         if _G.CDK_H3_Flying then
                             _G.CDK_H3_Flying = false
                             if _G.CDK_H3_Tween then _G.CDK_H3_Tween:Cancel() end
                         end
-                        SetTask("SubTask", "CDK Quest / ĐANG BĂM CAKE QUEEN VỠ MẶT!!!")
-                        _G.WasAttackingBoss = true -- Đánh dấu tao đang đấm nó!
+                        SetTask("SubTask", "CDK Quest / ĐANG BĂM CAKE QUEEN BẰNG TUSHITA!!!")
                         
-                        if CombatController and CombatController.Attack then
-                            CombatController.Attack(bossName)
+                        -- LUỒNG ÉP CẦM KIẾM TUSHITA BẰNG MỌI GIÁ
+                        if not _G.WasAttackingBoss then
+                            _G.WasAttackingBoss = true 
+                            task.spawn(function()
+                                while _G.WasAttackingBoss and h == 3 do
+                                    task.wait(0.1)
+                                    pcall(function()
+                                        local plr = game:GetService("Players").LocalPlayer
+                                        local tushita = plr.Backpack:FindFirstChild("Tushita") or plr.Character:FindFirstChild("Tushita")
+                                        if tushita and tushita.Parent == plr.Backpack then
+                                            -- Mày cất vào thì tao tự móc ra
+                                            plr.Character.Humanoid:EquipTool(tushita)
+                                        end
+                                    end)
+                                end
+                            end)
+                        end
+                        
+                        if CombatController and CombatController.Attack then 
+                            CombatController.Attack(bossName) 
                         end
                     end
                 end
