@@ -2957,14 +2957,11 @@ function RefreshTasksData()
             end
         end)
  if type(AddPoint) == "function" then pcall(AddPoint) end
-        
         -- Mặc giáp VIP cho J:RefreshQuest
         if type(J) == "table" and type(J.RefreshQuest) == "function" then
             pcall(function() J:RefreshQuest() end)
         end
-        
         if type(RefreshInventory) == "function" then pcall(RefreshInventory) end
-        
         -- Bọc giáp cho Remotes
         pcall(function()
             if Remotes and Remotes.CommE then
@@ -2976,9 +2973,7 @@ function RefreshTasksData()
                 end)
             end
         end)
-        
         if type(RefreshRace) == "function" then pcall(RefreshRace) end
-        
         -- Chống văng game khi treo AFK
         pcall(function()
             local a_Player = game:GetService("Players").LocalPlayer
@@ -2992,7 +2987,6 @@ function RefreshTasksData()
                 end)
             end
         end)
-        
         -- Bọc giáp VIP cho SetText cuối cùng
         pcall(function()
             if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
@@ -3002,18 +2996,15 @@ function RefreshTasksData()
             end
         end)
  QueueList = {}
-    
     function NearbyHopHandler()
         -- Tạm thời bỏ qua hàm này để tránh lỗi văng game vớ vẩn
         return
     end
-
     -- VÒNG LẶP UPDATE GIAO DIỆN & THỜI GIAN
     task.spawn(function()
         while task.wait(1) do
             if not _G.Stop then
                 pcall(NearbyHopHandler)
-                
                 -- Bọc giáp check nhân vật ngồi
                 pcall(function()
                     local lplr = game:GetService("Players").LocalPlayer
@@ -3024,19 +3015,16 @@ function RefreshTasksData()
                         end
                     end
                 end)
-                
                 -- Bọc giáp cập nhật thời gian (Fix dứt điểm lỗi r[3][r[2]])
                 pcall(function()
                     if type(RefreshPlayerData) == "function" then RefreshPlayerData() end
                     local startT = StartTick or os.time()
                     local J = os.time() - startT
                     local r_time = J + (OldSessionTime or 0)
-                    
                     local lplr = game:GetService("Players").LocalPlayer
                     if lplr then
                         pcall(function() writefile(".tdif-" .. lplr.Name, tostring(r_time)) end)
                     end
-                    
                     if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
                         ScriptStorage.Interface.SetText('LiveTime', "Time Elapsed: " .. tostring(r_time) .. "s")
                     elseif type(SetText) == "function" then
@@ -3047,7 +3035,6 @@ function RefreshTasksData()
             end
         end
     end)
-
     -- VÒNG LẶP FARM CHÍNH (Fix lỗi dòng 3040)
     task.spawn(function()
         while task.wait() do
@@ -3058,7 +3045,6 @@ function RefreshTasksData()
                     while task.wait() do game:GetService('TeleportService'):Teleport(game.PlaceId) end
                 end
             end)
-            
             pcall(function()
                 if not AnimationDelay or os.time() - AnimationDelay > 60 then
                     AnimationDelay = os.time()
@@ -3073,22 +3059,18 @@ function RefreshTasksData()
                 local lplr = game:GetService("Players").LocalPlayer
                 local char = lplr.Character
                 local backpack = lplr.Backpack
-                
                 -- Check: Có bật cày CDK ở Config không? Và đã có CDK trong rương chưa?
                 local wantsCDK = Config and Config.Items and Config.Items.CursedDualKatana
                 local hasCDK = backpack:FindFirstChild("Cursed Dual Katana") or (char and char:FindFirstChild("Cursed Dual Katana"))
-                
                 if wantsCDK and not hasCDK then
                     -- ĐANG CÀY CDK VÀ CHƯA CÓ -> ÉP CẦM TUSHITA HOẶC YAMA ĐỂ CHÉM
                     local sword = backpack:FindFirstChild("Tushita") or backpack:FindFirstChild("Yama")
                     if sword and char:FindFirstChild("Humanoid") then
                         char.Humanoid:EquipTool(sword)
                     end
-                    
                     if char:FindFirstChild("Tushita") or char:FindFirstChild("Yama") then
                         game:GetService("VirtualUser"):ClickButton1(Vector2.new()) -- Ép click chém
                     end
-                    
                     -- Noclip xuyên tường lúc farm kiếm
                     for _, part in pairs(char:GetDescendants()) do
                         if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
@@ -3100,16 +3082,14 @@ function RefreshTasksData()
                     end
                 end
             end)
-                end
-            end)
-            -- Chạy chuỗi nhiệm vụ an toàn
+-- Chạy chuỗi nhiệm vụ an toàn
             local success, err = xpcall(function()
                 if type(RefreshTasksData) == "function" then RefreshTasksData() end
             end, debug.traceback)
             if not success then 
                 print("[ARYA LOG] Task Error Bypassed: ", err) 
             end
-        end
-    end)
+        end -- Đóng vòng lặp while task.wait()
+    end) -- Đóng task.spawn()
 
 hoangtuveu()
