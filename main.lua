@@ -2605,13 +2605,41 @@ function hoangtuveu()
                 ForceToRollBone = true
                 return
             end
-        elseif W == 'Good' then
+            elseif W == 'Good' then
             if h == 2 then
-                SetTask("SubTask", 'CDK Quest / Waiting until pirate raid started')
+                -- Ải 2: Phục kích Hải Tặc tại Castle
+                local castlePos = CFrame.new(-5075, 315, -3150)
+                local foundPirate = false
+                pcall(function()
+                    if workspace:FindFirstChild("Enemies") then
+                        for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                            if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+                                local name = mob.Name
+                                if string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban" then
+                                    SetTask("SubTask", "CDK Quest / ĐANG CHIẾN ĐẤU: " .. name)
+                                    if CombatController and CombatController.Attack then
+                                        CombatController.Attack(name)
+                                    end
+                                    foundPirate = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end)
+                if not foundPirate then
+                    SetTask("SubTask", "CDK Quest / Đang bay ra Castle phục kích Hải Tặc...")
+                    if TweenController and TweenController.Tween then
+                        TweenController.Tween(castlePos)
+                    elseif typeof(Tween) == "function" then
+                        Tween(castlePos)
+                    end
+                end
                 return
-            elseif h == 3 and not ScriptStorage.Enemies["Cake Queen"] then
+            elseif h == 3 and not ScriptStorage.Enemies['Cake Queen'] then
+                -- Ải 3: Đợi Cake Queen (Mày lỡ tay xóa mất cái này nên nó lỗi!)
                 Hop()
-                SetTask('SubTask', "CDK Quest / Waiting until Cake Queen boss spawned")
+                SetTask("SubTask", "CDK Quest / Waiting until Cake Queen boss spawned")
                 return
             end
         end
