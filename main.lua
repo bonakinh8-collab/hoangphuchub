@@ -3217,7 +3217,6 @@ elseif h == 3 then
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
-
 end
 
 hoangtuveu()
