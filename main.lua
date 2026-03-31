@@ -7,7 +7,7 @@ task.spawn(function()
     repeat task.wait() until chooseTeam.Visible == true
     task.wait(1)
     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
-    chooseTeam.Visible = false
+    chooseTeam.Visible = true
 end)
 function hoangtuveu()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
