@@ -2605,9 +2605,9 @@ function hoangtuveu()
                 ForceToRollBone = true
                 return
             end
-            elseif W == 'Good' then
+        elseif W == 'Good' then
             if h == 2 then
-                -- Ải 2: Phục kích Hải Tặc tại Castle (V6 Định vị chính xác)
+                -- Ải 2: Phục kích Hải Tặc tại Castle 
                 local castlePos = CFrame.new(-5075, 315, -3150)
                 local foundPirate = false
                 
@@ -2616,10 +2616,8 @@ function hoangtuveu()
                         for _, mob in pairs(workspace.Enemies:GetChildren()) do
                             if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
                                 local name = mob.Name
-                                -- TÍNH KHOẢNG CÁCH: Quái phải nằm trong bán kính 1500 stud quanh Castle
                                 local dist = (mob.HumanoidRootPart.Position - castlePos.Position).Magnitude
-                                
-                                if dist < 1500 and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
+                                if dist < 500 and name ~= "Beautiful Pirate" and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
                                     SetTask("SubTask", "CDK Quest / ĐANG CHIẾN ĐẤU RAID: " .. name)
                                     if CombatController and CombatController.Attack then
                                         CombatController.Attack(name)
@@ -2632,21 +2630,33 @@ function hoangtuveu()
                     end
                 end)
                 
-                -- Nếu không có quái Raid ở Castle thì bay ra đó đứng đợi
                 if not foundPirate then
-                    SetTask("SubTask", "CDK Quest / Đang ngồi nóc Castle phục kích...")
-                    if TweenController and TweenController.Tween then
-                        TweenController.Tween(castlePos)
-                    elseif typeof(Tween) == "function" then
-                        Tween(castlePos)
+                    SetTask("SubTask", "CDK Quest / Đang bay ra Castle phục kích...")
+                    -- CHỮA BỆNH LIỆT CHÂN: Sửa đúng hàm Create của thằng Dev gốc
+                    if TweenController and TweenController.Create then
+                        TweenController.Create(castlePos)
                     end
                 end
                 return
                 
-            elseif h == 3 and not ScriptStorage.Enemies['Cake Queen'] then
-                -- Ải 3: Đợi Cake Queen 
-                Hop()
-                SetTask("SubTask", "CDK Quest / Waiting until Cake Queen boss spawned")
+            elseif h == 3 then
+                -- Ải 3: Săn Lùng Cake Queen 
+                local hasCakeQueen = false
+                pcall(function()
+                    if workspace:FindFirstChild("Enemies") and workspace.Enemies:FindFirstChild("Cake Queen") then
+                        hasCakeQueen = true
+                    end
+                end)
+                
+                if not hasCakeQueen then
+                    SetTask("SubTask", "CDK Quest / Server đéo có Cake Queen, đang Auto Hop...")
+                    Hop()
+                else
+                    SetTask("SubTask", "CDK Quest / ĐANG BĂM CAKE QUEEN!!!")
+                    if CombatController and CombatController.Attack then
+                        CombatController.Attack("Cake Queen")
+                    end
+                end
                 return
             end
         end
