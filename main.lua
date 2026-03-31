@@ -2659,7 +2659,7 @@ function hoangtuveu()
                 return
             elseif h == 3 then
                 -- ==========================================
-                -- ẢI 3: CAKE QUEEN (V20 - TẨY CHAY HUB, TỰ VIẾT BOT CHÉM BOSS)
+                -- ẢI 3: CAKE QUEEN (V21 - MƯỢN NÃO HUB KẾT HỢP TỊCH THU VŨ KHÍ)
                 -- ==========================================
                 if not _G.CDK_H3_Entry_Reset then
                     _G.CDK_H3_Entry_Reset = true
@@ -2667,6 +2667,7 @@ function hoangtuveu()
                     _G.CDK_H2_Flying = false
                     if _G.CDK_H2_Tween then _G.CDK_H2_Tween:Cancel() end
                     _G.WasAttackingBoss = false 
+                    _G.ToolsHidden = false -- Cờ báo hiệu tịch thu đồ
                 end
 
                 local bossName = "Cake Queen"
@@ -2681,6 +2682,19 @@ function hoangtuveu()
                 end)
                 
                 if not bossAliveInServer then
+                    -- 1. TRẢ LẠI VŨ KHÍ KHI BOSS CHẾT
+                    if _G.ToolsHidden then
+                        pcall(function()
+                            local plr = game:GetService("Players").LocalPlayer
+                            for _, tool in pairs(game.Lighting:GetChildren()) do
+                                if tool:IsA("Tool") and tool:GetAttribute("HiddenByScript") then
+                                    tool.Parent = plr.Backpack
+                                end
+                            end
+                        end)
+                        _G.ToolsHidden = false
+                    end
+
                     if _G.WasAttackingBoss then
                         SetTask("SubTask", "CDK Quest / Boss chết! Đợi 10s xem có bị hút vào Dimension không...")
                         task.wait(10) 
@@ -2738,49 +2752,44 @@ function hoangtuveu()
                             _G.CDK_H3_Flying = false
                             if _G.CDK_H3_Tween then _G.CDK_H3_Tween:Cancel() end
                         end
-                        SetTask("SubTask", "CDK Quest / BOT TỰ TẠO: ĐANG CẦM TUSHITA CHÉM BOSS!!!")
-                        _G.WasAttackingBoss = true 
                         
-                        -- ==========================================
-                        -- TẨY CHAY HUB: TAO TỰ VIẾT LỆNH ĐÁNH Ở ĐÂY!
-                        -- ==========================================
+                        SetTask("SubTask", "CDK Quest / ĐÃ TỊCH THU MELEE! ĐANG ÉP HUB CHÉM BẰNG TUSHITA!")
+                        _G.WasAttackingBoss = true 
+
+                        -- 2. CHIẾN DỊCH TỊCH THU: CHỈ CHỪA LẠI TUSHITA
+                        if not _G.ToolsHidden then
+                            _G.ToolsHidden = true
+                            pcall(function()
+                                local plr = game:GetService("Players").LocalPlayer
+                                -- Gom hết đồ trong Balo và trên tay nhân vật đem giấu vào game.Lighting
+                                for _, tool in pairs(plr.Backpack:GetChildren()) do
+                                    if tool:IsA("Tool") and tool.Name ~= "Tushita" then
+                                        tool:SetAttribute("HiddenByScript", true)
+                                        tool.Parent = game.Lighting
+                                    end
+                                end
+                                if plr.Character then
+                                    for _, tool in pairs(plr.Character:GetChildren()) do
+                                        if tool:IsA("Tool") and tool.Name ~= "Tushita" then
+                                            tool:SetAttribute("HiddenByScript", true)
+                                            tool.Parent = game.Lighting
+                                        end
+                                    end
+                                end
+                            end)
+                        end
+                        
+                        -- Ép cầm luôn cho chắc
                         pcall(function()
                             local plr = game:GetService("Players").LocalPlayer
-                            local char = plr.Character
-                            local boss = workspace.Enemies:FindFirstChild(bossName)
-                            
-                            if char and boss and boss:FindFirstChild("HumanoidRootPart") and boss:FindFirstChild("Humanoid") and boss.Humanoid.Health > 0 then
-                                local root = char:FindFirstChild("HumanoidRootPart")
-                                
-                                -- 1. ÉP CẦM ĐÚNG TUSHITA, ĐÉO CÓ MELEE GÌ Ở ĐÂY CẢ
-                                local tushita = plr.Backpack:FindFirstChild("Tushita") or char:FindFirstChild("Tushita")
-                                if tushita then
-                                    if tushita.Parent == plr.Backpack then
-                                        char.Humanoid:EquipTool(tushita)
-                                    end
-                                    
-                                    -- 2. TỰ ĐỘNG BẬT HAKI (NẾU CHƯA BẬT)
-                                    if not char:FindFirstChild("HasBuso") then
-                                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                                    end
-                                    
-                                    -- 3. ĐU BÁM BOSS (Bám sát trên đầu con Boss 5 mét để né skill)
-                                    if root then
-                                        root.CFrame = boss.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
-                                    end
-                                    
-                                    -- 4. SPAM CHÉM LIÊN TỤC
-                                    tushita:Activate()
-                                    
-                                    -- Dùng VirtualUser click ảo thêm cho chắc cốp
-                                    game:GetService("VirtualUser"):CaptureController()
-                                    game:GetService("VirtualUser"):ClickButton1(Vector2.new())
-                                else
-                                    SetTask("SubTask", "CDK Quest / LỖI: Đéo tìm thấy Tushita trong Balo!!!")
-                                end
-                            end
+                            local tushita = plr.Backpack:FindFirstChild("Tushita")
+                            if tushita then plr.Character.Humanoid:EquipTool(tushita) end
                         end)
-                        -- KẾT THÚC HÀM TỰ ĐÁNH (ĐÉO GỌI COMBATCONTROLLER NỮA)
+
+                        -- 3. GỌI LẠI NÃO GỐC ĐỂ NÓ NÉ ĐÒN
+                        if CombatController and CombatController.Attack then 
+                            CombatController.Attack(bossName) 
+                        end
                     end
                 end
                 return
