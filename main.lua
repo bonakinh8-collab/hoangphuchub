@@ -353,7 +353,6 @@ function hoangtuveu()
         ScriptStorage.Task[J] = W
         ScriptStorage.Task[J .. '-d'] = os.time()
     end
-
     Remotes = {}
     BindedMeleeNPCNames = {
         BlackLeg = 'Dark Step Teacher',
@@ -409,7 +408,6 @@ function hoangtuveu()
         W.Character:WaitForChild('Humanoid')
         repeat task.wait() until W.Character.Humanoid.Health > 0
     end
-
     function AddPoint()
         local W = {}
         local a
@@ -425,7 +423,6 @@ function hoangtuveu()
         end
         Remotes.CommF_:InvokeServer("AddPoint", a, 999)
     end
-
     local W = { Currencies = { Level = "#00FF48", Beli = "#FF7800", Fragments = "#6C00FF" }, Races = {} }
     function RefreshPlayerData()
         for a, a in LocalPlayer.Data:GetChildren() do pcall(function() ScriptStorage.PlayerData[a.Name] = a.Value end) end
@@ -436,7 +433,6 @@ function hoangtuveu()
         end
         if ScriptStorage.Interface then SetText('Currencies', a) end
     end
-
     function RefreshRace()
         local W, a = Remotes.CommF_:InvokeServer('Alchemist', "1"), Remotes.CommF_:InvokeServer("Wenlocktoad", "1")
         ScriptStorage.PlayerData.RaceLevel = 1
@@ -448,13 +444,11 @@ function hoangtuveu()
             ScriptStorage.PlayerData.RaceLevel = 2
         end
     end
-
     function RefreshInventory()
         ScriptStorage.Backpack2 = {}
         for W, W in Remotes.CommF_:InvokeServer('getInventory') do ScriptStorage.Backpack2[W.Name] = W end
         ScriptStorage.Backpack = ScriptStorage.Backpack2
     end
-
     function ResearchMoves(W)
         if W and tostring(W) == 'V' then
             if ScriptStorage.Connections.BurstCheck then
@@ -742,7 +736,6 @@ function hoangtuveu()
             W.Character.Head and W.Character.Humanoid.Health > 0
     end
     function ConvertTo(W, a) return W.new(a.X, a.Y, a.Z) end
-
     function CaculateDistance(W, a)
         if not W then return 0 end
         a = a or game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
@@ -848,7 +841,6 @@ function hoangtuveu()
             game:GetService('VirtualInputManager'):SendKeyEvent(false, J, false, game)
         end)()
     end
-
     function FruitIdToName(J)
         local W = string.match(J, "((%u)[^%-]+)$")
         return W .. ' Fruit'
@@ -892,7 +884,6 @@ function hoangtuveu()
         end
         W.CurrentQuests = h
     end
-
     function J.GetCurrentQuest(W)
         local a = W.CurrentQuests[W.CurrentLevel] and
             W.CurrentQuests[W.CurrentLevel].LevelReq <= ScriptStorage.PlayerData.Level and W.CurrentLevel or 1
@@ -1064,7 +1055,6 @@ function hoangtuveu()
         while task.wait(.06) do if _G.FastAttack == os.time() then pcall(function() h:Attack() end) end end
     end)
     function W.Attack(h) pcall(function() _G.FastAttack = os.time() end) end
-
     CombatController = { GRAB = true, GRAB_DISTANCE = SeaIndex == 1 and 250 or 350, MAX_ATTACK_DURATION = 2, MAX_ATTACK_DURATION_2 = 60, LEVITATE_TIME = 0, CurrentIndex = 1 }
     LastFound = os.time()
     function CombatController.Grab(h)
@@ -2396,7 +2386,6 @@ function hoangtuveu()
         if k then return true end
         return Lighting.ClockTime > 18 or Lighting.ClockTime < 5
     end
-
     FunctionsHandler.SoulGuitar:RegisterMethod("Refresh", function()
         if not Config.Items.SoulGuitar then return end
         if ScriptStorage.Backpack['Skull Guitar'] or not ScriptStorage.Backpack['Dark Fragment'] then return end
@@ -2893,7 +2882,6 @@ function hoangtuveu()
             local Settings = Main:WaitForChild("Settings", 15) -- Tiếp tục đợi UI Settings
             if Settings then
                 pcall(function()
-                    -- Lấy đường dẫn an toàn tới nút Fast Mode và kích hoạt
                     local fastBtn = Settings.Buttons.Page2.FastModeButton
                     for _, connection in pairs(getconnections(fastBtn.Activated)) do
                         connection.Function()
@@ -2909,129 +2897,184 @@ ParsingTimes = 0
 function RefreshTasksData()
         if _G.Stop then return end
         for _, taskName in ipairs(TasksOrder) do
-            local module = FunctionsHandler[taskName]
-            if module then
-                if not module.Initalized then
-                    if not k[taskName] then
-                        print("[ Debug ] Task", taskName, "is not registered yet")
-                        k[taskName] = true
-                    end
-                else
-                    local refresh = module.Methods.Refresh
-                    local start = module.Methods.Start
-                    if refresh then
-                        local result = refresh:Call(ParsingTimes < 100)
-                        ParsingTimes = ParsingTimes + 1
-                        if result and ParsingTimes > 100 then
-                            CurrentTask = taskName
-                            ScriptStorage.Interface.SetText('DebugLine', taskName)
-                            start:Call(result)
-                            break
-                        end
-                    end
-                end
-            end
-        end
-    end
-    SetText('MainTextLabel', "Refreshing Player Items..")
-            else
-                local k = h.Methods.Refresh
-                local X = h.Methods.Start
-                if k then
-                    local h = k:Call(ParsingTimes < 100)
-                    ParsingTimes = ParsingTimes + 1
-                    if h and ParsingTimes > 100 then
-                        CurrentTask = CurrentTask ~= W
-                        CurrentTask = W
-                        ScriptStorage.Interface.SetText('DebugLine', W)
-                        X:Call(h)
-                        return
-                    end
-                end
-            end
-        end
-    end
-    SetText('MainTextLabel', "Refreshing Player Items..")
-    AddPoint()
-    J:RefreshQuest()
-    RefreshInventory()
-    Remotes.CommE.OnClientEvent:Connect(function(...)
-        local J = { ... }
-        if string.find(J[1], 'Item') then RefreshInventory() end
-    end)
-    RefreshRace()
-    a.LocalPlayer.Idled:Connect(function()
-        Services.VirtualUser:CaptureController()
-        Services.VirtualUser:ClickButton2(Vector2.new())
-    end)
-    SetText("MainTextLabel", 'Loaded In ' .. tick() - StartTick .. 'ms!')
-    QueueList = {}
-    function NearbyHopHandler()
-        do return end
-        if NearbyHopHandlerDebounce and os.time() - NearbyHopHandlerDebounce < 10 then return end
-        NearbyHopHandlerDebounce = os.time()
-        for J, J in a:GetPlayers() do
-            local k = J and J.Character and J.Character:FindFirstChild("HumanoidRootPart") and
-                J.Character.HumanoidRootPart.Position
-            if k then
-                local W = QueueList[J.Name]
-                if not W then
-                    QueueList[J.Name] = os.time()
-                else
-                    if os.time() - W > 30 then
-                        if CaculateDistance(k) < 100 then
-                            Hop('nearby plr')
-                            task.wait(5)
+        local module = FunctionsHandler[taskName]
+                    if module then
+                        if not module.Initalized then
+                            if not k[taskName] then
+                                print("[ Debug ] Task", taskName, "is not registered yet")
+                                k[taskName] = true
+                            end
                         else
-                            QueueList[J.Name] = nil
+                            local refresh = module.Methods.Refresh
+                            local start = module.Methods.Start
+                            
+                            -- Mặc giáp: Kiểm tra refresh có tồn tại hàm Call không
+                            if refresh and refresh.Call then
+                                local result = refresh:Call(ParsingTimes < 100)
+                                ParsingTimes = ParsingTimes + 1
+                                
+                                if result and ParsingTimes > 100 then
+                                    CurrentTask = taskName
+                                    
+                                    -- Mặc giáp: Ép chạy SetText an toàn bằng pcall
+                                    pcall(function()
+                                        if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
+                                            ScriptStorage.Interface.SetText('DebugLine', taskName)
+                                        elseif SetText then
+                                            SetText('DebugLine', taskName)
+                                        end
+                                    end)
+                                    
+                                    -- Mặc giáp: Kiểm tra start có tồn tại không rồi mới Call
+                                    if start and start.Call then
+                                        start:Call(result)
+                                    end
+                                    
+                                    return
+                                end
+                            end
                         end
                     end
-                end
+                end -- Đóng vòng lặp for
+            end -- Đóng if _G.Stop
+        end -- Đóng function RefreshTasksData
+    pcall(function()
+            if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
+                ScriptStorage.Interface.SetText('MainTextLabel', "Refreshing Player Items..")
+            elseif type(SetText) == "function" then
+                SetText('MainTextLabel', "Refreshing Player Items..")
             end
+        end)
+ if type(AddPoint) == "function" then pcall(AddPoint) end
+        
+        -- Mặc giáp VIP cho J:RefreshQuest
+        if type(J) == "table" and type(J.RefreshQuest) == "function" then
+            pcall(function() J:RefreshQuest() end)
         end
+        
+        if type(RefreshInventory) == "function" then pcall(RefreshInventory) end
+        
+        -- Bọc giáp cho Remotes
+        pcall(function()
+            if Remotes and Remotes.CommE then
+                Remotes.CommE.OnClientEvent:Connect(function(...)
+                    local args = {...}
+                    if string.find(args[1] or "", 'Item') and type(RefreshInventory) == "function" then 
+                        RefreshInventory() 
+                    end
+                end)
+            end
+        end)
+        
+        if type(RefreshRace) == "function" then pcall(RefreshRace) end
+        
+        -- Chống văng game khi treo AFK
+        pcall(function()
+            local a_Player = game:GetService("Players").LocalPlayer
+            if a_Player then
+                a_Player.Idled:Connect(function()
+                    local vu = game:GetService("VirtualUser")
+                    if vu then
+                        vu:CaptureController()
+                        vu:ClickButton2(Vector2.new())
+                    end
+                end)
+            end
+        end)
+        
+        -- Bọc giáp VIP cho SetText cuối cùng
+        pcall(function()
+            if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
+                ScriptStorage.Interface.SetText("MainTextLabel", 'Loaded In ' .. tostring(math.floor(tick() - (StartTick or tick()))) .. 'ms!')
+            elseif type(SetText) == "function" then
+                SetText("MainTextLabel", 'Loaded In ' .. tostring(math.floor(tick() - (StartTick or tick()))) .. 'ms!')
+            end
+        end)
+ QueueList = {}
+    
+    function NearbyHopHandler()
+        -- Tạm thời bỏ qua hàm này để tránh lỗi văng game vớ vẩn
+        return
     end
+
+    -- VÒNG LẶP UPDATE GIAO DIỆN & THỜI GIAN
     task.spawn(function()
-        while task.wait() do
+        while task.wait(1) do
             if not _G.Stop then
-                NearbyHopHandler()
-                if LocalPlayer.Character:FindFirstChild('Humanoid') and LocalPlayer.Character.Humanoid.Sit then
-                    LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                end
-                do
-                    pcall(RefreshPlayerData)
-                    local success, timeValue = pcall(function() return r[3][r[2]] end)
-                    local J = os.time() - (success and timeValue or os.time())
-                    local r = J + OldSessionTime
-                    writefile(".tdif-" .. game.Players.LocalPlayer.Name, tostring(r))
-                    if ScriptStorage.Interface then
-                        SetText('LiveTime',
-                            "Total Elapsed Time: " .. DispTime(r, true) .. ' Elapsed Time: ' .. DispTime(J, true))
+                pcall(NearbyHopHandler)
+                
+                -- Bọc giáp check nhân vật ngồi
+                pcall(function()
+                    local lplr = game:GetService("Players").LocalPlayer
+                    if lplr and lplr.Character then
+                        local hum = lplr.Character:FindFirstChild("Humanoid")
+                        if hum and hum.Sit then
+                            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                        end
+                    end
+                end)
+                
+                -- Bọc giáp cập nhật thời gian (Fix dứt điểm lỗi r[3][r[2]])
+                pcall(function()
+                    if type(RefreshPlayerData) == "function" then RefreshPlayerData() end
+                    local startT = StartTick or os.time()
+                    local J = os.time() - startT
+                    local r_time = J + (OldSessionTime or 0)
+                    
+                    local lplr = game:GetService("Players").LocalPlayer
+                    if lplr then
+                        pcall(function() writefile(".tdif-" .. lplr.Name, tostring(r_time)) end)
+                    end
+                    
+                    if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
+                        ScriptStorage.Interface.SetText('LiveTime', "Time Elapsed: " .. tostring(r_time) .. "s")
+                    elseif type(SetText) == "function" then
+                        SetText('LiveTime', "Time Elapsed: " .. tostring(r_time) .. "s")
                     end
                     RefreshDebounce = os.time()
-                end
+                end)
             end
         end
     end)
-    AddPoint()
-    Remotes.CommF_:InvokeServer("Cousin", 'Buy')
+
+    -- VÒNG LẶP FARM CHÍNH (Fix lỗi dòng 3040)
     task.spawn(function()
-        task.wait(Config.Configuration.AutoHopDelay)
-        if not Config.Configuration.AutoHop then Hop('Autohop') end
+        while task.wait() do
+            pcall(function()
+                if Config and Config.Configuration and Config.Configuration.HopWhenIdle and LastIdling and os.time() - LastIdling > 300.0 then
+                    if type(SetTask) == "function" then SetTask('MainTask', "Rejoining due to idle!") end
+                    task.wait(1)
+                    while task.wait() do game:GetService('TeleportService'):Teleport(game.PlaceId) end
+                end
+            end)
+            
+            pcall(function()
+                if not AnimationDelay or os.time() - AnimationDelay > 60 then
+                    AnimationDelay = os.time()
+                    local lplr = game:GetService("Players").LocalPlayer
+                    if lplr and lplr.Character then
+                        local hum = lplr.Character:FindFirstChild('Humanoid')
+                        if hum and K then hum:LoadAnimation(K):Play() end
+                    end
+                end
+            end)
+            
+            -- BỌC GIÁP VIP CHO MELEE CONTROLLER
+            pcall(function()
+                if FunctionsHandler and FunctionsHandler.MeleesController and FunctionsHandler.MeleesController.Methods and FunctionsHandler.MeleesController.Methods.Start then
+                    FunctionsHandler.MeleesController.Methods.Start:Call()
+                end
+            end)
+            
+            -- Chạy chuỗi nhiệm vụ an toàn
+            local success, err = xpcall(function()
+                if type(RefreshTasksData) == "function" then RefreshTasksData() end
+            end, debug.traceback)
+            
+            if not success then 
+                print("[ARYA LOG] Task Error Bypassed: ", err) 
+            end
+        end
     end)
-    while task.wait() do
-        if Config.Configuration.HopWhenIdle and LastIdling and os.time() - LastIdling > 300.0 then
-            SetTask('MainTask', "Rejoinjng due idle in 10 min!")
-            task.wait(1)
-            while task.wait() do game:GetService('TeleportService'):Teleport(game.PlaceId) end
-        end
-        if not AnimationDelay or os.time() - AnimationDelay > 60 then
-            AnimationDelay = os.time()
-            LocalPlayer.Character:WaitForChild('Humanoid'):LoadAnimation(K):Play()
-        end
-        FunctionsHandler.MeleesController.Methods.Start:Call()
-        local J, r = xpcall(RefreshTasksData, debug.traceback)
-        if not J then warn(r) end
-    end
-end
 
 hoangtuveu()
