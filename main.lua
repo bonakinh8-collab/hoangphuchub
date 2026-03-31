@@ -1,47 +1,34 @@
--- ==========================================
--- BỌC GIÁP AUTO-TEAM V4 (HỆ CHẬM MÀ CHẮC)
--- ==========================================
-task.spawn(function()
-    -- 1. Cho nó đứng im thở 5 giây đúng ý mày luôn!
-    task.wait(5) 
-    
-    -- 2. Đợi game load xong tài nguyên chính
-    if not game:IsLoaded() then
-        game.Loaded:Wait()
-    end
-    
-    local plr = game:GetService("Players").LocalPlayer
-    local gui = plr:WaitForChild("PlayerGui")
-    
-    -- 3. Đợi cái Main UI của HoangPhucHub xuất hiện (để tránh script chạy trước UI)
-    local main = gui:WaitForChild("Main", 20) -- Đợi tối đa 20s
-    if not main then return end
-    
-    local chooseTeam = main:WaitForChild("ChooseTeam", 20)
-    if not chooseTeam then return end
+Config = {
+    Team = "Pirates",
+    Configuration = {
+        HopWhenIdle = false,
+        AutoHop = false,
+        AutoHopDelay = 10 * 10,
+        FpsBoost = false,
+        blackscreen = false
+    },
+    Items = {
 
-    -- 4. ÉP CHỌN TEAM (Dùng cả Remote lẫn Click ảo cho chắc kèo)
-    while task.wait(1) do
-        if plr.Team == nil or plr.Team.Name == "None" then
-            -- Gửi lệnh lên Server
-            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
-            
-            -- Giả lập Click vào nút Pirates để "đánh thức" Script chính
-            pcall(function()
-                local btn = chooseTeam.Container.Pirates.Frame.TextButton
-                for _, conn in pairs(getconnections(btn.Activated)) do
-                    conn.Function()
-                end
-            end)
-        else
-            break -- Có team rồi thì dừng
-        end
-    end
-    
-    -- 5. Sau khi xong xuôi, ẩn cái bảng đi cho đẹp
-    task.wait(1)
-    chooseTeam.Visible = false
-end)
+        -- Melees 
+        AutoFullyMelees = false,
+
+        -- Swords 
+        Saber = false,
+        CursedDualKatana = true,
+
+        -- Guns 
+        SoulGuitar = false,
+
+        -- Upgrades 
+
+        RaceV2 = false
+
+    },
+    Settings = {
+        StayInSea2UntilHaveDarkFragments = false
+    }
+}
+loadstring(game:HttpGet("https://raw.githubusercontent.com/bonakinh8-collab/hoangphuchub/refs/heads/main/main.lua"))()
 function hoangtuveu()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
     local W = {Instances = {}}
