@@ -1,13 +1,27 @@
+-- ==========================================
+-- BỌC GIÁP AUTO-TEAM V3 (GIẢ LẬP CLICK CHUỘT THẬT)
+-- ==========================================
 task.spawn(function()
-    repeat task.wait() until game:IsLoaded()
-    local player = game:GetService("Players").LocalPlayer
-    local playerGui = player:WaitForChild("PlayerGui")
-    local mainGui = playerGui:WaitForChild("Main")
-    local chooseTeam = mainGui:WaitForChild("ChooseTeam")
-    repeat task.wait() until chooseTeam.Visible == true
-    task.wait(1)
+    local plr = game:GetService("Players").LocalPlayer
+    local gui = plr:WaitForChild("PlayerGui")
+    local main = gui:WaitForChild("Main")
+    local chooseTeam = main:WaitForChild("ChooseTeam")
+    
+    -- Đợi đến khi bảng Team thực sự load xong và hiện lên
+    repeat task.wait(0.5) until chooseTeam.Visible == true
+    
+    -- 1. Gửi API xin vào Team
     game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
-    chooseTeam.Visible = true
+    
+    -- 2. DÙNG HÀM CỦA EXECUTOR ĐỂ ÉP GAME TỰ CLICK VÀO NÚT PIRATES (Kích hoạt Script Hub)
+    pcall(function()
+        for _, connection in pairs(getconnections(chooseTeam.Container.Pirates.Frame.TextButton.Activated)) do
+            connection.Function()
+        end
+    end)
+    
+    -- 3. Chỉ ẨN đi, TUYỆT ĐỐI KHÔNG DESTROY!
+    chooseTeam.Visible = false
 end)
 function hoangtuveu()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
