@@ -1,27 +1,13 @@
--- ==========================================
--- BỌC GIÁP AUTO-TEAM V2 (PHÁ CỬA BRUTE-FORCE)
--- ==========================================
 task.spawn(function()
     repeat task.wait() until game:IsLoaded()
-    local plr = game:GetService("Players").LocalPlayer
-    
-    -- Spam lệnh xin vào Team Pirates liên tục cho đến khi Server đồng ý
-    while task.wait(1) do
-        if plr.Team == nil or plr.Team.Name == "None" then
-            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
-        else
-            break -- Có team rồi thì thoát vòng lặp!
-        end
-    end
-    
-    -- Đá văng cái bảng UI ra chuồng gà
-    pcall(function()
-        local ui = plr:WaitForChild("PlayerGui"):WaitForChild("Main")
-        if ui:FindFirstChild("ChooseTeam") then
-            ui.ChooseTeam.Visible = false
-            ui.ChooseTeam:Destroy() -- XÓA XÁC LUÔN CHO SẠCH
-        end
-    end)
+    local player = game:GetService("Players").LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    local mainGui = playerGui:WaitForChild("Main")
+    local chooseTeam = mainGui:WaitForChild("ChooseTeam")
+    repeat task.wait() until chooseTeam.Visible == true
+    task.wait(1)
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
+    chooseTeam.Visible = true
 end)
 function hoangtuveu()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
