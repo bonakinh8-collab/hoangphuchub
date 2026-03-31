@@ -6,7 +6,7 @@ task.spawn(function()
     local chooseTeam = mainGui:WaitForChild("ChooseTeam")
     repeat task.wait() until chooseTeam.Visible == true
     task.wait(1)
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", Config.Team or "Pirates")
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
     chooseTeam.Visible = false
 end)
 function hoangtuveu()
@@ -2669,24 +2669,87 @@ function hoangtuveu()
                 end
                 return
                 
-            elseif h == 3 then
-                -- Ải 3: Săn Lùng Cake Queen (V12 - TRẢ LẠI RADAR VỆ TINH TOÀN CẦU)
-                local hasCakeQueen = false
+elseif h == 3 then
+                -- ==========================================
+                -- ẢI 3: SĂN CAKE QUEEN (V15 - FIX KẸT MAP & LỖI MẤT DIMENSION)
+                -- ==========================================
                 
+                -- Xóa kẹt chân từ các ải trước
+                if not _G.CDK_H3_Entry_Reset then
+                    _G.CDK_H3_Entry_Reset = true
+                    _G.CDK_H2_Entry_Reset = false
+                    _G.CDK_H2_Flying = false
+                    if _G.CDK_H2_Tween then _G.CDK_H2_Tween:Cancel() end
+                    _G.WasAttackingBoss = false -- Biến ghi nhớ "Vừa nãy tao có đang đấm Boss không?"
+                end
+
+                local bossName = "Cake Queen"
+                local bossAliveInServer = false
+                local bossInWorkspace = false
+                
+                -- 1. Radar Vệ Tinh
                 pcall(function()
-                    -- Chọc thẳng vào bộ nhớ ngầm của Script (Không bị giới hạn khoảng cách 10.000m)
-                    if ScriptStorage and ScriptStorage.Enemies and ScriptStorage.Enemies['Cake Queen'] then
-                        hasCakeQueen = true
+                    if ScriptStorage and ScriptStorage.Enemies and ScriptStorage.Enemies[bossName] then
+                        bossAliveInServer = true
                     end
                 end)
                 
-                if not hasCakeQueen then
-                    SetTask("SubTask", "CDK Quest / Đang nhảy Server tìm Cake Queen...")
+                -- 2. Radar Mắt Thường
+                pcall(function()
+                    if workspace:FindFirstChild("Enemies") and workspace.Enemies:FindFirstChild(bossName) then
+                        bossInWorkspace = true
+                    end
+                end)
+                
+                -- XỬ LÝ LOGIC ĐÁNH BOSS & NHẢY SERVER
+                if not bossAliveInServer then
+                    -- NẾU TRƯỚC ĐÓ ĐANG ĐẤM BOSS MÀ GIỜ NÓ BIẾN MẤT -> ĐỢI GAME DỊCH CHUYỂN
+                    if _G.WasAttackingBoss then
+                        SetTask("SubTask", "CDK Quest / Boss chết! Đợi 10s xem có bị hút vào Dimension không...")
+                        task.wait(10) -- Nghỉ 10 giây chống nhảy Server láo!
+                        _G.WasAttackingBoss = false
+                        return -- Dừng lặp để chờ
+                    end
+                    
+                    SetTask("SubTask", "CDK Quest / Server sạch bóng, đang Auto Hop...")
                     Hop()
                 else
-                    SetTask("SubTask", "CDK Quest / ĐANG BĂM CAKE QUEEN!!!")
-                    if CombatController and CombatController.Attack then
-                        CombatController.Attack("Cake Queen")
+                    if not bossInWorkspace then
+                        -- FIX BUG LIỆT CHÂN Ở ĐẢO CẢNG (Tự bay ra Đảo Kem)
+                        SetTask("SubTask", "CDK Quest / Boss đang ở Đảo Kem, Mở khóa phản lực bay tới...")
+                        local iceCreamPos = CFrame.new(-710, 382, -11150) 
+                        local lplr = game:GetService("Players").LocalPlayer
+                        local root = lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
+                        
+                        if root then
+                            local dist = (root.Position - iceCreamPos.Position).Magnitude
+                            if dist > 300 then
+                                if not _G.CDK_H3_Flying then
+                                    _G.CDK_H3_Flying = true
+                                    _G.CDK_H3_Tween = game:GetService("TweenService"):Create(root, TweenInfo.new(dist/300, Enum.EasingStyle.Linear), {CFrame = iceCreamPos})
+                                    _G.CDK_H3_Tween:Play()
+                                    
+                                    task.spawn(function()
+                                        local completed = false
+                                        _G.CDK_H3_Tween.Completed:Connect(function() completed = true end)
+                                        while task.wait() and not completed and h == 3 and _G.CDK_H3_Flying do end
+                                        _G.CDK_H3_Flying = false
+                                    end)
+                                end
+                            end
+                        end
+                    else
+                        -- THẤY BOSS RỒI -> XUNG PHONG!
+                        if _G.CDK_H3_Flying then
+                            _G.CDK_H3_Flying = false
+                            if _G.CDK_H3_Tween then _G.CDK_H3_Tween:Cancel() end
+                        end
+                        SetTask("SubTask", "CDK Quest / ĐANG BĂM CAKE QUEEN VỠ MẶT!!!")
+                        _G.WasAttackingBoss = true -- Đánh dấu tao đang đấm nó!
+                        
+                        if CombatController and CombatController.Attack then
+                            CombatController.Attack(bossName)
+                        end
                     end
                 end
                 return
