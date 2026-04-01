@@ -3279,3 +3279,79 @@ function hoangtuveu()
 end
 
 hoangtuveu()
+
+-- ==========================================
+-- [HOANG PHUC HUB] - V25: AUTO FARM BONES & ĐỔI LỬA TÍM YAMA HOÀN HẢO
+-- ==========================================
+task.spawn(function()
+    while task.wait(0.5) do 
+        pcall(function()
+            if Config and Config.Items and Config.Items.CursedDualKatana then
+                local plr = game:GetService("Players").LocalPlayer
+                local commF = game:GetService("ReplicatedStorage").Remotes.CommF_
+                
+                local hasEssence = plr.Backpack:FindFirstChild("Hallow Essence") or (plr.Character and plr.Character:FindFirstChild("Hallow Essence"))
+                local reaperAlive = workspace.Enemies:FindFirstChild("Soul Reaper") or game:GetService("ReplicatedStorage"):FindFirstChild("Soul Reaper")
+                
+                if not hasEssence and not reaperAlive then
+                    -- 1. MÓC TÚI KIỂM TRA SỐ LƯỢNG XƯƠNG
+                    local boneCount = 0
+                    local inv = commF:InvokeServer("getInventory")
+                    if type(inv) == "table" then
+                        for _, item in pairs(inv) do
+                            if item.Name == "Bones" then
+                                boneCount = item.Count
+                                break
+                            end
+                        end
+                    end
+                    
+                    if boneCount >= 50 then
+                        -- CÓ VỐN (>=50 XƯƠNG) -> BAY RA CHỖ DEATH KING ROLL
+                        pcall(function() SetTask("SubTask", "Yama Quest / Đang có " .. boneCount .. " Xương -> Đang Roll Lửa Tím!") end)
+                        local deathKing = workspace.Map:FindFirstChild("Death King")
+                        if deathKing and deathKing:FindFirstChild("HumanoidRootPart") then
+                            local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                            if root then
+                                local dist = (root.Position - deathKing.HumanoidRootPart.Position).Magnitude
+                                if dist > 20 then
+                                    -- Dịch chuyển ra mặt thằng Death King
+                                    root.CFrame = deathKing.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                                    task.wait(0.5)
+                                else
+                                    -- Ép Roll
+                                    task.spawn(function()
+                                        commF:InvokeServer("Bones", "Buy", 1, 1)
+                                    end)
+                                    task.wait(1)
+                                end
+                            end
+                        end
+                    else
+                        -- HẾT VỐN (<50 XƯƠNG) -> ĐI LÀM KIẾM TIỀN (FARM BONES)
+                        pcall(function() SetTask("SubTask", "Yama Quest / Thiếu Xương (" .. boneCount .. "/50) -> Đang Auto Farm Bones!") end)
+                        if CombatController and CombatController.Attack then
+                            -- Ép Hub tự bay đi cày con Reborn Skeleton
+                            CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy"})
+                        end
+                    end
+                    
+                elseif hasEssence and not reaperAlive then
+                    -- 2. ĐÃ ROLL RA LỬA TÍM -> BAY RA BỆ ĐÁ TRIỆU HỒI SOUL REAPER
+                    pcall(function() SetTask("SubTask", "Yama Quest / CÓ LỬA TÍM -> ĐANG TRIỆU HỒI SOUL REAPER!") end)
+                    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        local root = plr.Character.HumanoidRootPart
+                        local altarPos = CFrame.new(-9455, 142, 5566)
+                        
+                        if (root.Position - altarPos.Position).Magnitude > 15 then
+                            root.CFrame = altarPos
+                            task.wait(0.5)
+                            plr.Character.Humanoid:EquipTool(hasEssence)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+-- ==========================================
