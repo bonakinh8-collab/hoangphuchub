@@ -3285,34 +3285,84 @@ function hoangtuveu()
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
--- BẢN VÁ YAMA V29: ÉP TỰ SÁT KHI BOSS XUẤT HIỆN
+-- BẢN VÁ YAMA V31: SỬA LỖI NGU HỌC & AUTO ĐỊA NGỤC
         task.spawn(function()
             _G.StartRolling = false
             while task.wait(0.5) do
                 pcall(function()
                     if Config and Config.Items and Config.Items.CursedDualKatana then
-                        local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"]
-                        local reaperAlive = workspace.Enemies:FindFirstChild("Soul Reaper") or game:GetService("ReplicatedStorage"):FindFirstChild("Soul Reaper")
+                        local plr = game.Players.LocalPlayer
+                        local char = plr.Character
+                        local root = char and char:FindFirstChild("HumanoidRootPart")
+                        if not root then return end
                         
-                        -- CHẾ ĐỘ 4: BOSS ĐÃ RA -> ÉP TỰ SÁT!!!
-                        if reaperAlive then
-                            SetTask("SubTask", "Yama Quest / TỬ THẦN ĐÃ RA! LAO VÀO FEED MẠNG!")
-                            local char = game.Players.LocalPlayer.Character
-                            if char and char:FindFirstChild("HumanoidRootPart") and reaperAlive:FindFirstChild("HumanoidRootPart") then
-                                -- Dịch chuyển thẳng mặt Boss
-                                char.HumanoidRootPart.CFrame = reaperAlive.HumanoidRootPart.CFrame
-                                -- Cất hết vũ khí đéo cho đánh trả
-                                char.Humanoid:UnequipTools() 
+                        -- 1. RADA DÒ TÌM ĐỊA NGỤC (HELL DIMENSION)
+                        local inHell = false
+                        pcall(function()
+                            for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
+                                if gui:IsA("TextLabel") and gui.Text:find("Hell Dimension") then
+                                    inHell = true
+                                    break
+                                end
+                            end
+                        end)
+                        
+                        if inHell then
+                            -- === CHẾ ĐỘ 5: CÀN QUÉT ĐỊA NGỤC ===
+                            SetTask("SubTask", "YAMA QUEST / ĐANG QUÉT SẠCH ĐỊA NGỤC!")
+                            local yama = plr.Backpack:FindFirstChild("Yama") or char:FindFirstChild("Yama")
+                            if yama then char.Humanoid:EquipTool(yama) end
+                            
+                            local nearestEnemy = nil
+                            local minDist = 2000
+                            for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+                                if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
+                                    local dist = (enemy.HumanoidRootPart.Position - root.Position).Magnitude
+                                    if dist < minDist then
+                                        minDist = dist
+                                        nearestEnemy = enemy
+                                    end
+                                end
                             end
                             
-                        -- CÁC CHẾ ĐỘ CŨ (NẾU BOSS CHƯA RA)
+                            if nearestEnemy then
+                                -- Bắt được quái -> Bay vào chém (Ép click chuột)
+                                root.CFrame = nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4)
+                                game:GetService("VirtualUser"):ClickButton1(Vector2.new())
+                            else
+                                -- Không có quái -> Tự động đi tìm Đuốc để bật
+                                for _, prompt in pairs(workspace:GetDescendants()) do
+                                    if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
+                                        local dist = (prompt.Parent.Position - root.Position).Magnitude
+                                        if dist < 2000 then
+                                            root.CFrame = prompt.Parent.CFrame
+                                            task.wait(0.2)
+                                            fireproximityprompt(prompt)
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                            return -- NGẮT NGANG ĐÉO CHO CHẠY LỆNH DƯỚI!!!
+                        end
+                        
+                        -- ==============================================
+                        -- CÁC CHẾ ĐỘ NGOÀI MAP
+                        -- ==============================================
+                        local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"]
+                        
+                        -- FIX LỖI NGU: CHỈ TÌM BOSS TRÊN MAP!!!
+                        local reaperAlive = workspace.Enemies:FindFirstChild("Soul Reaper")
+                        
+                        if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
+                            -- === CHẾ ĐỘ 4: TỰ SÁT ĐỂ XUỐNG ĐỊA NGỤC ===
+                            SetTask("SubTask", "Yama Quest / TỬ THẦN ĐÃ RA! LAO VÀO FEED MẠNG!")
+                            root.CFrame = reaperAlive.HumanoidRootPart.CFrame
+                            char.Humanoid:UnequipTools() 
+                            
                         elseif not hasEssence and not reaperAlive then
                             local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
-                            if boneCount >= 500 then 
-                                _G.StartRolling = true 
-                            elseif boneCount < 50 then 
-                                _G.StartRolling = false 
-                            end
+                            if boneCount >= 500 then _G.StartRolling = true elseif boneCount < 50 then _G.StartRolling = false end
                             
                             if not _G.StartRolling then
                                 SetTask("SubTask", "Yama Quest / Tích trữ Xương ("..boneCount.."/500)")
@@ -3321,33 +3371,27 @@ function hoangtuveu()
                                 end
                             else
                                 SetTask("SubTask", "Yama Quest / Đang xả Xương Roll Lửa Tím ("..boneCount.."/50)")
-                                local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                                if root then
-                                    root.CFrame = CFrame.new(-9493, 160, 5543)
-                                    task.wait(1)
-                                    task.spawn(function()
-                                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
-                                    end)
-                                    task.wait(2)
-                                    local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
-                                    if newBoneCount == boneCount then
-                                        SetTask("SubTask", "DEATH KING BỊ COOLDOWN 2H! TIẾP TỤC CÀY QUÁI!")
-                                        _G.StartRolling = false
-                                        task.wait(3)
-                                    end
+                                root.CFrame = CFrame.new(-9493, 160, 5543)
+                                task.wait(1)
+                                task.spawn(function()
+                                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                                end)
+                                task.wait(2)
+                                local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
+                                if newBoneCount == boneCount then
+                                    SetTask("SubTask", "DEATH KING BỊ COOLDOWN 2H! TIẾP TỤC CÀY QUÁI!")
+                                    _G.StartRolling = false
+                                    task.wait(3)
                                 end
                             end
                             
                         elseif hasEssence and not reaperAlive then
                             SetTask("SubTask", "Yama Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
-                            local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                            if root then
-                                local altarPos = CFrame.new(-9455, 142, 5566)
-                                if (root.Position - altarPos.Position).Magnitude > 15 then
-                                    root.CFrame = altarPos
-                                    task.wait(0.5)
-                                    game.Players.LocalPlayer.Character.Humanoid:EquipTool(hasEssence)
-                                end
+                            local altarPos = CFrame.new(-9455, 142, 5566)
+                            if (root.Position - altarPos.Position).Magnitude > 15 then
+                                root.CFrame = altarPos
+                                task.wait(0.5)
+                                char.Humanoid:EquipTool(hasEssence)
                             end
                         end
                     end
