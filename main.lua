@@ -3285,7 +3285,7 @@ function hoangtuveu()
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
--- BẢN VÁ YAMA V27: ĐẠI GIA 2000 XƯƠNG (CÀY XONG MỚI XẢ)
+-- BẢN VÁ YAMA V28: DỊCH CHUYỂN TỌA ĐỘ GỐC & XỬ LÝ COOLDOWN
         task.spawn(function()
             _G.StartRolling = false
             while task.wait(0.5) do
@@ -3297,44 +3297,41 @@ function hoangtuveu()
                         if not hasEssence and not reaperAlive then
                             local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                             
-                            -- Bộ đếm thông minh: Dưới 2000 thì farm, trên 2000 thì xả
-                            if boneCount >= 2000 then 
+                            -- Mốc 500 là max ping của Death King rồi, không cày 2000 nữa
+                            if boneCount >= 500 then 
                                 _G.StartRolling = true 
                             elseif boneCount < 50 then 
                                 _G.StartRolling = false 
                             end
                             
                             if not _G.StartRolling then
-                                -- 1. CHẾ ĐỘ CÀY CUỐC (DƯỚI 2000 XƯƠNG)
-                                SetTask("SubTask", "Yama Quest / Tích trữ Xương ("..boneCount.."/2000)")
+                                SetTask("SubTask", "Yama Quest / Tích trữ Xương ("..boneCount.."/500)")
                                 if CombatController and CombatController.Attack then
                                     CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
                                 end
                             else
-                                -- 2. CHẾ ĐỘ ĐẠI GIA XẢ XƯƠNG (TRÊN 2000 XƯƠNG)
                                 SetTask("SubTask", "Yama Quest / Đang xả Xương Roll Lửa Tím ("..boneCount.."/50)")
-                                local deathKing = workspace.Map:FindFirstChild("Death King")
-                                if deathKing and deathKing:FindFirstChild("HumanoidRootPart") then
-                                    local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                                    if root then
-                                        local dist = (root.Position - deathKing.HumanoidRootPart.Position).Magnitude
-                                        if dist > 20 then
-                                            -- Teleport bay ra mặt Death King
-                                            root.CFrame = deathKing.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
-                                            task.wait(0.5)
-                                        else
-                                            -- Ép Roll chống kẹt X2 EXP
-                                            task.spawn(function()
-                                                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
-                                            end)
-                                            task.wait(1)
-                                        end
+                                local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                if root then
+                                    -- Dịch chuyển bằng tọa độ tĩnh, đéo cần quan tâm NPC có tàng hình hay không
+                                    root.CFrame = CFrame.new(-9493, 160, 5543)
+                                    task.wait(1)
+                                    task.spawn(function()
+                                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                                    end)
+                                    task.wait(2) -- Đợi server trừ xương
+                                    
+                                    -- RADA PHÁT HIỆN COOLDOWN
+                                    local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
+                                    if newBoneCount == boneCount then
+                                        SetTask("SubTask", "DEATH KING BỊ COOLDOWN 2H! TIẾP TỤC CÀY QUÁI!")
+                                        _G.StartRolling = false -- Quay xe đi cày xương tiếp
+                                        task.wait(3)
                                     end
                                 end
                             end
                             
                         elseif hasEssence and not reaperAlive then
-                            -- 3. TRÚNG SỐ LỬA TÍM -> BAY RA GỌI BOSS TỨC THÌ
                             SetTask("SubTask", "Yama Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
                             local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                             if root then
