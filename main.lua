@@ -3285,10 +3285,10 @@ function hoangtuveu()
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
--- BẢN VÁ YAMA V31: SỬA LỖI NGU HỌC & AUTO ĐỊA NGỤC
+-- BẢN VÁ YAMA V32: RADA QUÉT CHUẨN XÁC & KHÓA LỆNH KHI FEED MẠNG
         task.spawn(function()
             _G.StartRolling = false
-            while task.wait(0.5) do
+            while task.wait(0.1) do -- Giảm tốc độ delay để bám Boss chặt hơn
                 pcall(function()
                     if Config and Config.Items and Config.Items.CursedDualKatana then
                         local plr = game.Players.LocalPlayer
@@ -3296,19 +3296,18 @@ function hoangtuveu()
                         local root = char and char:FindFirstChild("HumanoidRootPart")
                         if not root then return end
                         
+                        -- ==============================================
                         -- 1. RADA DÒ TÌM ĐỊA NGỤC (HELL DIMENSION)
+                        -- ==============================================
                         local inHell = false
-                        pcall(function()
-                            for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
-                                if gui:IsA("TextLabel") and gui.Text:find("Hell Dimension") then
-                                    inHell = true
-                                    break
-                                end
+                        for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
+                            if gui:IsA("TextLabel") and gui.Text:find("Hell Dimension") then
+                                inHell = true
+                                break
                             end
-                        end)
+                        end
                         
                         if inHell then
-                            -- === CHẾ ĐỘ 5: CÀN QUÉT ĐỊA NGỤC ===
                             SetTask("SubTask", "YAMA QUEST / ĐANG QUÉT SẠCH ĐỊA NGỤC!")
                             local yama = plr.Backpack:FindFirstChild("Yama") or char:FindFirstChild("Yama")
                             if yama then char.Humanoid:EquipTool(yama) end
@@ -3326,15 +3325,12 @@ function hoangtuveu()
                             end
                             
                             if nearestEnemy then
-                                -- Bắt được quái -> Bay vào chém (Ép click chuột)
                                 root.CFrame = nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4)
                                 game:GetService("VirtualUser"):ClickButton1(Vector2.new())
                             else
-                                -- Không có quái -> Tự động đi tìm Đuốc để bật
                                 for _, prompt in pairs(workspace:GetDescendants()) do
                                     if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
-                                        local dist = (prompt.Parent.Position - root.Position).Magnitude
-                                        if dist < 2000 then
+                                        if (prompt.Parent.Position - root.Position).Magnitude < 2000 then
                                             root.CFrame = prompt.Parent.CFrame
                                             task.wait(0.2)
                                             fireproximityprompt(prompt)
@@ -3343,55 +3339,68 @@ function hoangtuveu()
                                     end
                                 end
                             end
-                            return -- NGẮT NGANG ĐÉO CHO CHẠY LỆNH DƯỚI!!!
+                            return -- NGẮT LỆNH: Đã ở Địa ngục thì cấm chạy code bên dưới!
                         end
                         
                         -- ==============================================
-                        -- CÁC CHẾ ĐỘ NGOÀI MAP
+                        -- 2. RADA TÌM BOSS (DEEP SCAN XUYÊN THƯ MỤC)
                         -- ==============================================
-                        local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"]
-                        
-                        -- FIX LỖI NGU: CHỈ TÌM BOSS TRÊN MAP!!!
-                        local reaperAlive = workspace.Enemies:FindFirstChild("Soul Reaper")
+                        local reaperAlive = nil
+                        for _, v in pairs(workspace.Enemies:GetChildren()) do
+                            if string.find(v.Name, "Soul Reaper") or string.find(v.Name, "Reaper") then reaperAlive = v break end
+                        end
+                        if not reaperAlive then
+                            for _, v in pairs(workspace.Characters:GetChildren()) do
+                                if string.find(v.Name, "Soul Reaper") or string.find(v.Name, "Reaper") then reaperAlive = v break end
+                            end
+                        end
                         
                         if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
-                            -- === CHẾ ĐỘ 4: TỰ SÁT ĐỂ XUỐNG ĐỊA NGỤC ===
                             SetTask("SubTask", "Yama Quest / TỬ THẦN ĐÃ RA! LAO VÀO FEED MẠNG!")
                             root.CFrame = reaperAlive.HumanoidRootPart.CFrame
                             char.Humanoid:UnequipTools() 
-                            
-                        elseif not hasEssence and not reaperAlive then
-                            local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
-                            if boneCount >= 500 then _G.StartRolling = true elseif boneCount < 50 then _G.StartRolling = false end
-                            
-                            if not _G.StartRolling then
-                                SetTask("SubTask", "Yama Quest / Tích trữ Xương ("..boneCount.."/500)")
-                                if CombatController and CombatController.Attack then
-                                    CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
-                                end
-                            else
-                                SetTask("SubTask", "Yama Quest / Đang xả Xương Roll Lửa Tím ("..boneCount.."/50)")
-                                root.CFrame = CFrame.new(-9493, 160, 5543)
-                                task.wait(1)
-                                task.spawn(function()
-                                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
-                                end)
-                                task.wait(2)
-                                local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
-                                if newBoneCount == boneCount then
-                                    SetTask("SubTask", "DEATH KING BỊ COOLDOWN 2H! TIẾP TỤC CÀY QUÁI!")
-                                    _G.StartRolling = false
-                                    task.wait(3)
-                                end
-                            end
-                            
-                        elseif hasEssence and not reaperAlive then
+                            return -- NGẮT LỆNH: Khóa chết CFrame vào mồm Boss, đéo cho chạy đi Roll!
+                        end
+                        
+                        -- ==============================================
+                        -- 3. CHẾ ĐỘ CÓ LỬA TÍM -> GỌI BOSS
+                        -- ==============================================
+                        local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"]
+                        if hasEssence then
                             SetTask("SubTask", "Yama Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
                             local altarPos = CFrame.new(-9455, 142, 5566)
                             if (root.Position - altarPos.Position).Magnitude > 15 then
                                 root.CFrame = altarPos
                                 task.wait(0.5)
                                 char.Humanoid:EquipTool(hasEssence)
+                            end
+                            return
+                        end
+                        
+                        -- ==============================================
+                        -- 4. CHẾ ĐỘ CÀY XƯƠNG & ROLL (ĐÃ FIX KẸT 50)
+                        -- ==============================================
+                        local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
+                        if boneCount >= 500 then _G.StartRolling = true elseif boneCount <= 50 then _G.StartRolling = false end
+                        
+                        if not _G.StartRolling then
+                            SetTask("SubTask", "Yama Quest / Tích trữ Xương ("..boneCount.."/500)")
+                            if CombatController and CombatController.Attack then
+                                CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
+                            end
+                        else
+                            SetTask("SubTask", "Yama Quest / Đang xả Xương Roll Lửa Tím ("..boneCount.."/50)")
+                            root.CFrame = CFrame.new(-9493, 160, 5543)
+                            task.wait(1)
+                            task.spawn(function()
+                                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                            end)
+                            task.wait(2)
+                            local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
+                            if newBoneCount == boneCount then
+                                SetTask("SubTask", "DEATH KING BỊ COOLDOWN 2H! TIẾP TỤC CÀY QUÁI!")
+                                _G.StartRolling = false
+                                task.wait(3)
                             end
                         end
                     end
