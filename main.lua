@@ -1397,20 +1397,28 @@ function hoangtuveu()
     FunctionsHandler.LevelFarm:RegisterMethod("Start", function(h)
         if SeaIndex == 3 then
             if (ScriptStorage.Backpack.Bones or { Count = 0 }).Count >= 50 then
-                if os.time() > (BonesCooldown or 0) then
-                    local X, X, X, w = Remotes.CommF_:InvokeServer("Bones", 'Check')
-                    print("State", X, "Message", w)
-                    if tonumber(X or 1) == 0 then
-                        local X = Split(w, ":")
-                        local w = ((tonumber(X[1]) * 60) + tonumber(X[2])) * 60
-                        BonesCooldown = os.time() + w
-                        print('Next', BonesCooldown)
-                    else
-                        print('Roll')
+            if os.time() > (BonesCooldown or 0) then
+                local X, X, X, w = Remotes.CommF_:InvokeServer("Bones", 'Check')
+                print("State", X, "Message", w)
+                if tonumber(X or 1) == 0 then
+                    local X = Split(w, ":")
+                    local w = ((tonumber(X[1]) * 60) + tonumber(X[2])) * 60
+                    BonesCooldown = os.time() + w
+                    print('Next', BonesCooldown)
+                else
+                    print('Roll')
+                    task.spawn(function()
                         Remotes.CommF_:InvokeServer('Bones', 'Buy', 1, 1)
-                    end
+                    end)
+                    task.wait(1)
                 end
             end
+        else
+            SetTask("SubTask", "Yama Quest / Thiếu Xương -> Tự động đi cày Bones!")
+            if CombatController and CombatController.Attack then
+                CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
+            end
+            return
         end
         local X = ScriptStorage.PlayerData.Level
         if GodHumanFlag then
@@ -3279,50 +3287,3 @@ function hoangtuveu()
 end
 
 hoangtuveu()
-
-task.spawn(function()
-    local plr = game:GetService("Players").LocalPlayer
-    local commF = game:GetService("ReplicatedStorage").Remotes.CommF_
-    local coreGui = game:GetService("StarterGui")
-    
-    coreGui:SetCore("SendNotification", {Title="HỆ THỐNG GACHA YAMA", Text="Đã kích hoạt Ký Sinh Trùng V26!", Duration=3})
-    
-    while task.wait(1) do
-        pcall(function()
-            local hasEssence = plr.Backpack:FindFirstChild("Hallow Essence") or (plr.Character and plr.Character:FindFirstChild("Hallow Essence"))
-            local reaperAlive = workspace.Enemies:FindFirstChild("Soul Reaper") or game:GetService("ReplicatedStorage"):FindFirstChild("Soul Reaper")
-            
-            if not hasEssence and not reaperAlive then
-                -- Đếm Xương
-                local boneCount = 0
-                local inv = commF:InvokeServer("getInventory")
-                if type(inv) == "table" then
-                    for _, item in pairs(inv) do
-                        if item.Name == "Bones" then boneCount = item.Count break end
-                    end
-                end
-                
-                if boneCount >= 50 then
-                    coreGui:SetCore("SendNotification", {Title="V26 GACHA TỰ ĐỘNG", Text="Đang có "..boneCount.." Xương -> Đang Roll Lửa Tím!", Duration=1})
-                    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                        -- Bay thẳng ra Haunted Castle ép Roll
-                        plr.Character.HumanoidRootPart.CFrame = CFrame.new(-9493, 160, 5543)
-                        task.wait(0.5)
-                        commF:InvokeServer("Bones", "Buy", 1, 1)
-                    end
-                else
-                    coreGui:SetCore("SendNotification", {Title="V26 CẢNH BÁO", Text="HẾT XƯƠNG! Hãy mở Menu Hub bật Auto Farm Bones lên!", Duration=2})
-                    task.wait(4) -- Đợi 4 giây cho đỡ spam màn hình
-                end
-            elseif hasEssence and not reaperAlive then
-                coreGui:SetCore("SendNotification", {Title="V26 THÀNH CÔNG", Text="ĐÃ RA LỬA TÍM! Bay ra cắm đuốc gọi Reaper ngay!", Duration=4})
-                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                    -- Bay ra bệ đá ở giữa sân gọi Boss
-                    plr.Character.HumanoidRootPart.CFrame = CFrame.new(-9455, 142, 5566)
-                    task.wait(1)
-                    plr.Character.Humanoid:EquipTool(hasEssence)
-                end
-            end
-        end)
-    end
-end)
