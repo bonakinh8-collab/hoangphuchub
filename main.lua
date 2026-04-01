@@ -3285,44 +3285,7 @@ function hoangtuveu()
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
--- HÀM TWEEN LƯỚT MƯỢT NÉ ANTI-CHEAT
-local TweenService = game:GetService("TweenService")
-local function TWEEN_TO(targetCFrame)
-    local plr = game.Players.LocalPlayer
-    local char = plr.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    
-    local distance = (root.Position - targetCFrame.Position).Magnitude
-    local speed = 300 -- Tốc độ bay 300 là vừa đủ nhanh và an toàn
-    local timeToTravel = distance / speed
-    
-    local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
-    
-    -- Xóa trọng lực lúc bay để không rớt xuống biển
-    local antiGravity = Instance.new("BodyVelocity")
-    antiGravity.Velocity = Vector3.new(0, 0, 0)
-    antiGravity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    antiGravity.Parent = root
-
-    tween:Play()
-    tween.Completed:Wait() -- Chờ bay tới nơi
-    antiGravity:Destroy() -- Trả lại trọng lực
-end
-
--- BẢN VÁ YAMA V33: ĐÃ SỬA LỖI TELEPORT THÀNH TWEEN BAY MƯỢT
-task.spawn(function()
-    _G.StartRolling = false
-    while task.wait(0.5) do
-        pcall(function()
-            if Config and Config.Items and Config.Items.CursedDualKatana then
-                local plr = game.Players.LocalPlayer
-                local char = plr.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                if not root then return end
-                
-                -- ==============================================
+-- ==============================================
                 -- 1. RADA DÒ TÌM ĐỊA NGỤC (HELL DIMENSION)
                 -- ==============================================
                 local inHell = false
@@ -3338,6 +3301,11 @@ task.spawn(function()
                     local yama = plr.Backpack:FindFirstChild("Yama") or char:FindFirstChild("Yama")
                     if yama then char.Humanoid:EquipTool(yama) end
                     
+                    -- ĐÃ FIX: TỰ ĐỘNG BẬT LẠI HAKI KHI VÀO ĐỊA NGỤC
+                    if not char:FindFirstChild("HasBuso") then
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
+                    end
+                    
                     local nearestEnemy = nil
                     local minDist = math.huge
                     for _, enemy in pairs(workspace.Enemies:GetChildren()) do
@@ -3351,14 +3319,25 @@ task.spawn(function()
                     end
                     
                     if nearestEnemy then
-                        -- ĐÃ FIX: Tween tới sau lưng quái
-                        TWEEN_TO(nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4))
-                        game:GetService("VirtualUser"):ClickButton1(Vector2.new())
+                        -- Lướt tới quái
+                        local targetPos = nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4)
+                        if minDist > 15 then
+                            TWEEN_TO(targetPos)
+                        else
+                            root.CFrame = targetPos -- Nếu ở gần sát thì bám theo luôn cho dễ chém
+                        end
+                        
+                        -- ĐÃ FIX: SPAM CLICK CHÉM TỐC ĐỘ CAO (Fast Attack)
+                        task.spawn(function()
+                            for i = 1, 10 do
+                                game:GetService("VirtualUser"):ClickButton1(Vector2.new())
+                                task.wait(0.05)
+                            end
+                        end)
                     else
                         for _, prompt in pairs(workspace:GetDescendants()) do
                             if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
                                 if (prompt.Parent.Position - root.Position).Magnitude < 2000 then
-                                    -- ĐÃ FIX: Tween tới ProximityPrompt
                                     TWEEN_TO(prompt.Parent.CFrame)
                                     task.wait(0.2)
                                     fireproximityprompt(prompt)
@@ -3369,76 +3348,6 @@ task.spawn(function()
                     end
                     return -- Đã ở Địa ngục thì NGẮT HẾT TẤT CẢ LỆNH DƯỚI!
                 end
-                
-                -- ==============================================
-                -- 2. TÌM LỬA TÍM TRONG BALO
-                -- ==============================================
-                local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"] or char:FindFirstChild("Hallow Essence")
-                
-                -- ==============================================
-                -- 3. RADA "VỆ TINH" QUÉT BOSS CỰC MẠNH
-                -- ==============================================
-                local reaperAlive = nil
-                for _, v in pairs(workspace.Enemies:GetChildren()) do
-                    if string.find(v.Name, "Reaper") then reaperAlive = v break end
-                end
-                if not reaperAlive then
-                    for _, v in pairs(workspace.Characters:GetChildren()) do
-                        if string.find(v.Name, "Reaper") then reaperAlive = v break end
-                    end
-                end
-                
-                if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
-                    SetTask("SubTask", "Yama Quest / TỬ THẦN ĐÃ RA! LAO VÀO FEED MẠNG!")
-                    if char:FindFirstChild("HasBuso") then
-                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                    end
-                    char.Humanoid:UnequipTools() 
-                    -- ĐÃ FIX: Lướt thẳng vào mặt Boss đéo sợ kick
-                    TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
-                    return 
-                end
-                
-                if hasEssence and not reaperAlive then
-                    SetTask("SubTask", "Yama Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
-                    local altarPos = CFrame.new(-9455, 142, 5566)
-                    if (root.Position - altarPos.Position).Magnitude > 15 then
-                        -- ĐÃ FIX: Lướt mượt tới bàn thờ
-                        TWEEN_TO(altarPos)
-                        task.wait(0.5)
-                        char.Humanoid:EquipTool(hasEssence)
-                    end
-                    return
-                end
-                
-                -- ==============================================
-                -- 4. CHẾ ĐỘ CÀY XƯƠNG & ROLL
-                -- ==============================================
-                local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
-                if boneCount >= 500 then _G.StartRolling = true elseif boneCount <= 50 then _G.StartRolling = false end
-                
-                if not _G.StartRolling then
-                    SetTask("SubTask", "Yama Quest / Tích trữ Xương ("..boneCount.."/500)")
-                    if CombatController and CombatController.Attack then
-                        CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
-                    end
-                else
-                    SetTask("SubTask", "Yama Quest / Đang Roll Xương TỪ XA ("..boneCount.."/50)")
-                    task.spawn(function()
-                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
-                    end)
-                    
-                    task.wait(1.5)
-                    local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
-                    if newBoneCount == boneCount then
-                        SetTask("SubTask", "DEATH KING BỊ COOLDOWN 2H! TIẾP TỤC CÀY QUÁI!")
-                        _G.StartRolling = false
-                    end
-                end
-            end
-        end)
-    end
-end)
 end
 
 hoangtuveu()
