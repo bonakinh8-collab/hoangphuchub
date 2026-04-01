@@ -3285,6 +3285,25 @@ function hoangtuveu()
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
+-- BẢN VÁ YAMA: KÍCH TRỢ TIM ÉP CHẠY FARM XƯƠNG TRONG SCRIPT CHÍNH
+        task.spawn(function()
+            while task.wait(1) do
+                pcall(function()
+                    if Config and Config.Items and Config.Items.CursedDualKatana then
+                        local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
+                        local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"]
+                        local reaperAlive = workspace.Enemies:FindFirstChild("Soul Reaper") or game:GetService("ReplicatedStorage"):FindFirstChild("Soul Reaper")
+                        
+                        if not hasEssence and not reaperAlive and boneCount < 50 then
+                            SetTask("SubTask", "Yama Quest / ÉP BUỘC ĐI FARM XƯƠNG ("..boneCount.."/50)")
+                            if CombatController and CombatController.Attack then
+                                CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
 end
 
 hoangtuveu()
