@@ -3285,7 +3285,7 @@ function hoangtuveu()
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
--- BẢN VÁ YAMA V28: DỊCH CHUYỂN TỌA ĐỘ GỐC & XỬ LÝ COOLDOWN
+-- BẢN VÁ YAMA V29: ÉP TỰ SÁT KHI BOSS XUẤT HIỆN
         task.spawn(function()
             _G.StartRolling = false
             while task.wait(0.5) do
@@ -3294,10 +3294,20 @@ function hoangtuveu()
                         local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"]
                         local reaperAlive = workspace.Enemies:FindFirstChild("Soul Reaper") or game:GetService("ReplicatedStorage"):FindFirstChild("Soul Reaper")
                         
-                        if not hasEssence and not reaperAlive then
-                            local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
+                        -- CHẾ ĐỘ 4: BOSS ĐÃ RA -> ÉP TỰ SÁT!!!
+                        if reaperAlive then
+                            SetTask("SubTask", "Yama Quest / TỬ THẦN ĐÃ RA! LAO VÀO FEED MẠNG!")
+                            local char = game.Players.LocalPlayer.Character
+                            if char and char:FindFirstChild("HumanoidRootPart") and reaperAlive:FindFirstChild("HumanoidRootPart") then
+                                -- Dịch chuyển thẳng mặt Boss
+                                char.HumanoidRootPart.CFrame = reaperAlive.HumanoidRootPart.CFrame
+                                -- Cất hết vũ khí đéo cho đánh trả
+                                char.Humanoid:UnequipTools() 
+                            end
                             
-                            -- Mốc 500 là max ping của Death King rồi, không cày 2000 nữa
+                        -- CÁC CHẾ ĐỘ CŨ (NẾU BOSS CHƯA RA)
+                        elseif not hasEssence and not reaperAlive then
+                            local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                             if boneCount >= 500 then 
                                 _G.StartRolling = true 
                             elseif boneCount < 50 then 
@@ -3313,19 +3323,16 @@ function hoangtuveu()
                                 SetTask("SubTask", "Yama Quest / Đang xả Xương Roll Lửa Tím ("..boneCount.."/50)")
                                 local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                                 if root then
-                                    -- Dịch chuyển bằng tọa độ tĩnh, đéo cần quan tâm NPC có tàng hình hay không
                                     root.CFrame = CFrame.new(-9493, 160, 5543)
                                     task.wait(1)
                                     task.spawn(function()
                                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
                                     end)
-                                    task.wait(2) -- Đợi server trừ xương
-                                    
-                                    -- RADA PHÁT HIỆN COOLDOWN
+                                    task.wait(2)
                                     local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                                     if newBoneCount == boneCount then
                                         SetTask("SubTask", "DEATH KING BỊ COOLDOWN 2H! TIẾP TỤC CÀY QUÁI!")
-                                        _G.StartRolling = false -- Quay xe đi cày xương tiếp
+                                        _G.StartRolling = false
                                         task.wait(3)
                                     end
                                 end
