@@ -1395,32 +1395,33 @@ function hoangtuveu()
         return true
     end)
     FunctionsHandler.LevelFarm:RegisterMethod("Start", function(h)
-        if SeaIndex == 3 then
-            if (ScriptStorage.Backpack.Bones or { Count = 0 }).Count >= 50 then
-            if os.time() > (BonesCooldown or 0) then
-                local X, X, X, w = Remotes.CommF_:InvokeServer("Bones", 'Check')
-                print("State", X, "Message", w)
-                if tonumber(X or 1) == 0 then
-                    local X = Split(w, ":")
-                    local w = ((tonumber(X[1]) * 60) + tonumber(X[2])) * 60
-                    BonesCooldown = os.time() + w
-                    print('Next', BonesCooldown)
+            if SeaIndex == 3 then
+                if (ScriptStorage.Backpack.Bones or { Count = 0 }).Count >= 50 then
+                    if os.time() > (BonesCooldown or 0) then
+                        local X, X, X, w = Remotes.CommF_:InvokeServer("Bones", 'Check')
+                        print("State", X, "Message", w)
+                        if tonumber(X or 1) == 0 then
+                            local X = Split(w, ":")
+                            local w = ((tonumber(X[1]) * 60) + tonumber(X[2])) * 60
+                            BonesCooldown = os.time() + w
+                            print('Next', BonesCooldown)
+                        else
+                            print('Roll')
+                            task.spawn(function()
+                                Remotes.CommF_:InvokeServer('Bones', 'Buy', 1, 1)
+                            end)
+                            task.wait(1)
+                        end
+                    end
                 else
-                    print('Roll')
-                    task.spawn(function()
-                        Remotes.CommF_:InvokeServer('Bones', 'Buy', 1, 1)
-                    end)
-                    task.wait(1)
+                    SetTask("SubTask", "Yama Quest / Thiếu Xương -> Tự động đi cày Bones!")
+                    if CombatController and CombatController.Attack then
+                        CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
+                    end
+                    return
                 end
             end
-        else
-            SetTask("SubTask", "Yama Quest / Thiếu Xương -> Tự động đi cày Bones!")
-            if CombatController and CombatController.Attack then
-                CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
-            end
-            return
-        end
-        local X = ScriptStorage.PlayerData.Level
+            local X = ScriptStorage.PlayerData.Level
         if GodHumanFlag then
             local w, D = (function()
                 getgenv()["   mphm ><<3"] = {}
