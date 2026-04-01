@@ -3285,19 +3285,65 @@ function hoangtuveu()
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
--- BẢN VÁ YAMA: KÍCH TRỢ TIM ÉP CHẠY FARM XƯƠNG TRONG SCRIPT CHÍNH
+-- BẢN VÁ YAMA V27: ĐẠI GIA 2000 XƯƠNG (CÀY XONG MỚI XẢ)
         task.spawn(function()
-            while task.wait(1) do
+            _G.StartRolling = false
+            while task.wait(0.5) do
                 pcall(function()
                     if Config and Config.Items and Config.Items.CursedDualKatana then
-                        local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                         local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"]
                         local reaperAlive = workspace.Enemies:FindFirstChild("Soul Reaper") or game:GetService("ReplicatedStorage"):FindFirstChild("Soul Reaper")
                         
-                        if not hasEssence and not reaperAlive and boneCount < 50 then
-                            SetTask("SubTask", "Yama Quest / ÉP BUỘC ĐI FARM XƯƠNG ("..boneCount.."/50)")
-                            if CombatController and CombatController.Attack then
-                                CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
+                        if not hasEssence and not reaperAlive then
+                            local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
+                            
+                            -- Bộ đếm thông minh: Dưới 2000 thì farm, trên 2000 thì xả
+                            if boneCount >= 2000 then 
+                                _G.StartRolling = true 
+                            elseif boneCount < 50 then 
+                                _G.StartRolling = false 
+                            end
+                            
+                            if not _G.StartRolling then
+                                -- 1. CHẾ ĐỘ CÀY CUỐC (DƯỚI 2000 XƯƠNG)
+                                SetTask("SubTask", "Yama Quest / Tích trữ Xương ("..boneCount.."/2000)")
+                                if CombatController and CombatController.Attack then
+                                    CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
+                                end
+                            else
+                                -- 2. CHẾ ĐỘ ĐẠI GIA XẢ XƯƠNG (TRÊN 2000 XƯƠNG)
+                                SetTask("SubTask", "Yama Quest / Đang xả Xương Roll Lửa Tím ("..boneCount.."/50)")
+                                local deathKing = workspace.Map:FindFirstChild("Death King")
+                                if deathKing and deathKing:FindFirstChild("HumanoidRootPart") then
+                                    local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                    if root then
+                                        local dist = (root.Position - deathKing.HumanoidRootPart.Position).Magnitude
+                                        if dist > 20 then
+                                            -- Teleport bay ra mặt Death King
+                                            root.CFrame = deathKing.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                                            task.wait(0.5)
+                                        else
+                                            -- Ép Roll chống kẹt X2 EXP
+                                            task.spawn(function()
+                                                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                                            end)
+                                            task.wait(1)
+                                        end
+                                    end
+                                end
+                            end
+                            
+                        elseif hasEssence and not reaperAlive then
+                            -- 3. TRÚNG SỐ LỬA TÍM -> BAY RA GỌI BOSS TỨC THÌ
+                            SetTask("SubTask", "Yama Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
+                            local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                            if root then
+                                local altarPos = CFrame.new(-9455, 142, 5566)
+                                if (root.Position - altarPos.Position).Magnitude > 15 then
+                                    root.CFrame = altarPos
+                                    task.wait(0.5)
+                                    game.Players.LocalPlayer.Character.Humanoid:EquipTool(hasEssence)
+                                end
                             end
                         end
                     end
