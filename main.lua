@@ -3379,6 +3379,126 @@ task.spawn(function()
                     end
                     return 
                 end
+-- ================================================================
+-- HÀM TWEEN LƯỚT MƯỢT NÉ ANTI-CHEAT
+-- ================================================================
+local TweenService = game:GetService("TweenService")
+local function TWEEN_TO(targetCFrame)
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+    
+    local distance = (root.Position - targetCFrame.Position).Magnitude
+    local speed = 300 
+    local timeToTravel = distance / speed
+    
+    local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
+    
+    local antiGravity = Instance.new("BodyVelocity")
+    antiGravity.Velocity = Vector3.new(0, 0, 0)
+    antiGravity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    antiGravity.Parent = root
+
+    tween:Play()
+    tween.Completed:Wait() 
+    antiGravity:Destroy() 
+end
+-- ================================================================
+-- HÀM TWEEN LƯỚT MƯỢT NÉ ANTI-CHEAT
+-- ================================================================
+local TweenService = game:GetService("TweenService")
+local function TWEEN_TO(targetCFrame)
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local root = char.HumanoidRootPart
+    
+    local distance = (root.Position - targetCFrame.Position).Magnitude
+    local speed = 300 
+    local timeToTravel = distance / speed
+    
+    local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
+    
+    local antiGravity = Instance.new("BodyVelocity")
+    antiGravity.Velocity = Vector3.new(0, 0, 0)
+    antiGravity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    antiGravity.Parent = root
+
+    tween:Play()
+    tween.Completed:Wait() 
+    antiGravity:Destroy() 
+end
+
+-- ================================================================
+-- BẢN VÁ YAMA V33: FIX LỖI RADA MÙ, NÂNG CẤP BAY XUYÊN ĐẢO
+-- ================================================================
+task.spawn(function()
+    _G.StartRolling = false
+    while task.wait(0.5) do
+        pcall(function()
+            if Config and Config.Items and Config.Items.CursedDualKatana then
+                local plr = game.Players.LocalPlayer
+                local char = plr.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then return end
+                
+                -- ==============================================
+                -- 1. RADA DÒ TÌM ĐỊA NGỤC (HELL DIMENSION)
+                -- ==============================================
+                local inHell = false
+                for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
+                    if gui:IsA("TextLabel") and gui.Text:find("Hell Dimension") then
+                        inHell = true
+                        break
+                    end
+                end
+                
+                if inHell then
+                    SetTask("SubTask", "YAMA QUEST / ĐANG QUÉT SẠCH ĐỊA NGỤC!")
+                    local yama = plr.Backpack:FindFirstChild("Yama") or char:FindFirstChild("Yama")
+                    if yama then char.Humanoid:EquipTool(yama) end
+                    
+                    if not char:FindFirstChild("HasBuso") then
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
+                    end
+                    
+                    local nearestEnemy = nil
+                    local minDist = math.huge
+                    for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+                        if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
+                            local dist = (enemy.HumanoidRootPart.Position - root.Position).Magnitude
+                            if dist < minDist then
+                                minDist = dist
+                                nearestEnemy = enemy
+                            end
+                        end
+                    end
+                    
+                    if nearestEnemy then
+                        TWEEN_TO(nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4))
+                        task.spawn(function()
+                            for i = 1, 10 do
+                                game:GetService("VirtualUser"):ClickButton1(Vector2.new())
+                                task.wait(0.05)
+                            end
+                        end)
+                    else
+                        for _, prompt in pairs(workspace:GetDescendants()) do
+                            if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
+                                if (prompt.Parent.Position - root.Position).Magnitude < 2000 then
+                                    TWEEN_TO(prompt.Parent.CFrame) 
+                                    task.wait(0.2)
+                                    fireproximityprompt(prompt)
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    return 
+                end
                 
                 -- ==============================================
                 -- 2. TÌM LỬA TÍM TRONG BALO
@@ -3398,7 +3518,6 @@ task.spawn(function()
                     end
                 end
                 
-                -- ĐÃ FIX: NẾU QUÁ XA ĐẾN MỨC KHÔNG THẤY BOSS BẰNG MẮT, QUÉT THANH MÁU TRÊN MÀN HÌNH!
                 local bossBarVisible = false
                 for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
                     if gui:IsA("TextLabel") and string.find(gui.Text, "Soul Reaper") then
@@ -3409,13 +3528,11 @@ task.spawn(function()
 
                 -- XỬ LÝ BAY TỚI BOSS:
                 if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
-                    -- Trường hợp 1: Ở gần Boss -> Bay ghim thẳng vào mặt
                     SetTask("SubTask", "Yama Quest / TỬ THẦN ĐÃ RA! BAY VÀO FEED MẠNG!")
                     TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
                     char.Humanoid:UnequipTools() 
                     return 
                 elseif bossBarVisible then
-                    -- Trường hợp 2: Ở đảo khác (nhìn thấy thanh máu mà đéo thấy Boss) -> Bay về tọa độ Bàn Thờ
                     SetTask("SubTask", "Yama Quest / BOSS Ở ĐẢO KHÁC! BAY VỀ HAUNTED CASTLE NGAY!")
                     local altarPos = CFrame.new(-9455, 142, 5566)
                     TWEEN_TO(altarPos)
@@ -3461,6 +3578,7 @@ task.spawn(function()
         end)
     end
 end)
-end
 
-hoangtuveu()
+end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
+
+hoangtuveu() -- KÍCH HOẠT CHẠY SCRIPT NÈ
