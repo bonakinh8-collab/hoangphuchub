@@ -3329,7 +3329,7 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ CDK V35: CHỐNG MÙ DIMENSION (RADA DÒ BẰNG VỊ TRÍ MAP)
+-- BẢN VÁ CDK V36: RADA MỞ RỘNG BÁN KÍNH 15.000M - CHỐNG LƯỚT VĂNG MAP
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
@@ -3342,7 +3342,7 @@ task.spawn(function()
                 if not root then return end
                 
                 -- ==============================================
-                -- 1. RADA DÒ DIMENSION BẰNG MAP (KHÔNG DÙNG CHỮ NỮA)
+                -- 1. RADA DÒ DIMENSION BẰNG MAP (MỞ RỘNG 15,000 STUD)
                 -- ==============================================
                 local inDimension = false
                 local isHell = false
@@ -3351,7 +3351,7 @@ task.spawn(function()
                 local hellMap = workspace.Map:FindFirstChild("HellDimension")
                 if hellMap then
                     local part = hellMap:FindFirstChildWhichIsA("BasePart", true)
-                    if part and (part.Position - root.Position).Magnitude < 3000 then
+                    if part and (part.Position - root.Position).Magnitude < 15000 then
                         inDimension = true
                         isHell = true
                     end
@@ -3361,7 +3361,7 @@ task.spawn(function()
                 local heavenMap = workspace.Map:FindFirstChild("HeavenlyDimension")
                 if heavenMap and not inDimension then
                     local part = heavenMap:FindFirstChildWhichIsA("BasePart", true)
-                    if part and (part.Position - root.Position).Magnitude < 3000 then
+                    if part and (part.Position - root.Position).Magnitude < 15000 then
                         inDimension = true
                     end
                 end
@@ -3369,7 +3369,6 @@ task.spawn(function()
                 if inDimension then
                     SetTask("SubTask", "CDK Quest / ĐANG TRONG DIMENSION! TẬP TRUNG LÀM QUEST!")
                     
-                    -- Tự trang bị vũ khí tùy theo Map
                     local swordName = isHell and "Yama" or "Tushita"
                     local sword = plr.Backpack:FindFirstChild(swordName) or char:FindFirstChild(swordName)
                     if sword then char.Humanoid:EquipTool(sword) end
@@ -3378,7 +3377,6 @@ task.spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
                     end
                     
-                    -- Chém quái
                     local nearestEnemy = nil
                     local minDist = math.huge
                     for _, enemy in pairs(workspace.Enemies:GetChildren()) do
@@ -3391,7 +3389,7 @@ task.spawn(function()
                         end
                     end
                     
-                    if nearestEnemy then
+                    if nearestEnemy and minDist < 5000 then
                         TWEEN_TO(nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4))
                         task.spawn(function()
                             for i = 1, 10 do
@@ -3400,10 +3398,9 @@ task.spawn(function()
                             end
                         end)
                     else
-                        -- Tìm đuốc để thắp
                         for _, prompt in pairs(workspace:GetDescendants()) do
                             if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
-                                if (prompt.Parent.Position - root.Position).Magnitude < 2500 then
+                                if (prompt.Parent.Position - root.Position).Magnitude < 5000 then
                                     TWEEN_TO(prompt.Parent.CFrame) 
                                     task.wait(0.2)
                                     fireproximityprompt(prompt)
@@ -3412,7 +3409,7 @@ task.spawn(function()
                             end
                         end
                     end
-                    return -- CỰC KỲ QUAN TRỌNG: CHẶN KHÔNG CHO NÓ NHẢY XUỐNG CODE BAY ĐÁNH BOSS!
+                    return -- CHẶN TUYỆT ĐỐI BAY RA NGOÀI TÌM TỬ THẦN
                 end
                 
                 -- ==============================================
