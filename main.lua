@@ -3329,7 +3329,7 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ CDK V46: RADAR THỜI GIAN THỰC (NON-BLOCKING) + KHÓA HUB TẬN GỐC
+-- BẢN VÁ CDK V47: FIX LỖI NHẬN NHẦM ĐẢO (BỨC TƯỜNG LỬA CHỐNG NGU)
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
@@ -3341,30 +3341,37 @@ task.spawn(function()
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if not root then return end
                 
+                -- Khai báo vị trí Bàn Thờ trước để làm mốc
+                local altarPos = CFrame.new(-9455, 142, 5566)
+                local distToAltar = (root.Position - altarPos.Position).Magnitude
+                
                 -- ==============================================
-                -- 1. DIMENSION LOGIC (ƯU TIÊN ĐUỐC TRƯỚC)
+                -- 1. DIMENSION LOGIC (ĐÃ FIX BÁN KÍNH VÀ THÊM BỨC TƯỜNG LỬA)
                 -- ==============================================
                 local inDimension = false
                 local isHell = false
-                local hellMap = workspace.Map:FindFirstChild("HellDimension")
-                if hellMap then
-                    local part = hellMap:FindFirstChildWhichIsA("BasePart", true)
-                    if part and (part.Position - root.Position).Magnitude < 15000 then
-                        inDimension = true
-                        isHell = true
-                    end
-                end
                 
-                local heavenMap = workspace.Map:FindFirstChild("HeavenlyDimension")
-                if heavenMap and not inDimension then
-                    local part = heavenMap:FindFirstChildWhichIsA("BasePart", true)
-                    if part and (part.Position - root.Position).Magnitude < 15000 then
-                        inDimension = true
+                -- CHỈ KHI NÀO Ở XA ĐẢO BÓNG TỐI (>4000) THÌ MỚI ĐƯỢC CHECK DIMENSION
+                if distToAltar > 4000 then
+                    local hellMap = workspace.Map:FindFirstChild("HellDimension")
+                    if hellMap then
+                        local part = hellMap:FindFirstChildWhichIsA("BasePart", true)
+                        if part and (part.Position - root.Position).Magnitude < 6000 then
+                            inDimension = true
+                            isHell = true
+                        end
+                    end
+                    
+                    local heavenMap = workspace.Map:FindFirstChild("HeavenlyDimension")
+                    if heavenMap and not inDimension then
+                        local part = heavenMap:FindFirstChildWhichIsA("BasePart", true)
+                        if part and (part.Position - root.Position).Magnitude < 6000 then
+                            inDimension = true
+                        end
                     end
                 end
                 
                 if inDimension then
-                    -- Đã vào Dimension thì mở khóa tự sát cho nó đánh quái
                     if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
                     
                     local swordName = isHell and "Yama" or "Tushita"
@@ -3413,15 +3420,10 @@ task.spawn(function()
                 end
                 
                 -- ==============================================
-                -- 2. TÌM LỬA TÍM TRONG BALO
+                -- 2. VỆ TINH QUÉT TỬ THẦN (FEED MẠNG)
                 -- ==============================================
                 local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"] or char:FindFirstChild("Hallow Essence")
-                local altarPos = CFrame.new(-9455, 142, 5566)
-                local distToAltar = (root.Position - altarPos.Position).Magnitude
                 
-                -- ==============================================
-                -- 3. VỆ TINH QUÉT TỬ THẦN (RADAR SIÊU TỐC KHÔNG ĐÓNG BĂNG)
-                -- ==============================================
                 local reaperAlive = nil
                 local reaperRoot = nil
                 for _, v in pairs(workspace.Enemies:GetChildren()) do
@@ -3452,9 +3454,7 @@ task.spawn(function()
                     end
                 end
 
-                -- NẾU PHÁT HIỆN BOSS DÙ CHỈ LÀ CÁI BÓNG HAY THANH MÁU
                 if reaperAlive or bossBarVisible then
-                    -- BẬT KHÓA ÉP THÁO VŨ KHÍ 60 LẦN/GIÂY NGAY LẬP TỨC
                     if not _G.SuicideLock then
                         _G.SuicideLock = game:GetService("RunService").Heartbeat:Connect(function()
                             pcall(function()
@@ -3476,10 +3476,9 @@ task.spawn(function()
                             TWEEN_TO(altarPos)
                         end
                     end
-                    return -- CỰC KỲ QUAN TRỌNG: NGẮT LUỒNG NGAY LẬP TỨC
+                    return 
                 end
                 
-                -- Tắt khóa nếu an toàn không có boss
                 if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
                 
                 if hasEssence and not reaperAlive and not bossBarVisible then
@@ -3493,7 +3492,7 @@ task.spawn(function()
                 end
                 
                 -- ==============================================
-                -- 4. ÉP BAY VỀ HAUNTED CASTLE & CÀY XƯƠNG
+                -- 3. CÀY XƯƠNG
                 -- ==============================================
                 local boneCount = 0
                 pcall(function() boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count end)
@@ -3518,14 +3517,11 @@ task.spawn(function()
                     end
                 else
                     SetTask("SubTask", "CDK Quest / Đang Roll Xương ("..boneCount.."/50)")
-                    
-                    -- FIX LỖI BLOCKING RADAR TẠI ĐÂY: Nhét cái delay 1.5s vào task.spawn để Radar vẫn chạy mượt
                     if not _G.RollDebounce then
                         _G.RollDebounce = true
                         task.spawn(function()
                             pcall(function() game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1) end)
                             task.wait(1.5)
-                            
                             local newBoneCount = 0
                             pcall(function() newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count end)
                             if newBoneCount == boneCount then
