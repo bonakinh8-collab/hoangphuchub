@@ -3329,11 +3329,11 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ CDK V44: TRẢ LẠI VỆ TINH + FIX LỖI KẸT TWEEN BAY MAP
+-- BẢN VÁ CDK V45: CHUẨN MỰC TỰ SÁT & DỌN LỖI GIẬT KINH PHONG
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
-    while task.wait(0.1) do
+    while task.wait(0.2) do -- Chỉnh delay an toàn để Tween không đè nhau
         pcall(function()
             if Config and Config.Items and Config.Items.CursedDualKatana then
                 local plr = game.Players.LocalPlayer
@@ -3342,7 +3342,7 @@ task.spawn(function()
                 if not root then return end
                 
                 -- ==============================================
-                -- 1. DIMENSION LOGIC (THẮP ĐUỐC TRƯỚC, ĐÁNH QUÁI SAU)
+                -- 1. DIMENSION LOGIC (ƯU TIÊN ĐUỐC TRƯỚC)
                 -- ==============================================
                 local inDimension = false
                 local isHell = false
@@ -3364,6 +3364,9 @@ task.spawn(function()
                 end
                 
                 if inDimension then
+                    -- Tắt khóa tự sát nếu đang chạy
+                    if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
+                    
                     local swordName = isHell and "Yama" or "Tushita"
                     local sword = plr.Backpack:FindFirstChild(swordName) or char:FindFirstChild(swordName)
                     if sword then char.Humanoid:EquipTool(sword) end
@@ -3384,7 +3387,9 @@ task.spawn(function()
                     if #unlitTorches > 0 then
                         SetTask("SubTask", "CDK Quest / ĐANG THẮP ĐUỐC! (CÒN LẠI "..#unlitTorches.." CÁI)")
                         local targetTorch = unlitTorches[1]
-                        TWEEN_TO(targetTorch.Parent.CFrame) 
+                        if (root.Position - targetTorch.Parent.Position).Magnitude > 15 then
+                            TWEEN_TO(targetTorch.Parent.CFrame) 
+                        end
                         task.wait(0.2)
                         fireproximityprompt(targetTorch)
                     else
@@ -3408,21 +3413,24 @@ task.spawn(function()
                 end
                 
                 -- ==============================================
-                -- 2. TÌM LỬA TÍM TRONG BALO & KHOẢNG CÁCH
+                -- 2. TÌM LỬA TÍM TRONG BALO
                 -- ==============================================
                 local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"] or char:FindFirstChild("Hallow Essence")
                 local altarPos = CFrame.new(-9455, 142, 5566)
                 local distToAltar = (root.Position - altarPos.Position).Magnitude
                 
                 -- ==============================================
-                -- 3. VỆ TINH QUÉT TỬ THẦN & HACK LÀM MÙ HUB (ĐÃ TRẢ LẠI!)
+                -- 3. VỆ TINH QUÉT TỬ THẦN & ÉP CHẾT (BẢN CHUẨN)
                 -- ==============================================
                 local reaperAlive = nil
                 for _, v in pairs(workspace.Enemies:GetChildren()) do
-                    if v.Name:find("Reaper") or v.Name == "FeedTarget" then 
-                        reaperAlive = v 
-                        v.Name = "FeedTarget" -- Hack làm mù Hub
-                        break 
+                    if v.Name:find("Reaper") then reaperAlive = v break end
+                end
+                if not reaperAlive then
+                    for _, v in pairs(workspace:GetChildren()) do 
+                        if v:IsA("Model") and v.Name:find("Reaper") and v:FindFirstChild("HumanoidRootPart") then 
+                            reaperAlive = v break 
+                        end
                     end
                 end
                 
@@ -3436,21 +3444,35 @@ task.spawn(function()
 
                 if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
                     SetTask("SubTask", "CDK Quest / THẤY TỬ THẦN RỒI! ĐANG LAO VÀO FEED MẠNG!")
-                    if (root.Position - reaperAlive.HumanoidRootPart.Position).Magnitude > 5 then
+                    
+                    -- KHÓA TAY BẰNG HEARTBEAT (Chạy 60 lần/giây để cấm Hub rút vũ khí)
+                    if not _G.SuicideLock then
+                        _G.SuicideLock = game:GetService("RunService").Heartbeat:Connect(function()
+                            pcall(function()
+                                if char:FindFirstChildOfClass("Tool") then
+                                    char.Humanoid:UnequipTools()
+                                end
+                            end)
+                        end)
+                    end
+                    
+                    local distToBoss = (root.Position - reaperAlive.HumanoidRootPart.Position).Magnitude
+                    if distToBoss > 10 then
                         TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
-                    else
-                        char.Humanoid:UnequipTools()
                     end
                     return
+                    
                 elseif bossBarVisible then
-                    SetTask("SubTask", "CDK Quest / RADA BÁO CÓ BOSS! ĐANG TÌM QUANH BÀN THỜ...")
-                    if distToAltar > 150 then
+                    SetTask("SubTask", "CDK Quest / RADA BÁO CÓ BOSS! ĐANG CHỜ XÁC LOAD...")
+                    -- FIX LỖI GIẬT KINH PHONG: Chỉ bay về Bàn Thờ rồi ĐỨNG IM, không dùng math.random nữa!
+                    if distToAltar > 15 then
                         TWEEN_TO(altarPos)
-                    else
-                        TWEEN_TO(altarPos * CFrame.new(math.random(-50, 50), 0, math.random(-50, 50)))
                     end
                     return
                 end
+                
+                -- Nếu không có Boss thì tắt khóa tự sát đi
+                if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
                 
                 if hasEssence and not reaperAlive and not bossBarVisible then
                     SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
@@ -3468,7 +3490,6 @@ task.spawn(function()
                 local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                 if boneCount >= 500 then _G.StartRolling = true elseif boneCount <= 50 then _G.StartRolling = false end
                 
-                -- FIX LỖI KẸT CHÔN CHÂN: Trả lại khóa bay _G.IsFlyingToCastle
                 if distToAltar > 1500 then
                     SetTask("SubTask", "CDK Quest / Đang lướt xé gió về Đảo Bóng Tối để load Map...")
                     if not _G.IsFlyingToCastle then
