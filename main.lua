@@ -3328,37 +3328,18 @@ end
 -- ================================================================
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 -- ================================================================
--- BẢN VÁ CDK V52: HOÀN TRẢ ROLL XƯƠNG (CHUẨN API BLOX FRUITS 100%)
+-- BẢN VÁ CDK V53: QUÉT COREGUI (ĐỌC NÃO HUB) + ROLL XƯƠNG TỪ XA
 -- ================================================================
 task.spawn(function()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local CommF = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_")
+    local CoreGui = game:GetService("CoreGui")
+    local Players = game:GetService("Players")
     
-    -- Vệ tinh check Xương ngầm (Quét kho đồ 3 giây/lần cực mượt, không làm lag game)
-    local currentBones = 0
-    task.spawn(function()
-        while task.wait(3) do
-            pcall(function()
-                local inv = CommF:InvokeServer("getInventory")
-                if type(inv) == "table" then
-                    local found = false
-                    for _, item in pairs(inv) do
-                        if item.Name == "Bones" then
-                            currentBones = item.Count
-                            found = true
-                            break
-                        end
-                    end
-                    if not found then currentBones = 0 end
-                end
-            end)
-        end
-    end)
-
     while task.wait(0.2) do
         pcall(function()
             if Config and Config.Items and Config.Items.CursedDualKatana then
-                local plr = game.Players.LocalPlayer
+                local plr = Players.LocalPlayer
                 local char = plr.Character
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if not root then return end
@@ -3367,7 +3348,7 @@ task.spawn(function()
                 local distToAltar = (root.Position - altarPos.Position).Magnitude
                 
                 -- ==============================================
-                -- TÌNH HUỐNG 1: DIMENSION (THẮP ĐUỐC)
+                -- TÌNH HUỐNG 1: DIMENSION (THẮP ĐUỐC & DỌN QUÁI)
                 -- ==============================================
                 local inDimension = false
                 local isHell = false
@@ -3376,8 +3357,7 @@ task.spawn(function()
                     if hellMap then
                         local part = hellMap:FindFirstChildWhichIsA("BasePart", true)
                         if part and (part.Position - root.Position).Magnitude < 6000 then
-                            inDimension = true
-                            isHell = true
+                            inDimension = true; isHell = true
                         end
                     end
                     local heavenMap = workspace.Map:FindFirstChild("HeavenlyDimension")
@@ -3433,13 +3413,30 @@ task.spawn(function()
                 end
                 
                 -- ==============================================
-                -- TÌNH HUỐNG 2: NHIỆM VỤ YAMA EVIL (ROLL XƯƠNG & FEED MẠNG)
+                -- TÌNH HUỐNG 2: NHIỆM VỤ YAMA EVIL (ĐỌC COREGUI CỦA HUB)
                 -- ==============================================
                 local isReaperQuestActive = false
-                for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
-                    if gui:IsA("TextLabel") and (gui.Text:find("Fear the Reaper") or gui.Text:find("Yama Evil")) then
-                        isReaperQuestActive = true
-                        break
+                
+                -- Lục tung cái Menu Hub để tìm chữ "Yama Evil" hoặc "Fear the Reaper"
+                for _, gui in pairs(CoreGui:GetDescendants()) do
+                    if gui:IsA("TextLabel") and gui.Text then
+                        local txt = string.lower(gui.Text)
+                        if txt:find("yama evil") or txt:find("fear the reaper") then
+                            isReaperQuestActive = true
+                            break
+                        end
+                    end
+                end
+                -- Back up: Lục luôn trong giao diện gốc game đề phòng
+                if not isReaperQuestActive then
+                    for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
+                        if gui:IsA("TextLabel") and gui.Text then
+                            local txt = string.lower(gui.Text)
+                            if txt:find("yama evil") or txt:find("fear the reaper") then
+                                isReaperQuestActive = true
+                                break
+                            end
+                        end
                     end
                 end
 
@@ -3465,7 +3462,7 @@ task.spawn(function()
                         if gui:IsA("TextLabel") and gui.Text:find("Soul Reaper") then bossBarVisible = true; break end
                     end
 
-                    -- BƯỚC 2.1: THẤY BOSS -> ÉP CHẾT
+                    -- 2.1: THẤY BOSS -> ÉP CHẾT
                     if reaperAlive or bossBarVisible then
                         if not _G.SuicideLock then
                             _G.SuicideLock = game:GetService("RunService").Heartbeat:Connect(function()
@@ -3484,34 +3481,35 @@ task.spawn(function()
                     
                     if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
                     
-                    -- BƯỚC 2.2: CÓ LỬA TÍM -> GỌI BOSS
+                    -- 2.2: CÓ LỬA TÍM -> BAY VỀ BÀN THỜ GỌI BOSS
                     if hasEssence and not reaperAlive and not bossBarVisible then
                         SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
                         if distToAltar > 15 then
                             TWEEN_TO(altarPos)
-                            task.wait(0.5)
+                        else
                             char.Humanoid:EquipTool(hasEssence)
                         end
                         return
                     end
                     
-                    -- BƯỚC 2.3: KHÔNG LỬA TÍM + ĐỦ XƯƠNG -> ROLL XƯƠNG (MỚI THÊM LẠI)
-                    if not hasEssence and not reaperAlive and currentBones >= 50 then
-                        if distToAltar > 15 then
-                            SetTask("SubTask", "CDK Quest / Bay về Bàn Thờ để Roll Lửa Tím...")
-                            TWEEN_TO(altarPos)
-                        else
-                            SetTask("SubTask", "CDK Quest / Đang Roll Xương tìm Lửa Tím ("..currentBones.." xương)")
+                    -- 2.3: KHÔNG LỬA TÍM -> ROLL TỪ XA LIÊN TỤC
+                    if not hasEssence and not reaperAlive then
+                        local boneCount = 0
+                        pcall(function() boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count end)
+                        
+                        if boneCount >= 50 then
+                            SetTask("SubTask", "CDK Quest / Đang Roll Xương TỪ XA tìm Lửa Tím ("..boneCount.." xương)")
                             if not _G.RollDebounce then
                                 _G.RollDebounce = true
                                 task.spawn(function()
+                                    -- Ép gửi Request mua xương liên tục từ xa
                                     pcall(function() CommF:InvokeServer("Bones", "Buy", 1, 1) end)
                                     task.wait(1.5)
                                     _G.RollDebounce = false
                                 end)
                             end
+                            return -- Chặn Hub để tránh nó chạy lung tung
                         end
-                        return -- Ngắt luôn để Hub không kéo đi chỗ khác
                     end
                 end
                 
@@ -3540,10 +3538,9 @@ task.spawn(function()
                     end
                     return
                 end
-            end
-        end)
-    end
-end)
+            end)
+        end
+    end)
 
 end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
 
