@@ -3329,7 +3329,7 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ CDK V43: LOGIC THIÊN TÀI - THẮP ĐUỐC TRƯỚC, ĐÁNH QUÁI SAU
+-- BẢN VÁ CDK V44: TRẢ LẠI VỆ TINH + FIX LỖI KẸT TWEEN BAY MAP
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
@@ -3342,7 +3342,7 @@ task.spawn(function()
                 if not root then return end
                 
                 -- ==============================================
-                -- 1. DIMENSION LOGIC (THEO Ý TƯỞNG CỦA ÔNG)
+                -- 1. DIMENSION LOGIC (THẮP ĐUỐC TRƯỚC, ĐÁNH QUÁI SAU)
                 -- ==============================================
                 local inDimension = false
                 local isHell = false
@@ -3372,7 +3372,6 @@ task.spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
                     end
                     
-                    -- BƯỚC 1: TÌM VÀ THẮP ĐUỐC TRƯỚC TIÊN
                     local unlitTorches = {}
                     for _, prompt in pairs(workspace:GetDescendants()) do
                         if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
@@ -3383,14 +3382,12 @@ task.spawn(function()
                     end
                     
                     if #unlitTorches > 0 then
-                        -- CÒN ĐUỐC CHƯA THẮP -> TẮT AUTO ĐÁNH, CHỈ ĐI THẮP ĐUỐC
                         SetTask("SubTask", "CDK Quest / ĐANG THẮP ĐUỐC! (CÒN LẠI "..#unlitTorches.." CÁI)")
                         local targetTorch = unlitTorches[1]
                         TWEEN_TO(targetTorch.Parent.CFrame) 
                         task.wait(0.2)
                         fireproximityprompt(targetTorch)
                     else
-                        -- BƯỚC 2: HẾT ĐUỐC RỒI -> BẬT AUTO GOM QUÁI LÀM GỎI TỤI NÓ
                         SetTask("SubTask", "CDK Quest / ĐÃ THẮP XONG ĐUỐC! BẬT MODE ĐẬP QUÁI!")
                         local dimensionMobs = {}
                         local hasMobs = false
@@ -3407,12 +3404,28 @@ task.spawn(function()
                             CombatController.Attack(dimensionMobs)
                         end
                     end
-                    return -- CHẶN KHÔNG CHO XUỐNG DƯỚI ĐỂ TRÁNH XUNG ĐỘT HUB
+                    return 
                 end
                 
                 -- ==============================================
-                -- 3. QUÉT TỬ THẦN & ÉP CHẾT (FEED MẠNG)
+                -- 2. TÌM LỬA TÍM TRONG BALO & KHOẢNG CÁCH
                 -- ==============================================
+                local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"] or char:FindFirstChild("Hallow Essence")
+                local altarPos = CFrame.new(-9455, 142, 5566)
+                local distToAltar = (root.Position - altarPos.Position).Magnitude
+                
+                -- ==============================================
+                -- 3. VỆ TINH QUÉT TỬ THẦN & HACK LÀM MÙ HUB (ĐÃ TRẢ LẠI!)
+                -- ==============================================
+                local reaperAlive = nil
+                for _, v in pairs(workspace.Enemies:GetChildren()) do
+                    if v.Name:find("Reaper") or v.Name == "FeedTarget" then 
+                        reaperAlive = v 
+                        v.Name = "FeedTarget" -- Hack làm mù Hub
+                        break 
+                    end
+                end
+                
                 local bossBarVisible = false
                 for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
                     if gui:IsA("TextLabel") and gui.Text:find("Soul Reaper") then
@@ -3421,26 +3434,27 @@ task.spawn(function()
                     end
                 end
 
-                if bossBarVisible then
-                    local altarPos = CFrame.new(-9455, 142, 5566)
-                    SetTask("SubTask", "CDK Quest / TỬ THẦN XUẤT HIỆN! ĐANG ÉP CHẾT ĐỂ VÀO HELL!")
-                    
-                    -- ÉP RESET ĐỂ CHẾT NHANH ĐỠ TỐN THỜI GIAN NHÂY VỚI HUB
-                    if (root.Position - altarPos.Position).Magnitude > 5 then
+                if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
+                    SetTask("SubTask", "CDK Quest / THẤY TỬ THẦN RỒI! ĐANG LAO VÀO FEED MẠNG!")
+                    if (root.Position - reaperAlive.HumanoidRootPart.Position).Magnitude > 5 then
+                        TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
+                    else
+                        char.Humanoid:UnequipTools()
+                    end
+                    return
+                elseif bossBarVisible then
+                    SetTask("SubTask", "CDK Quest / RADA BÁO CÓ BOSS! ĐANG TÌM QUANH BÀN THỜ...")
+                    if distToAltar > 150 then
                         TWEEN_TO(altarPos)
                     else
-                        -- Bay tới giữa bàn thờ thì cất đồ và đứng im
-                        char.Humanoid:UnequipTools()
+                        TWEEN_TO(altarPos * CFrame.new(math.random(-50, 50), 0, math.random(-50, 50)))
                     end
                     return
                 end
                 
-                -- [PHẦN GỌI BOSS VÀ CÀY XƯƠNG GIỮ NGUYÊN BÊN DƯỚI]
-                local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"] or char:FindFirstChild("Hallow Essence")
-                local altarPos = CFrame.new(-9455, 142, 5566)
-                if hasEssence and not bossBarVisible then
+                if hasEssence and not reaperAlive and not bossBarVisible then
                     SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
-                    if (root.Position - altarPos.Position).Magnitude > 15 then
+                    if distToAltar > 15 then
                         TWEEN_TO(altarPos)
                         task.wait(0.5)
                         char.Humanoid:EquipTool(hasEssence)
@@ -3448,11 +3462,22 @@ task.spawn(function()
                     return
                 end
                 
+                -- ==============================================
+                -- 4. ÉP BAY VỀ HAUNTED CASTLE & CÀY XƯƠNG
+                -- ==============================================
                 local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                 if boneCount >= 500 then _G.StartRolling = true elseif boneCount <= 50 then _G.StartRolling = false end
                 
-                if (root.Position - altarPos.Position).Magnitude > 1500 then
-                    TWEEN_TO(altarPos)
+                -- FIX LỖI KẸT CHÔN CHÂN: Trả lại khóa bay _G.IsFlyingToCastle
+                if distToAltar > 1500 then
+                    SetTask("SubTask", "CDK Quest / Đang lướt xé gió về Đảo Bóng Tối để load Map...")
+                    if not _G.IsFlyingToCastle then
+                        _G.IsFlyingToCastle = true
+                        task.spawn(function()
+                            TWEEN_TO(altarPos)
+                            _G.IsFlyingToCastle = false
+                        end)
+                    end
                     return 
                 end
 
@@ -3463,8 +3488,16 @@ task.spawn(function()
                     end
                 else
                     SetTask("SubTask", "CDK Quest / Đang Roll Xương ("..boneCount.."/50)")
-                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                    task.spawn(function()
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+                    end)
+                    
                     task.wait(1.5)
+                    local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
+                    if newBoneCount == boneCount then
+                        SetTask("SubTask", "DEATH KING BỊ COOLDOWN 2H! TIẾP TỤC CÀY QUÁI!")
+                        _G.StartRolling = false
+                    end
                 end
             end
         end)
