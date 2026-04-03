@@ -3329,7 +3329,7 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ CDK V40: KHÓA TAY CHỐNG AUTO ĐÁNH - CHỈ FEED CHO TỬ THẦN
+-- BẢN VÁ CDK V41: ĐỔI TÊN BOSS LÀM MÙ HUB - NGỪNG HOÀN TOÀN AUTO ĐÁNH
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
@@ -3415,11 +3415,16 @@ task.spawn(function()
                 local distToAltar = (root.Position - altarPos.Position).Magnitude
                 
                 -- ==============================================
-                -- 3. QUÉT TỬ THẦN BẰNG VỆ TINH (CHẾ ĐỘ BAO CÁT)
+                -- 3. QUÉT TỬ THẦN & HACK LÀM MÙ HUB
                 -- ==============================================
                 local reaperAlive = nil
                 for _, v in pairs(workspace.Enemies:GetChildren()) do
-                    if v.Name:find("Reaper") then reaperAlive = v break end
+                    -- TUYỆT KỸ Ở ĐÂY: Đổi tên Boss thành "FeedTarget" để ngắt hoàn toàn Auto Attack của Hub
+                    if v.Name:find("Reaper") or v.Name == "FeedTarget" then 
+                        reaperAlive = v 
+                        v.Name = "FeedTarget" 
+                        break 
+                    end
                 end
                 
                 local bossBarVisible = false
@@ -3431,16 +3436,8 @@ task.spawn(function()
                 end
 
                 if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
-                    SetTask("SubTask", "CDK Quest / ĐANG FEED TỬ THẦN! KHÓA TAY CẤM ĐÁNH LẠI!")
+                    SetTask("SubTask", "CDK Quest / ĐÃ ĐỔI TÊN BOSS ĐỂ KHÓA HUB! BAY VÀO FEED MẠNG!")
                     TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
-                    
-                    -- FIX CỰC MẠNH: Ép tháo vũ khí liên tục để thằng Hub không thể rút kiếm ra chém Boss
-                    task.spawn(function()
-                        for i = 1, 10 do
-                            pcall(function() char.Humanoid:UnequipTools() end)
-                            task.wait(0.05)
-                        end
-                    end)
                     return 
                 elseif bossBarVisible then
                     SetTask("SubTask", "CDK Quest / RADA BÁO CÓ BOSS! ĐANG TÌM QUANH BÀN THỜ...")
