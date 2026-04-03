@@ -3329,11 +3329,11 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ CDK V36: RADA MỞ RỘNG BÁN KÍNH 15.000M - CHỐNG LƯỚT VĂNG MAP
+-- BẢN VÁ CDK V37: HOVER TRÊN ĐẦU QUÁI NÉ DAME & CHỐNG KẸT RADA BOSS
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
-    while task.wait(0.5) do
+    while task.wait(0.1) do -- Giảm delay để chém nhanh hơn
         pcall(function()
             if Config and Config.Items and Config.Items.CursedDualKatana then
                 local plr = game.Players.LocalPlayer
@@ -3342,12 +3342,11 @@ task.spawn(function()
                 if not root then return end
                 
                 -- ==============================================
-                -- 1. RADA DÒ DIMENSION BẰNG MAP (MỞ RỘNG 15,000 STUD)
+                -- 1. RADA DÒ DIMENSION
                 -- ==============================================
                 local inDimension = false
                 local isHell = false
                 
-                -- Dò map Yama
                 local hellMap = workspace.Map:FindFirstChild("HellDimension")
                 if hellMap then
                     local part = hellMap:FindFirstChildWhichIsA("BasePart", true)
@@ -3357,7 +3356,6 @@ task.spawn(function()
                     end
                 end
                 
-                -- Dò map Tushita
                 local heavenMap = workspace.Map:FindFirstChild("HeavenlyDimension")
                 if heavenMap and not inDimension then
                     local part = heavenMap:FindFirstChildWhichIsA("BasePart", true)
@@ -3390,9 +3388,10 @@ task.spawn(function()
                     end
                     
                     if nearestEnemy and minDist < 5000 then
-                        TWEEN_TO(nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4))
+                        -- FIX 1: BAY LƠ LỬNG TRÊN ĐẦU QUÁI CAO 8 MÉT, QUÁI KHÔNG THỂ ĐÁNH TRÚNG!
+                        TWEEN_TO(nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 8, 0))
                         task.spawn(function()
-                            for i = 1, 10 do
+                            for i = 1, 5 do
                                 game:GetService("VirtualUser"):ClickButton1(Vector2.new())
                                 task.wait(0.05)
                             end
@@ -3409,7 +3408,7 @@ task.spawn(function()
                             end
                         end
                     end
-                    return -- CHẶN TUYỆT ĐỐI BAY RA NGOÀI TÌM TỬ THẦN
+                    return 
                 end
                 
                 -- ==============================================
@@ -3418,15 +3417,17 @@ task.spawn(function()
                 local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"] or char:FindFirstChild("Hallow Essence")
                 
                 -- ==============================================
-                -- 3. RADA "VỆ TINH" QUÉT BOSS CỰC MẠNH
+                -- 3. RADA QUÉT TỬ THẦN
                 -- ==============================================
                 local reaperAlive = nil
                 for _, v in pairs(workspace.Enemies:GetChildren()) do
                     if string.find(v.Name, "Reaper") then reaperAlive = v break end
                 end
                 if not reaperAlive then
-                    for _, v in pairs(workspace.Characters:GetChildren()) do
-                        if string.find(v.Name, "Reaper") then reaperAlive = v break end
+                    for _, v in pairs(workspace:GetChildren()) do -- Quét thẳng ra ngoài Workspace phòng hờ lag model
+                        if v:IsA("Model") and string.find(v.Name, "Reaper") and v:FindFirstChild("HumanoidRootPart") then 
+                            reaperAlive = v break 
+                        end
                     end
                 end
                 
@@ -3438,22 +3439,28 @@ task.spawn(function()
                     end
                 end
 
+                local altarPos = CFrame.new(-9455, 142, 5566)
+                local distToAltar = (root.Position - altarPos.Position).Magnitude
+
                 if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
                     SetTask("SubTask", "CDK Quest / TỬ THẦN ĐÃ RA! BAY VÀO FEED MẠNG!")
                     TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
                     char.Humanoid:UnequipTools() 
                     return 
                 elseif bossBarVisible then
-                    SetTask("SubTask", "CDK Quest / BOSS Ở ĐẢO KHÁC! BAY VỀ HAUNTED CASTLE NGAY!")
-                    local altarPos = CFrame.new(-9455, 142, 5566)
-                    TWEEN_TO(altarPos)
+                    -- FIX 2: CHỐNG KẸT BAY TẠI CHỖ KHI ĐÃ Ở BÀN THỜ
+                    if distToAltar > 150 then
+                        SetTask("SubTask", "CDK Quest / BOSS Ở ĐẢO KHÁC! BAY VỀ HAUNTED CASTLE NGAY!")
+                        TWEEN_TO(altarPos)
+                    else
+                        SetTask("SubTask", "CDK Quest / ĐANG TÌM XÁC TỬ THẦN XUNG QUANH BÀN THỜ...")
+                    end
                     return
                 end
                 
                 if hasEssence and not reaperAlive and not bossBarVisible then
                     SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
-                    local altarPos = CFrame.new(-9455, 142, 5566)
-                    if (root.Position - altarPos.Position).Magnitude > 15 then
+                    if distToAltar > 15 then
                         TWEEN_TO(altarPos)
                         task.wait(0.5)
                         char.Humanoid:EquipTool(hasEssence)
@@ -3462,19 +3469,17 @@ task.spawn(function()
                 end
                 
                 -- ==============================================
-                -- 4. CHẾ ĐỘ CÀY XƯƠNG & ÉP BAY VỀ ĐẢO BÓNG TỐI
+                -- 4. CHẾ ĐỘ CÀY XƯƠNG
                 -- ==============================================
                 local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                 if boneCount >= 500 then _G.StartRolling = true elseif boneCount <= 50 then _G.StartRolling = false end
                 
-                local hauntedPos = CFrame.new(-9455, 142, 5566)
-                
-                if (root.Position - hauntedPos.Position).Magnitude > 1500 then
+                if distToAltar > 1500 then
                     SetTask("SubTask", "CDK Quest / Đang lướt xé gió về Đảo Bóng Tối để load Map...")
                     if not _G.IsFlyingToCastle then
                         _G.IsFlyingToCastle = true
                         task.spawn(function()
-                            TWEEN_TO(hauntedPos)
+                            TWEEN_TO(altarPos)
                             _G.IsFlyingToCastle = false
                         end)
                     end
