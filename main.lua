@@ -3280,13 +3280,14 @@ function hoangtuveu()
             local success, err = xpcall(function()
                 if type(RefreshTasksData) == "function" then RefreshTasksData() end
             end, debug.traceback)
-            if not success then 
+ if not success then 
                 print("[ARYA LOG] Task Error Bypassed: ", err) 
             end
         end -- Đóng vòng lặp while task.wait()
     end) -- Đóng task.spawn()
+
 -- ================================================================
--- HÀM TWEEN LƯỚT MƯỢT NÉ ANTI-CHEAT
+-- BẢN VÁ TWEEN + CDK HOÀN CHỈNH
 -- ================================================================
 local TweenService = game:GetService("TweenService")
 local function TWEEN_TO(targetCFrame)
@@ -3312,9 +3313,6 @@ local function TWEEN_TO(targetCFrame)
     antiGravity:Destroy() 
 end
 
--- ================================================================
--- BẢN VÁ YAMA V33: FIX LỖI RADA MÙ, NÂNG CẤP BAY XUYÊN ĐẢO
--- ================================================================
 task.spawn(function()
     _G.StartRolling = false
     while task.wait(0.5) do
@@ -3325,129 +3323,6 @@ task.spawn(function()
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if not root then return end
                 
-                -- ==============================================
-                -- 1. RADA DÒ TÌM ĐỊA NGỤC (HELL DIMENSION)
-                -- ==============================================
-                local inHell = false
-                for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
-                    if gui:IsA("TextLabel") and gui.Text:find("Hell Dimension") then
-                        inHell = true
-                        break
-                    end
-                end
-                
-                if inHell then
-                    SetTask("SubTask", "YAMA QUEST / ĐANG QUÉT SẠCH ĐỊA NGỤC!")
-                    local yama = plr.Backpack:FindFirstChild("Yama") or char:FindFirstChild("Yama")
-                    if yama then char.Humanoid:EquipTool(yama) end
-                    
-                    if not char:FindFirstChild("HasBuso") then
-                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
-                    end
-                    
-                    local nearestEnemy = nil
-                    local minDist = math.huge
-                    for _, enemy in pairs(workspace.Enemies:GetChildren()) do
-                        if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
-                            local dist = (enemy.HumanoidRootPart.Position - root.Position).Magnitude
-                            if dist < minDist then
-                                minDist = dist
-                                nearestEnemy = enemy
-                            end
-                        end
-                    end
-                    
-                    if nearestEnemy then
-                        TWEEN_TO(nearestEnemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4))
-                        task.spawn(function()
-                            for i = 1, 10 do
-                                game:GetService("VirtualUser"):ClickButton1(Vector2.new())
-                                task.wait(0.05)
-                            end
-                        end)
-                    else
-                        for _, prompt in pairs(workspace:GetDescendants()) do
-                            if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
-                                if (prompt.Parent.Position - root.Position).Magnitude < 2000 then
-                                    TWEEN_TO(prompt.Parent.CFrame) 
-                                    task.wait(0.2)
-                                    fireproximityprompt(prompt)
-                                    break
-                                end
-                            end
-                        end
-                    end
-                    return 
-                end
--- ================================================================
--- HÀM TWEEN LƯỚT MƯỢT NÉ ANTI-CHEAT
--- ================================================================
-local TweenService = game:GetService("TweenService")
-local function TWEEN_TO(targetCFrame)
-    local plr = game.Players.LocalPlayer
-    local char = plr.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    
-    local distance = (root.Position - targetCFrame.Position).Magnitude
-    local speed = 300 
-    local timeToTravel = distance / speed
-    
-    local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
-    
-    local antiGravity = Instance.new("BodyVelocity")
-    antiGravity.Velocity = Vector3.new(0, 0, 0)
-    antiGravity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    antiGravity.Parent = root
-
-    tween:Play()
-    tween.Completed:Wait() 
-    antiGravity:Destroy() 
-end
--- ================================================================
--- HÀM TWEEN LƯỚT MƯỢT NÉ ANTI-CHEAT
--- ================================================================
-local TweenService = game:GetService("TweenService")
-local function TWEEN_TO(targetCFrame)
-    local plr = game.Players.LocalPlayer
-    local char = plr.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local root = char.HumanoidRootPart
-    
-    local distance = (root.Position - targetCFrame.Position).Magnitude
-    local speed = 300 
-    local timeToTravel = distance / speed
-    
-    local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
-    
-    local antiGravity = Instance.new("BodyVelocity")
-    antiGravity.Velocity = Vector3.new(0, 0, 0)
-    antiGravity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    antiGravity.Parent = root
-
-    tween:Play()
-    tween.Completed:Wait() 
-    antiGravity:Destroy() 
-end
-
--- ================================================================
--- BẢN VÁ YAMA V33: FIX LỖI RADA MÙ, NÂNG CẤP BAY XUYÊN ĐẢO
--- ================================================================
-task.spawn(function()
-    _G.StartRolling = false
-    while task.wait(0.5) do
-        pcall(function()
-            if Config and Config.Items and Config.Items.CursedDualKatana then
-                local plr = game.Players.LocalPlayer
-                local char = plr.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                if not root then return end
-                
-                -- ==============================================
-                -- 1. RADA DÒ TÌM ĐỊA NGỤC (HELL DIMENSION)
-                -- ==============================================
                 local inHell = false
                 for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
                     if gui:IsA("TextLabel") and gui.Text:find("Hell Dimension") then
@@ -3500,14 +3375,8 @@ task.spawn(function()
                     return 
                 end
                 
-                -- ==============================================
-                -- 2. TÌM LỬA TÍM TRONG BALO
-                -- ==============================================
                 local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"] or char:FindFirstChild("Hallow Essence")
                 
-                -- ==============================================
-                -- 3. RADA "VỆ TINH" QUÉT BOSS (ĐÃ NÂNG CẤP XUYÊN ĐẢO)
-                -- ==============================================
                 local reaperAlive = nil
                 for _, v in pairs(workspace.Enemies:GetChildren()) do
                     if string.find(v.Name, "Reaper") then reaperAlive = v break end
@@ -3526,7 +3395,6 @@ task.spawn(function()
                     end
                 end
 
-                -- XỬ LÝ BAY TỚI BOSS:
                 if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
                     SetTask("SubTask", "Yama Quest / TỬ THẦN ĐÃ RA! BAY VÀO FEED MẠNG!")
                     TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
@@ -3550,9 +3418,6 @@ task.spawn(function()
                     return
                 end
                 
-                -- ==============================================
-                -- 4. CHẾ ĐỘ CÀY XƯƠNG & ROLL
-                -- ==============================================
                 local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                 if boneCount >= 500 then _G.StartRolling = true elseif boneCount <= 50 then _G.StartRolling = false end
                 
@@ -3566,7 +3431,6 @@ task.spawn(function()
                     task.spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
                     end)
-                    
                     task.wait(1.5)
                     local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                     if newBoneCount == boneCount then
@@ -3579,6 +3443,6 @@ task.spawn(function()
     end
 end)
 
-end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
+end
 
-hoangtuveu() -- KÍCH HOẠT CHẠY SCRIPT NÈ
+hoangtuveu()
