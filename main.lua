@@ -3329,7 +3329,7 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ CDK V39: TRẢ LẠI VỆ TINH GỐC - XÓA BỎ LỖI ĐỨNG IM CHỜ XÁC
+-- BẢN VÁ CDK V40: KHÓA TAY CHỐNG AUTO ĐÁNH - CHỈ FEED CHO TỬ THẦN
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
@@ -3415,7 +3415,7 @@ task.spawn(function()
                 local distToAltar = (root.Position - altarPos.Position).Magnitude
                 
                 -- ==============================================
-                -- 3. QUÉT TỬ THẦN BẰNG VỆ TINH
+                -- 3. QUÉT TỬ THẦN BẰNG VỆ TINH (CHẾ ĐỘ BAO CÁT)
                 -- ==============================================
                 local reaperAlive = nil
                 for _, v in pairs(workspace.Enemies:GetChildren()) do
@@ -3430,15 +3430,20 @@ task.spawn(function()
                     end
                 end
 
-                -- FIX TẬN GỐC LỖI ĐỨNG IM:
                 if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
-                    SetTask("SubTask", "CDK Quest / THẤY XÁC TỬ THẦN RỒI! LAO VÀO FEED NGAY!")
+                    SetTask("SubTask", "CDK Quest / ĐANG FEED TỬ THẦN! KHÓA TAY CẤM ĐÁNH LẠI!")
                     TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
-                    char.Humanoid:UnequipTools() 
+                    
+                    -- FIX CỰC MẠNH: Ép tháo vũ khí liên tục để thằng Hub không thể rút kiếm ra chém Boss
+                    task.spawn(function()
+                        for i = 1, 10 do
+                            pcall(function() char.Humanoid:UnequipTools() end)
+                            task.wait(0.05)
+                        end
+                    end)
                     return 
                 elseif bossBarVisible then
-                    SetTask("SubTask", "CDK Quest / RADA BÁO CÓ BOSS NHƯNG CHƯA LOAD XÁC! ĐANG TÌM QUANH BÀN THỜ...")
-                    -- Thay vì đứng im, ép nó lượn quanh Bàn Thờ bán kính 50 mét để ép map load xác Boss
+                    SetTask("SubTask", "CDK Quest / RADA BÁO CÓ BOSS! ĐANG TÌM QUANH BÀN THỜ...")
                     TWEEN_TO(altarPos * CFrame.new(math.random(-50, 50), 0, math.random(-50, 50)))
                     return
                 end
