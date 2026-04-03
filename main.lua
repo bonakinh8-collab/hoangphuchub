@@ -3329,7 +3329,7 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ CDK V47: FIX LỖI NHẬN NHẦM ĐẢO (BỨC TƯỜNG LỬA CHỐNG NGU)
+-- BẢN VÁ CDK V48: LOGIC CHUẨN (DỌN SẠCH QUÁI RỒI MỚI THẮP ĐUỐC TIẾP)
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
@@ -3341,17 +3341,15 @@ task.spawn(function()
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if not root then return end
                 
-                -- Khai báo vị trí Bàn Thờ trước để làm mốc
                 local altarPos = CFrame.new(-9455, 142, 5566)
                 local distToAltar = (root.Position - altarPos.Position).Magnitude
                 
                 -- ==============================================
-                -- 1. DIMENSION LOGIC (ĐÃ FIX BÁN KÍNH VÀ THÊM BỨC TƯỜNG LỬA)
+                -- 1. DIMENSION LOGIC (ĐÃ LẬT NGƯỢC: QUÁI > ĐUỐC)
                 -- ==============================================
                 local inDimension = false
                 local isHell = false
                 
-                -- CHỈ KHI NÀO Ở XA ĐẢO BÓNG TỐI (>4000) THÌ MỚI ĐƯỢC CHECK DIMENSION
                 if distToAltar > 4000 then
                     local hellMap = workspace.Map:FindFirstChild("HellDimension")
                     if hellMap then
@@ -3382,38 +3380,45 @@ task.spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
                     end
                     
-                    local unlitTorches = {}
-                    for _, prompt in pairs(workspace:GetDescendants()) do
-                        if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
-                            if (prompt.Parent.Position - root.Position).Magnitude < 5000 then
-                                table.insert(unlitTorches, prompt)
+                    -- BƯỚC 1: QUÉT QUÁI TRƯỚC! NẾU CÓ QUÁI LÀ PHẢI DỌN NGAY LẬP TỨC!
+                    local dimensionMobs = {}
+                    local hasMobs = false
+                    for _, enemy in pairs(workspace.Enemies:GetChildren()) do
+                        if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
+                            if (enemy.HumanoidRootPart.Position - root.Position).Magnitude < 5000 then
+                                hasMobs = true
+                                if not table.find(dimensionMobs, enemy.Name) then table.insert(dimensionMobs, enemy.Name) end
                             end
                         end
                     end
                     
-                    if #unlitTorches > 0 then
-                        SetTask("SubTask", "CDK Quest / ĐANG THẮP ĐUỐC! (CÒN LẠI "..#unlitTorches.." CÁI)")
-                        local targetTorch = unlitTorches[1]
-                        if (root.Position - targetTorch.Parent.Position).Magnitude > 15 then
-                            TWEEN_TO(targetTorch.Parent.CFrame) 
+                    if hasMobs then
+                        -- CÓ QUÁI -> TẠM DỪNG TÌM ĐUỐC, BẬT HUB LÊN VÃ NÓ
+                        SetTask("SubTask", "CDK Quest / ĐANG DỌN QUÁI ĐỂ MỞ KHÓA ĐUỐC TIẾP THEO!")
+                        if CombatController and CombatController.Attack then
+                            CombatController.Attack(dimensionMobs)
                         end
-                        task.wait(0.2)
-                        fireproximityprompt(targetTorch)
                     else
-                        SetTask("SubTask", "CDK Quest / ĐÃ THẮP XONG ĐUỐC! BẬT MODE ĐẬP QUÁI!")
-                        local dimensionMobs = {}
-                        local hasMobs = false
-                        for _, enemy in pairs(workspace.Enemies:GetChildren()) do
-                            if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 and enemy:FindFirstChild("HumanoidRootPart") then
-                                if (enemy.HumanoidRootPart.Position - root.Position).Magnitude < 5000 then
-                                    hasMobs = true
-                                    if not table.find(dimensionMobs, enemy.Name) then table.insert(dimensionMobs, enemy.Name) end
+                        -- KHÔNG CÓ QUÁI -> AN TOÀN ĐỂ ĐI TÌM VÀ THẮP ĐUỐC TIẾP THEO
+                        local unlitTorches = {}
+                        for _, prompt in pairs(workspace:GetDescendants()) do
+                            if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
+                                if (prompt.Parent.Position - root.Position).Magnitude < 5000 then
+                                    table.insert(unlitTorches, prompt)
                                 end
                             end
                         end
                         
-                        if hasMobs and CombatController and CombatController.Attack then
-                            CombatController.Attack(dimensionMobs)
+                        if #unlitTorches > 0 then
+                            SetTask("SubTask", "CDK Quest / ĐANG THẮP ĐUỐC! (CÒN LẠI "..#unlitTorches.." CÁI)")
+                            local targetTorch = unlitTorches[1]
+                            if (root.Position - targetTorch.Parent.Position).Magnitude > 15 then
+                                TWEEN_TO(targetTorch.Parent.CFrame) 
+                            end
+                            task.wait(0.2)
+                            fireproximityprompt(targetTorch)
+                        else
+                            SetTask("SubTask", "CDK Quest / ĐÃ THẮP XONG 6 ĐUỐC! ĐỢI GAME TRẢ VỀ!")
                         end
                     end
                     return 
