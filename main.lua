@@ -492,9 +492,13 @@ function hoangtuveu()
                     ScriptStorage.Connections.Melees = meleeLevel.Changed:Connect(function(a)
                         ScriptStorage.Melees[W.Name] = a
                         RefreshMelees()
+                        -- [BẢN VÁ: LƯU MASTERY VÀO FILE NGAY LẬP TỨC]
+                        if Storage and Storage.Set then Storage:Set("SavedMelees", ScriptStorage.Melees) end
                     end)
                     ScriptStorage.Melees[W.Name] = meleeLevel.Value
                     RefreshMelees()
+                    -- [BẢN VÁ: LƯU LẦN ĐẦU KHI CẦM LÊN]
+                    if Storage and Storage.Set then Storage:Set("SavedMelees", ScriptStorage.Melees) end
                 end
             elseif string.find(tostring(W), "Fruit") then
                 task.spawn(function()
@@ -3082,6 +3086,12 @@ function hoangtuveu()
     end
     Storage.Data = {}
     pcall(function() Storage.Data = Decode(readfile(k) or '{}') end)
+    if Storage.Data["SavedMelees"] then
+        for meleeName, level in pairs(Storage.Data["SavedMelees"]) do
+            ScriptStorage.Melees[meleeName] = level
+        end -- <<< CHỮ END THỨ 1 (Đóng vòng lặp for)
+        RefreshMelees()
+    end -- <<< CHỮ END THỨ 2 (Đóng lệnh if)
     spawn(function() while task.wait(Storage.WRITE_DELAY) do Storage:Save() end end)
     CreateTraceback('Initalize', "Initalizing script..")
     task.spawn(function()
@@ -3287,7 +3297,7 @@ function hoangtuveu()
     end) -- Đóng task.spawn()
 
 -- ================================================================
--- BẢN VÁ TWEEN + CDK HOÀN CHỈNH
+-- HÀM TWEEN LƯỚT MƯỢT NÉ ANTI-CHEAT
 -- ================================================================
 local TweenService = game:GetService("TweenService")
 local function TWEEN_TO(targetCFrame)
@@ -3313,6 +3323,14 @@ local function TWEEN_TO(targetCFrame)
     antiGravity:Destroy() 
 end
 
+-- ================================================================
+-- ÉP BUỘC ƯU TIÊN CDK LÊN ĐẦU TIÊN (VIP PRIORITY)
+-- ================================================================
+TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
+
+-- ================================================================
+-- BẢN VÁ YAMA V33: FIX LỖI TREO TRÊN TRỜI & ƯU TIÊN CDK ĐỈNH CAO
+-- ================================================================
 task.spawn(function()
     _G.StartRolling = false
     while task.wait(0.5) do
@@ -3323,6 +3341,9 @@ task.spawn(function()
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if not root then return end
                 
+                -- ==============================================
+                -- 1. RADA DÒ TÌM ĐỊA NGỤC (HELL DIMENSION)
+                -- ==============================================
                 local inHell = false
                 for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
                     if gui:IsA("TextLabel") and gui.Text:find("Hell Dimension") then
@@ -3375,8 +3396,14 @@ task.spawn(function()
                     return 
                 end
                 
+                -- ==============================================
+                -- 2. TÌM LỬA TÍM TRONG BALO
+                -- ==============================================
                 local hasEssence = ScriptStorage.Backpack["Hallow Essence"] or ScriptStorage.Tools["Hallow Essence"] or char:FindFirstChild("Hallow Essence")
                 
+                -- ==============================================
+                -- 3. RADA "VỆ TINH" QUÉT BOSS CỰC MẠNH
+                -- ==============================================
                 local reaperAlive = nil
                 for _, v in pairs(workspace.Enemies:GetChildren()) do
                     if string.find(v.Name, "Reaper") then reaperAlive = v break end
@@ -3396,19 +3423,19 @@ task.spawn(function()
                 end
 
                 if reaperAlive and reaperAlive:FindFirstChild("HumanoidRootPart") then
-                    SetTask("SubTask", "Yama Quest / TỬ THẦN ĐÃ RA! BAY VÀO FEED MẠNG!")
+                    SetTask("SubTask", "CDK Quest / TỬ THẦN ĐÃ RA! BAY VÀO FEED MẠNG!")
                     TWEEN_TO(reaperAlive.HumanoidRootPart.CFrame)
                     char.Humanoid:UnequipTools() 
                     return 
                 elseif bossBarVisible then
-                    SetTask("SubTask", "Yama Quest / BOSS Ở ĐẢO KHÁC! BAY VỀ HAUNTED CASTLE NGAY!")
+                    SetTask("SubTask", "CDK Quest / BOSS Ở ĐẢO KHÁC! BAY VỀ HAUNTED CASTLE NGAY!")
                     local altarPos = CFrame.new(-9455, 142, 5566)
                     TWEEN_TO(altarPos)
                     return
                 end
                 
                 if hasEssence and not reaperAlive and not bossBarVisible then
-                    SetTask("SubTask", "Yama Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
+                    SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
                     local altarPos = CFrame.new(-9455, 142, 5566)
                     if (root.Position - altarPos.Position).Magnitude > 15 then
                         TWEEN_TO(altarPos)
@@ -3418,19 +3445,37 @@ task.spawn(function()
                     return
                 end
                 
+                -- ==============================================
+                -- 4. CHẾ ĐỘ CÀY XƯƠNG (ĐÃ FIX LỖI BAY CHẬM / LƠ LỬNG TRÊN BIỂN)
+                -- ==============================================
                 local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                 if boneCount >= 500 then _G.StartRolling = true elseif boneCount <= 50 then _G.StartRolling = false end
                 
                 if not _G.StartRolling then
-                    SetTask("SubTask", "Yama Quest / Tích trữ Xương ("..boneCount.."/500)")
+                    local hauntedPos = CFrame.new(-9455, 142, 5566)
+                    -- FIX: Kiểm tra nếu đang ở xa Đảo Bóng Tối thì lướt mượt tới đó trước
+                    if (root.Position - hauntedPos.Position).Magnitude > 1500 then
+                        SetTask("SubTask", "CDK Quest / Đang lướt xé gió về Đảo Bóng Tối (Haunted Castle)...")
+                        if not _G.IsFlyingToCastle then
+                            _G.IsFlyingToCastle = true
+                            task.spawn(function()
+                                TWEEN_TO(hauntedPos)
+                                _G.IsFlyingToCastle = false
+                            end)
+                        end
+                        return -- Ngắt ở đây để không gọi Attack làm giật lùi lệnh Tween
+                    end
+
+                    SetTask("SubTask", "CDK Quest / Tích trữ Xương ("..boneCount.."/500)")
                     if CombatController and CombatController.Attack then
                         CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
                     end
                 else
-                    SetTask("SubTask", "Yama Quest / Đang Roll Xương TỪ XA ("..boneCount.."/50)")
+                    SetTask("SubTask", "CDK Quest / Đang Roll Xương TỪ XA ("..boneCount.."/50)")
                     task.spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
                     end)
+                    
                     task.wait(1.5)
                     local newBoneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                     if newBoneCount == boneCount then
@@ -3443,6 +3488,6 @@ task.spawn(function()
     end
 end)
 
-end
+end -- ĐÓNG KÍN HÀM hoangtuveu() Ở TRÊN CÙNG LẠI
 
-hoangtuveu()
+hoangtuveu() -- KÍCH HOẠT CHẠY SCRIPT
