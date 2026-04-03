@@ -3329,7 +3329,7 @@ end
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 
 -- ================================================================
--- BẢN VÁ YAMA V33: FIX LỖI TREO TRÊN TRỜI & ƯU TIÊN CDK ĐỈNH CAO
+-- BẢN VÁ CDK V35: CHỐNG MÙ DIMENSION (RADA DÒ BẰNG VỊ TRÍ MAP)
 -- ================================================================
 task.spawn(function()
     _G.StartRolling = false
@@ -3342,25 +3342,43 @@ task.spawn(function()
                 if not root then return end
                 
                 -- ==============================================
-                -- 1. RADA DÒ TÌM ĐỊA NGỤC (HELL DIMENSION)
+                -- 1. RADA DÒ DIMENSION BẰNG MAP (KHÔNG DÙNG CHỮ NỮA)
                 -- ==============================================
-                local inHell = false
-                for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
-                    if gui:IsA("TextLabel") and gui.Text:find("Hell Dimension") then
-                        inHell = true
-                        break
+                local inDimension = false
+                local isHell = false
+                
+                -- Dò map Yama
+                local hellMap = workspace.Map:FindFirstChild("HellDimension")
+                if hellMap then
+                    local part = hellMap:FindFirstChildWhichIsA("BasePart", true)
+                    if part and (part.Position - root.Position).Magnitude < 3000 then
+                        inDimension = true
+                        isHell = true
                     end
                 end
                 
-                if inHell then
-                    SetTask("SubTask", "YAMA QUEST / ĐANG QUÉT SẠCH ĐỊA NGỤC!")
-                    local yama = plr.Backpack:FindFirstChild("Yama") or char:FindFirstChild("Yama")
-                    if yama then char.Humanoid:EquipTool(yama) end
+                -- Dò map Tushita
+                local heavenMap = workspace.Map:FindFirstChild("HeavenlyDimension")
+                if heavenMap and not inDimension then
+                    local part = heavenMap:FindFirstChildWhichIsA("BasePart", true)
+                    if part and (part.Position - root.Position).Magnitude < 3000 then
+                        inDimension = true
+                    end
+                end
+                
+                if inDimension then
+                    SetTask("SubTask", "CDK Quest / ĐANG TRONG DIMENSION! TẬP TRUNG LÀM QUEST!")
+                    
+                    -- Tự trang bị vũ khí tùy theo Map
+                    local swordName = isHell and "Yama" or "Tushita"
+                    local sword = plr.Backpack:FindFirstChild(swordName) or char:FindFirstChild(swordName)
+                    if sword then char.Humanoid:EquipTool(sword) end
                     
                     if not char:FindFirstChild("HasBuso") then
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
                     end
                     
+                    -- Chém quái
                     local nearestEnemy = nil
                     local minDist = math.huge
                     for _, enemy in pairs(workspace.Enemies:GetChildren()) do
@@ -3382,9 +3400,10 @@ task.spawn(function()
                             end
                         end)
                     else
+                        -- Tìm đuốc để thắp
                         for _, prompt in pairs(workspace:GetDescendants()) do
                             if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
-                                if (prompt.Parent.Position - root.Position).Magnitude < 2000 then
+                                if (prompt.Parent.Position - root.Position).Magnitude < 2500 then
                                     TWEEN_TO(prompt.Parent.CFrame) 
                                     task.wait(0.2)
                                     fireproximityprompt(prompt)
@@ -3393,7 +3412,7 @@ task.spawn(function()
                             end
                         end
                     end
-                    return 
+                    return -- CỰC KỲ QUAN TRỌNG: CHẶN KHÔNG CHO NÓ NHẢY XUỐNG CODE BAY ĐÁNH BOSS!
                 end
                 
                 -- ==============================================
@@ -3446,32 +3465,32 @@ task.spawn(function()
                 end
                 
                 -- ==============================================
-                -- 4. CHẾ ĐỘ CÀY XƯƠNG (ĐÃ FIX LỖI BAY CHẬM / LƠ LỬNG TRÊN BIỂN)
+                -- 4. CHẾ ĐỘ CÀY XƯƠNG & ÉP BAY VỀ ĐẢO BÓNG TỐI
                 -- ==============================================
                 local boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count
                 if boneCount >= 500 then _G.StartRolling = true elseif boneCount <= 50 then _G.StartRolling = false end
                 
-                if not _G.StartRolling then
-                    local hauntedPos = CFrame.new(-9455, 142, 5566)
-                    -- FIX: Kiểm tra nếu đang ở xa Đảo Bóng Tối thì lướt mượt tới đó trước
-                    if (root.Position - hauntedPos.Position).Magnitude > 1500 then
-                        SetTask("SubTask", "CDK Quest / Đang lướt xé gió về Đảo Bóng Tối (Haunted Castle)...")
-                        if not _G.IsFlyingToCastle then
-                            _G.IsFlyingToCastle = true
-                            task.spawn(function()
-                                TWEEN_TO(hauntedPos)
-                                _G.IsFlyingToCastle = false
-                            end)
-                        end
-                        return -- Ngắt ở đây để không gọi Attack làm giật lùi lệnh Tween
+                local hauntedPos = CFrame.new(-9455, 142, 5566)
+                
+                if (root.Position - hauntedPos.Position).Magnitude > 1500 then
+                    SetTask("SubTask", "CDK Quest / Đang lướt xé gió về Đảo Bóng Tối để load Map...")
+                    if not _G.IsFlyingToCastle then
+                        _G.IsFlyingToCastle = true
+                        task.spawn(function()
+                            TWEEN_TO(hauntedPos)
+                            _G.IsFlyingToCastle = false
+                        end)
                     end
+                    return 
+                end
 
+                if not _G.StartRolling then
                     SetTask("SubTask", "CDK Quest / Tích trữ Xương ("..boneCount.."/500)")
                     if CombatController and CombatController.Attack then
                         CombatController.Attack({ 'Reborn Skeleton', "Living Zombie", "Demonic Soul", 'Posessed Mummy' })
                     end
                 else
-                    SetTask("SubTask", "CDK Quest / Đang Roll Xương TỪ XA ("..boneCount.."/50)")
+                    SetTask("SubTask", "CDK Quest / Đang Roll Xương ("..boneCount.."/50)")
                     task.spawn(function()
                         game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
                     end)
@@ -3488,6 +3507,6 @@ task.spawn(function()
     end
 end)
 
-end -- ĐÓNG KÍN HÀM hoangtuveu() Ở TRÊN CÙNG LẠI
+end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
 
-hoangtuveu() -- KÍCH HOẠT CHẠY SCRIPT
+hoangtuveu() -- KÍCH HOẠT CHẠY SCRIPT NÈ
