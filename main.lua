@@ -3328,7 +3328,7 @@ end
 -- ================================================================
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 -- ================================================================
--- BẢN VÁ CDK V53: QUÉT COREGUI (ĐỌC NÃO HUB) + ROLL XƯƠNG TỪ XA
+-- BẢN VÁ CDK V55: CẬP NHẬT TỌA ĐỘ GỌI TỬ THẦN CHUẨN (-8936, 144, 6060)
 -- ================================================================
 task.spawn(function()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -3344,7 +3344,8 @@ task.spawn(function()
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if not root then return end
                 
-                local altarPos = CFrame.new(-9455, 142, 5566)
+                -- ĐÃ CẬP NHẬT TỌA ĐỘ CHUẨN ĐỂ CẮM LỬA TÍM THEO ẢNH CỦA ÔNG
+                local altarPos = CFrame.new(-8936, 144, 6060)
                 local distToAltar = (root.Position - altarPos.Position).Magnitude
                 
                 -- ==============================================
@@ -3417,7 +3418,6 @@ task.spawn(function()
                 -- ==============================================
                 local isReaperQuestActive = false
                 
-                -- Lục tung cái Menu Hub để tìm chữ "Yama Evil" hoặc "Fear the Reaper"
                 for _, gui in pairs(CoreGui:GetDescendants()) do
                     if gui:IsA("TextLabel") and gui.Text then
                         local txt = string.lower(gui.Text)
@@ -3427,7 +3427,7 @@ task.spawn(function()
                         end
                     end
                 end
-                -- Back up: Lục luôn trong giao diện gốc game đề phòng
+                
                 if not isReaperQuestActive then
                     for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
                         if gui:IsA("TextLabel") and gui.Text then
@@ -3481,9 +3481,9 @@ task.spawn(function()
                     
                     if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
                     
-                    -- 2.2: CÓ LỬA TÍM -> BAY VỀ BÀN THỜ GỌI BOSS
+                    -- 2.2: CÓ LỬA TÍM -> BAY VỀ BÀN THỜ GỌI BOSS (DÙNG TỌA ĐỘ MỚI CHUẨN XÁC)
                     if hasEssence and not reaperAlive and not bossBarVisible then
-                        SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! BAY RA GỌI BOSS!")
+                        SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! ĐANG BAY RA TỌA ĐỘ (-8936, 144, 6060) GỌI BOSS!")
                         if distToAltar > 15 then
                             TWEEN_TO(altarPos)
                         else
@@ -3502,13 +3502,12 @@ task.spawn(function()
                             if not _G.RollDebounce then
                                 _G.RollDebounce = true
                                 task.spawn(function()
-                                    -- Ép gửi Request mua xương liên tục từ xa
                                     pcall(function() CommF:InvokeServer("Bones", "Buy", 1, 1) end)
                                     task.wait(1.5)
                                     _G.RollDebounce = false
                                 end)
                             end
-                            return -- Chặn Hub để tránh nó chạy lung tung
+                            return
                         end
                     end
                 end
@@ -3518,7 +3517,7 @@ task.spawn(function()
                 -- ==============================================
                 local hasTushitaScroll = plr.Backpack:FindFirstChild("Tushita Scroll") or char:FindFirstChild("Tushita Scroll")
                 local hasYamaScroll = plr.Backpack:FindFirstChild("Yama Scroll") or char:FindFirstChild("Yama Scroll")
-                local cdkPedestalPos = CFrame.new(-9455, 142, 5566)
+                local cdkPedestalPos = CFrame.new(-9455, 142, 5566) -- Chỗ này vẫn giữ nguyên là Mansion/Bệ ghép
                 
                 if Config.Items.CursedDualKatana and not hasTushitaScroll and not hasYamaScroll and (plr.Backpack:FindFirstChild("Alucard Fragment") or char:FindFirstChild("Alucard Fragment")) then
                     SetTask("SubTask", "CDK Quest / ĐÃ XONG MỌI QUEST! BAY VỀ GHÉP CURSED DUAL KATANA!!!")
@@ -3538,9 +3537,11 @@ task.spawn(function()
                     end
                     return
                 end
-            end)
-        end
-    end)
+                
+            end
+        end)
+    end
+end)
 
 end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
 
