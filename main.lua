@@ -3328,7 +3328,7 @@ end
 -- ================================================================
 TasksOrder = { "CursedDualKatana", "Tushita", 'Yama', "SpecialBossesTask", "RaidController", 'Trevor', "UtillyItemsActivitation", 'ColosseumPuzzle', "Wenlocktoad", "ThirdSeaPuzzle", "PirateRaid", "SecondSeaPuzzle", "CollectDrops", 'BossesTask', "ExpRedeem", "LevelFarm" }
 -- ================================================================
--- BẢN VÁ CDK V55: CẬP NHẬT TỌA ĐỘ GỌI TỬ THẦN CHUẨN (-8936, 144, 6060)
+-- BẢN VÁ CDK V99: ƯU TIÊN TỐI THƯỢNG GHÉP CDK + AUTO CHUI CỬA TRẮNG
 -- ================================================================
 task.spawn(function()
     local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -3344,29 +3344,54 @@ task.spawn(function()
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if not root then return end
                 
-                -- ĐÃ CẬP NHẬT TỌA ĐỘ CHUẨN ĐỂ CẮM LỬA TÍM THEO ẢNH CỦA ÔNG
-                local altarPos = CFrame.new(-8936, 144, 6060)
-                local distToAltar = (root.Position - altarPos.Position).Magnitude
+                -- ==============================================
+                -- ƯU TIÊN 1: ĐÃ XONG HẾT -> BAY VỀ MANSION GHÉP CDK
+                -- ==============================================
+                local hasTushitaScroll = plr.Backpack:FindFirstChild("Tushita Scroll") or char:FindFirstChild("Tushita Scroll")
+                local hasYamaScroll = plr.Backpack:FindFirstChild("Yama Scroll") or char:FindFirstChild("Yama Scroll")
+                local hasFragment = plr.Backpack:FindFirstChild("Alucard Fragment") or char:FindFirstChild("Alucard Fragment")
                 
-                -- ==============================================
-                -- TÌNH HUỐNG 1: DIMENSION (THẮP ĐUỐC & DỌN QUÁI)
-                -- ==============================================
-                local inDimension = false
-                local isHell = false
-                if distToAltar > 4000 then
-                    local hellMap = workspace.Map:FindFirstChild("HellDimension")
-                    if hellMap then
-                        local part = hellMap:FindFirstChildWhichIsA("BasePart", true)
-                        if part and (part.Position - root.Position).Magnitude < 6000 then
-                            inDimension = true; isHell = true
+                -- Nếu không còn Scroll nào mà lại có Fragment -> Tức là đã xong 6 thử thách!
+                if not hasTushitaScroll and not hasYamaScroll and hasFragment then
+                    SetTask("SubTask", "CDK Quest / ĐÃ XONG MỌI QUEST! ƯU TIÊN 1: BAY VỀ GHÉP CURSED DUAL KATANA!!!")
+                    if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
+                    
+                    local cdkPedestalPos = CFrame.new(-9455, 142, 5566) -- Tọa độ Bệ Ghép Mansion
+                    
+                    if (root.Position - cdkPedestalPos.Position).Magnitude > 15 then
+                        TWEEN_TO(cdkPedestalPos)
+                    else
+                        -- Cố định chỉ bấm vào ProximityPrompt của bệ Cursed
+                        local cursedFolder = workspace.Map.Turtle:FindFirstChild("Cursed")
+                        if cursedFolder then
+                            for _, prompt in pairs(cursedFolder:GetDescendants()) do
+                                if prompt:IsA("ProximityPrompt") and prompt.Enabled then
+                                    fireproximityprompt(prompt)
+                                    task.wait(0.5)
+                                end
+                            end
                         end
                     end
+                    return -- CHẶN MỌI HOẠT ĐỘNG KHÁC, CHỈ TẬP TRUNG GHÉP CDK
+                end
+
+                -- ==============================================
+                -- TÌNH HUỐNG 2: ĐANG Ở DIMENSION (DỌN QUÁI, ĐUỐC, CỬA TRẮNG)
+                -- ==============================================
+                local altarPos = CFrame.new(-8936, 144, 6060)
+                local distToAltar = (root.Position - altarPos.Position).Magnitude
+                local inDimension = false
+                local isHell = false
+                local dimFolder = nil
+                
+                if distToAltar > 4000 then
+                    local hellMap = workspace.Map:FindFirstChild("HellDimension")
+                    if hellMap and hellMap:FindFirstChildWhichIsA("BasePart", true) and (hellMap:FindFirstChildWhichIsA("BasePart", true).Position - root.Position).Magnitude < 6000 then
+                        inDimension = true; isHell = true; dimFolder = hellMap
+                    end
                     local heavenMap = workspace.Map:FindFirstChild("HeavenlyDimension")
-                    if heavenMap and not inDimension then
-                        local part = heavenMap:FindFirstChildWhichIsA("BasePart", true)
-                        if part and (part.Position - root.Position).Magnitude < 6000 then
-                            inDimension = true
-                        end
+                    if heavenMap and not inDimension and heavenMap:FindFirstChildWhichIsA("BasePart", true) and (heavenMap:FindFirstChildWhichIsA("BasePart", true).Position - root.Position).Magnitude < 6000 then
+                        inDimension = true; dimFolder = heavenMap
                     end
                 end
                 
@@ -3389,7 +3414,7 @@ task.spawn(function()
                     end
                     
                     if hasMobs then
-                        SetTask("SubTask", "CDK Quest / ĐANG DỌN SẠCH QUÁI ĐỂ MỞ KHÓA ĐUỐC TIẾP THEO!")
+                        SetTask("SubTask", "CDK Quest / ĐANG DỌN SẠCH QUÁI TRONG DIMENSION!")
                         if CombatController and CombatController.Attack then CombatController.Attack(dimensionMobs) end
                     else
                         local unlitTorches = {}
@@ -3400,6 +3425,7 @@ task.spawn(function()
                                 end
                             end
                         end
+                        
                         if #unlitTorches > 0 then
                             SetTask("SubTask", "CDK Quest / ĐANG THẮP ĐUỐC! (CÒN LẠI "..#unlitTorches.."/3 CÁI)")
                             local targetTorch = unlitTorches[1]
@@ -3407,35 +3433,33 @@ task.spawn(function()
                             task.wait(0.2)
                             fireproximityprompt(targetTorch)
                         else
-                            SetTask("SubTask", "CDK Quest / ĐÃ THẮP XONG 3 ĐUỐC! CHỜ GAME DỊCH CHUYỂN!")
+                            -- ĐÃ THẮP XONG ĐUỐC -> TỰ ĐỘNG CHUI CỬA TRẮNG
+                            SetTask("SubTask", "CDK Quest / ĐÃ THẮP XONG ĐUỐC! ĐANG TỰ CHUI VÀO CỬA TRẮNG ĐỂ RA NGOÀI!")
+                            local exitDoor = dimFolder and (dimFolder:FindFirstChild("Exit", true) or dimFolder:FindFirstChild("Portal", true))
+                            if exitDoor then
+                                TWEEN_TO(exitDoor.CFrame)
+                            else
+                                -- Dự phòng nếu game giấu tên Part Exit
+                                char.Humanoid:MoveTo(root.Position + root.CFrame.LookVector * 50) 
+                            end
                         end
                     end
                     return 
                 end
                 
                 -- ==============================================
-                -- TÌNH HUỐNG 2: NHIỆM VỤ YAMA EVIL (ĐỌC COREGUI CỦA HUB)
+                -- TÌNH HUỐNG 3: NHIỆM VỤ YAMA EVIL (SĂN TỬ THẦN)
                 -- ==============================================
                 local isReaperQuestActive = false
-                
                 for _, gui in pairs(CoreGui:GetDescendants()) do
-                    if gui:IsA("TextLabel") and gui.Text then
-                        local txt = string.lower(gui.Text)
-                        if txt:find("yama evil") or txt:find("fear the reaper") then
-                            isReaperQuestActive = true
-                            break
-                        end
+                    if gui:IsA("TextLabel") and gui.Text and (string.lower(gui.Text):find("yama evil") or string.lower(gui.Text):find("fear the reaper")) then
+                        isReaperQuestActive = true; break
                     end
                 end
-                
                 if not isReaperQuestActive then
                     for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
-                        if gui:IsA("TextLabel") and gui.Text then
-                            local txt = string.lower(gui.Text)
-                            if txt:find("yama evil") or txt:find("fear the reaper") then
-                                isReaperQuestActive = true
-                                break
-                            end
+                        if gui:IsA("TextLabel") and gui.Text and (string.lower(gui.Text):find("yama evil") or string.lower(gui.Text):find("fear the reaper")) then
+                            isReaperQuestActive = true; break
                         end
                     end
                 end
@@ -3462,7 +3486,6 @@ task.spawn(function()
                         if gui:IsA("TextLabel") and gui.Text:find("Soul Reaper") then bossBarVisible = true; break end
                     end
 
-                    -- 2.1: THẤY BOSS -> ÉP CHẾT
                     if reaperAlive or bossBarVisible then
                         if not _G.SuicideLock then
                             _G.SuicideLock = game:GetService("RunService").Heartbeat:Connect(function()
@@ -3481,7 +3504,6 @@ task.spawn(function()
                     
                     if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
                     
-                    -- 2.2: CÓ LỬA TÍM -> BAY VỀ BÀN THỜ GỌI BOSS (DÙNG TỌA ĐỘ MỚI CHUẨN XÁC)
                     if hasEssence and not reaperAlive and not bossBarVisible then
                         SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! ĐANG BAY RA TỌA ĐỘ (-8936, 144, 6060) GỌI BOSS!")
                         if distToAltar > 15 then
@@ -3492,7 +3514,6 @@ task.spawn(function()
                         return
                     end
                     
-                    -- 2.3: KHÔNG LỬA TÍM -> ROLL TỪ XA LIÊN TỤC
                     if not hasEssence and not reaperAlive then
                         local boneCount = 0
                         pcall(function() boneCount = (ScriptStorage.Backpack.Bones or {Count = 0}).Count end)
@@ -3510,32 +3531,6 @@ task.spawn(function()
                             return
                         end
                     end
-                end
-                
-                -- ==============================================
-                -- TÌNH HUỐNG 3: HOÀN THÀNH 100%, ĐI GHÉP KIẾM
-                -- ==============================================
-                local hasTushitaScroll = plr.Backpack:FindFirstChild("Tushita Scroll") or char:FindFirstChild("Tushita Scroll")
-                local hasYamaScroll = plr.Backpack:FindFirstChild("Yama Scroll") or char:FindFirstChild("Yama Scroll")
-                local cdkPedestalPos = CFrame.new(-9455, 142, 5566) -- Chỗ này vẫn giữ nguyên là Mansion/Bệ ghép
-                
-                if Config.Items.CursedDualKatana and not hasTushitaScroll and not hasYamaScroll and (plr.Backpack:FindFirstChild("Alucard Fragment") or char:FindFirstChild("Alucard Fragment")) then
-                    SetTask("SubTask", "CDK Quest / ĐÃ XONG MỌI QUEST! BAY VỀ GHÉP CURSED DUAL KATANA!!!")
-                    if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
-                    
-                    if (root.Position - cdkPedestalPos.Position).Magnitude > 15 then
-                        TWEEN_TO(cdkPedestalPos)
-                    else
-                        for _, prompt in pairs(workspace:GetDescendants()) do
-                            if prompt:IsA("ProximityPrompt") and prompt.Enabled and prompt.Parent and prompt.Parent:IsA("BasePart") then
-                                if (prompt.Parent.Position - root.Position).Magnitude < 15 then
-                                    fireproximityprompt(prompt)
-                                    break
-                                end
-                            end
-                        end
-                    end
-                    return
                 end
                 
             end
