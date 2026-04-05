@@ -2739,10 +2739,10 @@ function hoangtuveu()
                         end
                     end
                     return
-            elseif h == 3 then
-                -- ==========================================
-                -- ẢI 3: CAKE QUEEN (V22 - CHUỘC LỖI TRẢ LẠI HÀM THẮP ĐUỐC)
-                -- ==========================================
+elseif h == 3 then
+                -- ==========================================================
+                -- ẢI 3: CAKE QUEEN (BẢN V25 - GIỮ CLICK UI ẢO NHƯNG ĐÉO LỌC NGƯỜI)
+                -- ==========================================================
                 if not _G.CDK_H3_Entry_Reset then
                     _G.CDK_H3_Entry_Reset = true
                     _G.CDK_H2_Entry_Reset = false
@@ -2777,47 +2777,117 @@ function hoangtuveu()
                         _G.ToolsHidden = false
                     end
 
+                    -- 2. GỌI LỆNH THẮP ĐUỐC XUỐNG ĐỊA NGỤC
                     if _G.WasAttackingBoss then
                         SetTask("SubTask", "CDK Quest / ĐÃ VÀO DIMENSION! GỌI LỆNH THẮP ĐUỐC!")
                         _G.WasAttackingBoss = false
                         
-                        -- TRẢ LẠI LỆNH GỐC CỦA DEV MÀ TAO LỠ XÓA:
                         pcall(function()
-                            if TweenController and TweenController.Cancel then TweenController:Cancel() end -- Dừng ngay vụ bay về Tiki
+                            if TweenController and TweenController.Cancel then TweenController:Cancel() end 
                             if FunctionsHandler and FunctionsHandler.CursedDualKatana and FunctionsHandler.CursedDualKatana.Methods and FunctionsHandler.CursedDualKatana.Methods.DoDimension then
                                 FunctionsHandler.CursedDualKatana.Methods.DoDimension.Callback("Heavenly Dimension")
                             end
-                            CdkProgress = nil -- Reset vòng lặp để Hub nhận diện đang ở Dimension
+                            CdkProgress = nil 
                         end)
                         
                         task.wait(5)
                         return 
                     end
                     
-                    SetTask("SubTask", "CDK Quest / Server sạch bóng, đang SUPER HOP...")
-                    if not _G.IsHoppingNow then
-                        _G.IsHoppingNow = true
-                        task.spawn(function()
-                            pcall(function()
-                                local req = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-                                local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Desc&limit=100"
-                                local res = req({Url = url, Method = "GET"})
-                                if res and res.StatusCode == 200 then
-                                    local data = game:GetService("HttpService"):JSONDecode(res.Body)
-                                    local servers = {}
-                                    for _, v in pairs(data.data) do
-                                        if type(v) == "table" and v.playing and v.maxPlayers and v.id ~= game.JobId and v.playing < (v.maxPlayers - 2) then
-                                            table.insert(servers, v.id)
-                                        end
-                                    end
-                                    if #servers > 0 then game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer) end
-                                end
-                            end)
-                            task.wait(5)
-                            _G.IsHoppingNow = false
+                    -- 3. BỘ MÁY CLICK UI ẢO TỐI THƯỢNG (GIỮ NGUYÊN NHƯ Ý SẾP)
+                    SetTask("SubTask", "CDK Quest / Bật UI Click Ảo để Hop Server...")
+                    
+                    local lplr = game:GetService("Players").LocalPlayer
+                    local GuiService = game:GetService("GuiService")
+
+                    -- Lá chắn tự xóa bảng lỗi
+                    if not _G.VoltHop_ErrorHandled then
+                        _G.VoltHop_ErrorHandled = true
+                        _G.IsHopping = false
+                        GuiService.ErrorMessageChanged:Connect(function(msg)
+                            if string.find(msg, "772") or string.find(msg, "773") or string.find(msg, "full") or string.find(msg, "hạn chế") then
+                                pcall(function() GuiService:ClearError() end)
+                                _G.IsHopping = false 
+                            end
+                        end)
+                        game:GetService("TeleportService").TeleportInitFailed:Connect(function()
+                            pcall(function() GuiService:ClearError() end)
+                            _G.IsHopping = false
                         end)
                     end
+
+                    if not _G.IsHopping then
+                        _G.IsHopping = true
+                        task.spawn(function()
+                            -- Hàm giả lập Click chuột vào màn hình
+                            local function TapButton(button)
+                                pcall(function()
+                                    if getconnections then
+                                        for _, conn in pairs(getconnections(button.MouseButton1Click)) do conn:Fire() end
+                                    elseif firesignal then
+                                        firesignal(button.MouseButton1Click)
+                                    end
+                                end)
+                            end
+
+                            while task.wait(2) and _G.IsHopping do 
+                                local PlayerGui = lplr:WaitForChild("PlayerGui")
+                                local joined = false
+                                local refreshBtn = nil
+                                local isBrowserOpen = false
+
+                                for _, desc in pairs(PlayerGui:GetDescendants()) do
+                                    if desc:IsA("TextButton") and desc.Text == "Refresh" then
+                                        refreshBtn = desc
+                                        if desc.Visible or (desc.Parent and desc.Parent.Visible) then isBrowserOpen = true end
+                                    end
+                                    
+                                    if desc:IsA("TextButton") and desc.Text == "Join" then
+                                        local container = desc.Parent
+                                        if container then
+                                            for _, child in pairs(container:GetDescendants()) do
+                                                if child:IsA("TextLabel") and string.find(child.Text, "Players:") then
+                                                    local countStr = string.match(child.Text, "Players:%s*(%d+)")
+                                                    if countStr then
+                                                        local count = tonumber(countStr)
+                                                        -- ĐÉO CẦN LỌC ÍT NGƯỜI! Miễn là chưa Full 12 người là BẤM JOIN LUN!
+                                                        if count < 11 then
+                                                            TapButton(desc)
+                                                            joined = true
+                                                            task.wait(10) -- Nghỉ 10s chờ Roblox nó load bay sang map
+                                                            break
+                                                        end
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                    if joined then break end
+                                end
+
+                                -- Nếu đéo thấy nút Join nào bấm được, tự mở bảng Server lên
+                                if not joined then
+                                    if isBrowserOpen and refreshBtn then
+                                        TapButton(refreshBtn)
+                                        task.wait(2) 
+                                    else
+                                        local mainGui = PlayerGui:FindFirstChild("Main")
+                                        if mainGui then
+                                            for _, btn in pairs(mainGui:GetDescendants()) do
+                                                if (btn:IsA("ImageButton") or btn:IsA("TextButton")) and (string.find(btn.Name, "Server") or string.find(btn.Name, "Browser")) then
+                                                    TapButton(btn)
+                                                    task.wait(1)
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end)
+                    end
+
                 else
+                    -- 4. ĐÁNH BOSS (GIỮ GỐC 100%)
                     if not bossInWorkspace then
                         SetTask("SubTask", "CDK Quest / Boss đang ở Đảo Kem, Tự bay tới để load Map...")
                         local iceCreamPos = CFrame.new(-710, 382, -11150) 
@@ -2848,7 +2918,6 @@ function hoangtuveu()
                         SetTask("SubTask", "CDK Quest / ĐÃ TỊCH THU MELEE! ĐANG ÉP HUB CHÉM BẰNG TUSHITA!")
                         _G.WasAttackingBoss = true 
 
-                        -- 2. CHIẾN DỊCH TỊCH THU: CHỈ CHỪA LẠI TUSHITA
                         if not _G.ToolsHidden then
                             _G.ToolsHidden = true
                             pcall(function()
@@ -2876,7 +2945,6 @@ function hoangtuveu()
                             if tushita then plr.Character.Humanoid:EquipTool(tushita) end
                         end)
 
-                        -- 3. GỌI LẠI NÃO GỐC ĐỂ NÓ NÉ ĐÒN
                         if CombatController and CombatController.Attack then 
                             CombatController.Attack(bossName) 
                         end
@@ -3444,25 +3512,47 @@ task.spawn(function()
                     return -- CHẶN MỌI HOẠT ĐỘNG KHÁC, CHỈ TẬP TRUNG GHÉP CDK
                 end
 
-                -- ==============================================
-                -- TÌNH HUỐNG 2: ĐANG Ở DIMENSION (DỌN QUÁI, ĐUỐC, CỬA TRẮNG)
-                -- ==============================================
-                local altarPos = CFrame.new(-8936, 144, 6060)
-                local distToAltar = (root.Position - altarPos.Position).Magnitude
-                local inDimension = false
-                local isHell = false
-                local dimFolder = nil
-                
-                if distToAltar > 4000 then
-                    local hellMap = workspace.Map:FindFirstChild("HellDimension")
-                    if hellMap and hellMap:FindFirstChildWhichIsA("BasePart", true) and (hellMap:FindFirstChildWhichIsA("BasePart", true).Position - root.Position).Magnitude < 6000 then
-                        inDimension = true; isHell = true; dimFolder = hellMap
-                    end
-                    local heavenMap = workspace.Map:FindFirstChild("HeavenlyDimension")
-                    if heavenMap and not inDimension and heavenMap:FindFirstChildWhichIsA("BasePart", true) and (heavenMap:FindFirstChildWhichIsA("BasePart", true).Position - root.Position).Magnitude < 6000 then
-                        inDimension = true; dimFolder = heavenMap
-                    end
-                end
+                -- =========================================================
+                        -- [BẢN VÁ YAMA ẢI 3]: ÉP CHẠM BỆ LỬA + CHỐNG LỖI 267 KICK
+                        -- =========================================================
+                        local altarPos = Vector3.new(-8936, 142.5, 6060) -- Hạ Y xuống 142.5 để ép chạm đáy bệ lửa
+                        local lplr = game:GetService("Players").LocalPlayer
+                        local char = lplr.Character
+                        local root = char and char:FindFirstChild("HumanoidRootPart")
+                        
+                        if root then
+                            local distToAltar = (root.Position - altarPos).Magnitude
+                            
+                            -- Cầm Hallow Essence (Lửa Tím) lên tay trước
+                            local essence = lplr.Backpack:FindFirstChild("Hallow Essence") or char:FindFirstChild("Hallow Essence")
+                            if essence then
+                                char.Humanoid:EquipTool(essence)
+                            end
+                            
+                            if distToAltar > 15 then
+                                if SetTask then SetTask("SubTask", "CDK Quest / CÓ LỬA TÍM! ĐANG BAY RA BỆ ĐÁ GỌI BOSS!") end
+                                -- Đang bay thì bật chống rớt
+                                local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
+                                bv.Velocity = Vector3.zero
+                                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                                
+                                local TS = game:GetService("TweenService")
+                                local tween = TS:Create(root, TweenInfo.new(distToAltar/300, Enum.EasingStyle.Linear), {CFrame = CFrame.new(altarPos)})
+                                tween:Play()
+                            else
+                                if SetTask then SetTask("SubTask", "CDK Quest / ĐÃ TỚI BỆ ĐÁ! ĐANG ĐÚT LỬA VÀO LÒ...") end
+                                
+                                -- TỚI NƠI LÀ PHẢI PHÁ HỦY ĐỆM KHÍ ĐỂ RƠI TỰ DO XUỐNG CHẠM BỆ LỬA!
+                                local bv = root:FindFirstChild("BodyVelocity")
+                                if bv then bv:Destroy() end
+                                
+                                -- Ép tọa độ cắm thẳng vào giữa chảo lửa và khóa cứng lại
+                                root.CFrame = CFrame.new(altarPos)
+                                
+                                -- NGHỈ NGƠI 1 GIÂY! Tuyệt đối không spam lệnh để tránh Error 267
+                                task.wait(1) 
+                            end
+                        end
                 
                 if inDimension then
                     if _G.SuicideLock then _G.SuicideLock:Disconnect() _G.SuicideLock = nil end
