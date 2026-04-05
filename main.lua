@@ -2839,16 +2839,17 @@ elseif h == 3 then
                     local lplr = game:GetService("Players").LocalPlayer
                     local GuiService = game:GetService("GuiService")
 
-                    -- Lá chắn tự xóa bảng lỗi
+                -- Lá chắn tự xóa bảng lỗi (VÁ LỖI 769 VÀ MỌI SỐ KHÁC)
                     if not _G.VoltHop_ErrorHandled then
                         _G.VoltHop_ErrorHandled = true
                         _G.IsHopping = false
+                        
+                        -- Cứ hiện bảng lỗi bất kỳ lúc đang Hop là XÓA NGAY!
                         GuiService.ErrorMessageChanged:Connect(function(msg)
-                            if string.find(msg, "772") or string.find(msg, "773") or string.find(msg, "full") or string.find(msg, "hạn chế") then
-                                pcall(function() GuiService:ClearError() end)
-                                _G.IsHopping = false 
-                            end
+                            pcall(function() GuiService:ClearError() end)
+                            _G.IsHopping = false 
                         end)
+                        
                         game:GetService("TeleportService").TeleportInitFailed:Connect(function()
                             pcall(function() GuiService:ClearError() end)
                             _G.IsHopping = false
@@ -2858,7 +2859,7 @@ elseif h == 3 then
                     if not _G.IsHopping then
                         _G.IsHopping = true
                         task.spawn(function()
-                            -- Hàm giả lập Click chuột vào màn hình
+                            -- Hàm giả lập Click chuột vào màn hình 
                             local function TapButton(button)
                                 pcall(function()
                                     if getconnections then
