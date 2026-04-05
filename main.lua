@@ -1,3 +1,23 @@
+-- BẢN VÁ: CHẶN HỌNG HUB, CHỜ VÀO PHE HẢI TẶC RỒI MỚI LOAD SCRIPT
+repeat task.wait() until game:IsLoaded()
+local __lplr = game:GetService("Players").LocalPlayer
+if not __lplr.Character or not __lplr.Character:FindFirstChild("HumanoidRootPart") then
+    local __commF = game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 9e9):WaitForChild("CommF_", 9e9)
+    while not __lplr.Character or not __lplr.Character:FindFirstChild("HumanoidRootPart") do
+        task.wait(0.5)
+        pcall(function()
+            __commF:InvokeServer("SetTeam", "Pirates")
+            local gui = __lplr:FindFirstChild("PlayerGui")
+            if gui and gui:FindFirstChild("Main") and gui.Main:FindFirstChild("ChooseTeam") then
+                local btn = gui.Main.ChooseTeam.Container.Pirates.Frame.TextButton
+                if getconnections then
+                    for _, c in pairs(getconnections(btn.Activated)) do c.Function() end
+                end
+            end
+        end)
+    end
+end
+task.wait(1)
 function hoangtuveu()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
     local W = {Instances = {}}
@@ -3573,7 +3593,7 @@ task.spawn(function()
     end
 end)
 -- ================================================================
-    -- BẢN VÁ TỐI THƯỢNG V2: AUTO TẨY ĐIỂM + LỖ ĐEN GOM QUÁI BÁ CHỦ
+    -- BẢN VÁ TỐI THƯỢNG V4: PHANH 350 MAS + AUTO STATS + XÀI BRING GỐC
     -- ================================================================
     task.spawn(function()
         local lplr = game:GetService("Players").LocalPlayer
@@ -3584,12 +3604,28 @@ end)
             pcall(function()
                 if ScriptStorage and ScriptStorage.ForceToUseSword then
                     local swordName = ScriptStorage.ForceToUseSword[1]
-                    local currentMas = ScriptStorage.ForceToUseSword[2]
-                    local maxMas = ScriptStorage.ForceToUseSword[3]
+                    local maxMas = 350 -- Ép cứng mốc 350
+                    local currentMas = 0
+                    
+                    -- Lấy Mastery chuẩn
+                    pcall(function()
+                        if ScriptStorage.Backpack and ScriptStorage.Backpack[swordName] then
+                            currentMas = ScriptStorage.Backpack[swordName].Mastery
+                        end
+                    end)
+                    
+                    -- [PHANH KHẨN CẤP]: Đủ 350 là cất kiếm, trả Hub đi làm CDK!
+                    if currentMas >= maxMas then
+                        ScriptStorage.ForceToUseSword = nil
+                        if lplr.Character and lplr.Character:FindFirstChild("Humanoid") then
+                            lplr.Character.Humanoid:UnequipTools()
+                        end
+                        if SetTask then SetTask("MainTask", "Đã Max 350 Mastery! Chuyển qua làm CDK!") end
+                        return
+                    end
                     
                     if SetTask then 
-                        -- NẾU MÀY THẤY DÒNG CHỮ NÀY LÀ MÀY COPY ĐÚNG RỒI ĐÓ SẾP!
-                        SetTask("MainTask", "SIÊU VIP PRO | Tẩy Điểm & Gom Lỗ Đen cày " .. swordName) 
+                        SetTask("MainTask", "SIÊU VIP PRO | Auto Stats & Bring Gốc cày " .. swordName) 
                         SetTask("SubTask", "Mastery: " .. tostring(currentMas) .. " / " .. tostring(maxMas))
                     end
                     
@@ -3597,39 +3633,31 @@ end)
                     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
                     
                     -- ====================================================
-                    -- 1. HỆ THỐNG AUTO TẨY STATS VÀ CỘNG ĐIỂM CỰC MẠNH
+                    -- 1. AUTO TẨY STATS VÀ CỘNG ĐIỂM DỒN VÀO KIẾM
                     -- ====================================================
                     local stats = lplr:FindFirstChild("Data") and lplr.Data:FindFirstChild("Stats")
                     local points = lplr.Data:FindFirstChild("Points")
                     
                     if stats and stats:FindFirstChild("Sword") and stats.Sword.Level.Value < 2800 then
                         if points and points.Value == 0 then
-                            -- ÉP BẤM NÚT REFUND BẰNG MỌI THỦ ĐOẠN
                             local refundBtn = lplr.PlayerGui.Main.Stats:FindFirstChild("Refund")
                             if refundBtn and refundBtn.Visible then
-                                -- Bóp cổ Executor: Bắn tín hiệu chìm
                                 pcall(function()
                                     if firesignal then
                                         firesignal(refundBtn.Activated)
                                         firesignal(refundBtn.MouseButton1Click)
                                     end
                                 end)
-                                
-                                -- Bóp cổ game: Dùng chuột vật lý bấm thẳng vào nút
                                 pcall(function()
                                     local pos = refundBtn.AbsolutePosition
                                     local size = refundBtn.AbsoluteSize
-                                    local centerX = pos.X + (size.X / 2)
-                                    local centerY = pos.Y + (size.Y / 2) + 36 -- Cộng bù thanh Topbar
-                                    vim:SendMouseButtonEvent(centerX, centerY, 0, true, game, 1)
+                                    vim:SendMouseButtonEvent(pos.X + (size.X / 2), pos.Y + (size.Y / 2) + 36, 0, true, game, 1)
                                     task.wait(0.05)
-                                    vim:SendMouseButtonEvent(centerX, centerY, 0, false, game, 1)
+                                    vim:SendMouseButtonEvent(pos.X + (size.X / 2), pos.Y + (size.Y / 2) + 36, 0, false, game, 1)
                                 end)
-                                task.wait(1.5) -- Chờ server nhả điểm về
+                                task.wait(1.5)
                             end
                         end
-                        
-                        -- DỒN ĐIỂM NGAY LẬP TỨC
                         if points and points.Value > 0 then
                             CommF:InvokeServer("AddPoint", "Defense", 2800)
                             CommF:InvokeServer("AddPoint", "Melee", 2800)
@@ -3645,52 +3673,19 @@ end)
                     if not char:FindFirstChild("HasBuso") then CommF:InvokeServer("Buso") end
 
                     -- ====================================================
-                    -- 3. HÚT QUÁI LỖ ĐEN BÁN KÍNH 1000 STUDS (VÉT SẠCH MAP)
+                    -- 3. GIAO CHO NÃO GỐC XỬ LÝ (TĂNG BÁN KÍNH HÚT LÊN 1000)
                     -- ====================================================
                     local farmMobs = {
                         "Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", 
                         "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"
                     }
                     
-                    local targetMob = nil
-                    for _, v in pairs(workspace.Enemies:GetChildren()) do
-                        if table.find(farmMobs, v.Name) and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
-                            targetMob = v
-                            break
-                        end
-                    end
-                    
-                    if targetMob then
-                        local tRoot = targetMob.HumanoidRootPart
-                        local mRoot = char.HumanoidRootPart
+                    if CombatController then
+                        -- Can thiệp nhẹ vào lõi gốc: Ép nó mở rộng vùng gom quái ra 1000 thay vì 350
+                        CombatController.GRAB_DISTANCE = 1000 
                         
-                        -- Treo ngược mày trên đầu quái để chém đéo bao giờ mất máu
-                        mRoot.CFrame = tRoot.CFrame * CFrame.new(0, 6, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                        
-                        -- Thuật hút vạn vật
-                        for _, v in pairs(workspace.Enemies:GetChildren()) do
-                            if table.find(farmMobs, v.Name) and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
-                                if (v.HumanoidRootPart.Position - tRoot.Position).Magnitude < 1000 then
-                                    v.HumanoidRootPart.CFrame = tRoot.CFrame
-                                    v.HumanoidRootPart.CanCollide = false
-                                    v.Humanoid.WalkSpeed = 0
-                                    v.Humanoid.JumpPower = 0
-                                    if v.HumanoidRootPart:FindFirstChild("BodyVelocity") then
-                                        v.HumanoidRootPart.BodyVelocity:Destroy()
-                                    end
-                                end
-                            end
-                        end
-                        
-                        -- Chém M1 Fast Attack
-                        if CombatController and CombatController.Attack then
-                            CombatController.Attack({targetMob.Name})
-                        end
-                        
-                        -- Nhấp chuột bồi thêm
-                        if sword and sword.Parent == char then sword:Activate() end
-                    else
-                        if CombatController and CombatController.Attack then
+                        -- Thả cho não gốc tự bay, tự gom, tự chém (đéo lo lỗi CFrame)
+                        if CombatController.Attack then
                             CombatController.Attack(farmMobs)
                         end
                     end
