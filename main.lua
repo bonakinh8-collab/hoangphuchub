@@ -3606,7 +3606,7 @@ task.spawn(function()
     end
 end)
 -- ================================================================
-    -- BẢN VÁ TỐI THƯỢNG V4: PHANH 350 MAS + AUTO STATS + XÀI BRING GỐC
+    -- BẢN VÁ TỐI THƯỢNG V5: ÉP MỞ BẢNG TẨY ĐIỂM + CHIA ĐỀU 3 CỘT
     -- ================================================================
     task.spawn(function()
         local lplr = game:GetService("Players").LocalPlayer
@@ -3617,17 +3617,17 @@ end)
             pcall(function()
                 if ScriptStorage and ScriptStorage.ForceToUseSword then
                     local swordName = ScriptStorage.ForceToUseSword[1]
-                    local maxMas = 350 -- Ép cứng mốc 350
+                    local maxMas = 350
                     local currentMas = 0
                     
-                    -- Lấy Mastery chuẩn
+                    -- Lấy Mastery chuẩn xác
                     pcall(function()
                         if ScriptStorage.Backpack and ScriptStorage.Backpack[swordName] then
                             currentMas = ScriptStorage.Backpack[swordName].Mastery
                         end
                     end)
                     
-                    -- [PHANH KHẨN CẤP]: Đủ 350 là cất kiếm, trả Hub đi làm CDK!
+                    -- [PHANH KHẨN CẤP]: Đủ 350 là trả Hub đi làm CDK!
                     if currentMas >= maxMas then
                         ScriptStorage.ForceToUseSword = nil
                         if lplr.Character and lplr.Character:FindFirstChild("Humanoid") then
@@ -3637,40 +3637,53 @@ end)
                         return
                     end
                     
-                    if SetTask then 
-                        SetTask("MainTask", "SIÊU VIP PRO | Auto Stats & Bring Gốc cày " .. swordName) 
-                        SetTask("SubTask", "Mastery: " .. tostring(currentMas) .. " / " .. tostring(maxMas))
-                    end
+                    if SetTask then SetTask("MainTask", "SIÊU VIP V5 | Ép Mở Bảng Tẩy & Cày " .. swordName) end
                     
                     local char = lplr.Character
                     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
                     
                     -- ====================================================
-                    -- 1. AUTO TẨY STATS VÀ CỘNG ĐIỂM DỒN VÀO KIẾM
+                    -- 1. AUTO TẨY STATS CHUẨN XÁC 100%
                     -- ====================================================
                     local stats = lplr:FindFirstChild("Data") and lplr.Data:FindFirstChild("Stats")
                     local points = lplr.Data:FindFirstChild("Points")
                     
                     if stats and stats:FindFirstChild("Sword") and stats.Sword.Level.Value < 2800 then
                         if points and points.Value == 0 then
-                            local refundBtn = lplr.PlayerGui.Main.Stats:FindFirstChild("Refund")
-                            if refundBtn and refundBtn.Visible then
+                            local statsMenu = lplr.PlayerGui.Main:FindFirstChild("Stats")
+                            local refundBtn = statsMenu and statsMenu:FindFirstChild("Refund")
+                            
+                            if statsMenu and refundBtn and refundBtn.Visible then
+                                -- ÉP MỞ BẢNG LÊN ĐỂ CHUỘT VẬT LÝ BẤM TRÚNG
+                                local wasVisible = statsMenu.Visible
+                                statsMenu.Visible = true
+                                statsMenu.Position = UDim2.new(0.5, -statsMenu.Size.X.Offset/2, 0.5, -statsMenu.Size.Y.Offset/2)
+                                task.wait(0.3)
+                                
+                                -- Bóp cổ Executor: Bắn lệnh chìm
                                 pcall(function()
                                     if firesignal then
                                         firesignal(refundBtn.Activated)
-                                        firesignal(refundBtn.MouseButton1Click)
+                                    elseif getconnections then
+                                        for _, c in pairs(getconnections(refundBtn.MouseButton1Click)) do c.Function() end
                                     end
                                 end)
+                                
+                                -- Bóp cổ Game: Dùng chuột vật lý đấm thẳng vào nút
                                 pcall(function()
                                     local pos = refundBtn.AbsolutePosition
                                     local size = refundBtn.AbsoluteSize
                                     vim:SendMouseButtonEvent(pos.X + (size.X / 2), pos.Y + (size.Y / 2) + 36, 0, true, game, 1)
-                                    task.wait(0.05)
+                                    task.wait(0.1)
                                     vim:SendMouseButtonEvent(pos.X + (size.X / 2), pos.Y + (size.Y / 2) + 36, 0, false, game, 1)
                                 end)
+                                
                                 task.wait(1.5)
+                                statsMenu.Visible = wasVisible -- Tắt đi cho gọn màn hình
                             end
                         end
+                        
+                        -- CỘNG ĐIỂM KHI ĐÃ CÓ ĐIỂM DƯ (Mỗi cột 2800 = 8400 điểm tổng)
                         if points and points.Value > 0 then
                             CommF:InvokeServer("AddPoint", "Defense", 2800)
                             CommF:InvokeServer("AddPoint", "Melee", 2800)
@@ -3686,27 +3699,18 @@ end)
                     if not char:FindFirstChild("HasBuso") then CommF:InvokeServer("Buso") end
 
                     -- ====================================================
-                    -- 3. GIAO CHO NÃO GỐC XỬ LÝ (TĂNG BÁN KÍNH HÚT LÊN 1000)
+                    -- 3. BRING MOB GỐC + MỞ RỘNG BÁN KÍNH
                     -- ====================================================
-                    local farmMobs = {
-                        "Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", 
-                        "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"
-                    }
-                    
                     if CombatController then
-                        -- Can thiệp nhẹ vào lõi gốc: Ép nó mở rộng vùng gom quái ra 1000 thay vì 350
                         CombatController.GRAB_DISTANCE = 1000 
-                        
-                        -- Thả cho não gốc tự bay, tự gom, tự chém (đéo lo lỗi CFrame)
                         if CombatController.Attack then
-                            CombatController.Attack(farmMobs)
+                            CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"})
                         end
                     end
                 end
             end)
         end
     end)
-
 end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
 
 hoangtuveu() -- KÍCH HOẠT CHẠY SCRIPT NÈ
