@@ -3645,20 +3645,16 @@ task.spawn(function()
                     return 
                 end
                 
-                -- ==============================================
-                -- TÌNH HUỐNG 3: NHIỆM VỤ YAMA EVIL (SĂN TỬ THẦN)
+-- ==============================================
+                -- TÌNH HUỐNG 3: NHIỆM VỤ YAMA EVIL (SĂN TỬ THẦN) - BẢN FIX TẨY NÃO
                 -- ==============================================
                 local isReaperQuestActive = false
-                for _, gui in pairs(CoreGui:GetDescendants()) do
-                    if gui:IsA("TextLabel") and gui.Text and (string.lower(gui.Text):find("yama evil") or string.lower(gui.Text):find("fear the reaper")) then
+                
+                -- CẤM QUÉT CoreGui (để nó đéo tự đọc chữ của chính cái Hub nữa)
+                -- CHỈ quét UI của Game, và CHỈ TÌM ĐÚNG chữ "fear the reaper" của Ải 3
+                for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
+                    if gui:IsA("TextLabel") and gui.Text and string.lower(gui.Text):find("fear the reaper") then
                         isReaperQuestActive = true; break
-                    end
-                end
-                if not isReaperQuestActive then
-                    for _, gui in pairs(plr.PlayerGui:GetDescendants()) do
-                        if gui:IsA("TextLabel") and gui.Text and (string.lower(gui.Text):find("yama evil") or string.lower(gui.Text):find("fear the reaper")) then
-                            isReaperQuestActive = true; break
-                        end
                     end
                 end
 
