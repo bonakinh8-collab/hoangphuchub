@@ -267,10 +267,35 @@ function hoangtuveu()
     pcall(function() r[3][r[2]] = os.time() end)
     OldSessionTime = isfile("HoangPhucHub/.tdif-" .. game.Players.LocalPlayer.Name) and 
     tonumber(readfile("HoangPhucHub/.tdif-" .. game.Players.LocalPlayer.Name)) or 0
-    repeat
-        task.wait()
-        game.ReplicatedStorage.Remotes.CommF_:InvokeServer("SetTeam", Config.Team)
-    until game.Players.LocalPlayer.Character
+    -- ================================================================
+    -- BẢN VÁ: CHỜ LOAD DATA XONG -> BẤM CHỌN HẢI TẶC -> MỚI CHẠY SCRIPT
+    -- ================================================================
+    local UI_Main = game.Players.LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Main")
+    
+    -- Chờ đến khi game load xong chữ "Loading Data..." và bung cái bảng chọn phe ra
+    repeat 
+        task.wait(0.5) 
+    until (UI_Main:FindFirstChild("ChooseTeam") and UI_Main.ChooseTeam.Visible) or game.Players.LocalPlayer.Character
+    
+    -- Bắt đầu spam lệnh chọn Pirates cho đến khi xác nhân vật rớt xuống map
+    while not game.Players.LocalPlayer.Character or not game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") do
+        task.wait(0.5)
+        pcall(function()
+            -- Cách 1: Bắn lệnh thẳng lên Server (Nhanh, chuẩn)
+            game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
+            
+            -- Cách 2: Ép click vật lý vào nút Hải Tặc (Dự phòng Executor cùi hoặc Server lag)
+            local pirateBtn = UI_Main.ChooseTeam.Container.Pirates.Frame.TextButton
+            if getconnections then
+                for _, conn in pairs(getconnections(pirateBtn.Activated)) do conn.Function() end
+                for _, conn in pairs(getconnections(pirateBtn.MouseButton1Click)) do conn.Function() end
+            end
+        end)
+    end
+    
+    -- Khóa chốt an toàn: Đợi nhân vật đứng vững trên mặt đất 100% rồi mới cho Script chạy tiếp
+    repeat task.wait(0.1) until game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    -- ================================================================
     alert("team assembled")
     repeat wait() until game.Players.LocalPlayer.Character
     spawn(function()
