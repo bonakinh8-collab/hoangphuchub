@@ -1,33 +1,3 @@
-Config = {
-    Team = "Pirates",
-    Configuration = {
-        HopWhenIdle = true,
-        AutoHop = true,
-        AutoHopDelay = 10 * 10,
-        FpsBoost = false,
-        blackscreen = false
-    },
-    Items = {
-
-        -- Melees 
-        AutoFullyMelees = false,
-
-        -- Swords 
-        Saber = false,
-        CursedDualKatana = true,
-
-        -- Guns 
-        SoulGuitar = false,
-
-        -- Upgrades 
-
-        RaceV2 = false
-
-    },
-    Settings = {
-        StayInSea2UntilHaveDarkFragments = false
-    }
-}
 function hoangtuveu()
     local J = {'Task1', 'Task2', "Currencies", 'Melees', 'LiveTime', 'DebugLine'}
     local W = {Instances = {}}
