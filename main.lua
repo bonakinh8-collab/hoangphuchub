@@ -268,43 +268,25 @@ function hoangtuveu()
     OldSessionTime = isfile("HoangPhucHub/.tdif-" .. game.Players.LocalPlayer.Name) and 
     tonumber(readfile("HoangPhucHub/.tdif-" .. game.Players.LocalPlayer.Name)) or 0
     -- ================================================================
-    -- BẢN VÁ V4: CHẶN ĐỨNG HUB - ÉP VÀO PHE HẢI TẶC TRÓT LỌT 100%
+    -- BẢN VÁ V5: ÉP VÀO PHE HẢI TẶC (CHỈ ĐỊNH ĐÍCH DANH)
     -- ================================================================
-    local lplr = game:GetService("Players").LocalPlayer
-    local rs = game:GetService("ReplicatedStorage")
-    local commF = rs:WaitForChild("Remotes", 9e9):WaitForChild("CommF_", 9e9)
-
-    -- Mở 1 luồng ngầm để chọc lệnh chọn phe mỗi 1.5 giây (tránh bị block spam)
-    task.spawn(function()
+    local lplr = game.Players.LocalPlayer
+    if not lplr.Character or not lplr.Character:FindFirstChild("HumanoidRootPart") then
+        local CommF = game:GetService("ReplicatedStorage").Remotes.CommF_
         while not lplr.Character or not lplr.Character:FindFirstChild("HumanoidRootPart") do
-            task.wait(1.5)
+            task.wait(0.5)
             pcall(function()
-                local playerGui = lplr:FindFirstChild("PlayerGui")
-                if playerGui then
-                    local mainUI = playerGui:FindFirstChild("Main")
-                    if mainUI and mainUI:FindFirstChild("ChooseTeam") and mainUI.ChooseTeam.Visible then
-                        
-                        -- Lệnh 1: Gửi thẳng vào cổng Server
-                        commF:InvokeServer("SetTeam", "Pirates")
-                        
-                        -- Lệnh 2: Ép click ẩn vào nút Hải Tặc (dành cho executor dỏm)
-                        local pirateBtn = mainUI.ChooseTeam.Container.Pirates.Frame.TextButton
-                        if pirateBtn and getconnections then
-                            for _, conn in pairs(getconnections(pirateBtn.Activated)) do conn.Function() end
-                        end
-                    end
+                -- Gửi chính xác chữ "Pirates" thay vì cái biến Config.Team bị lỗi nil
+                CommF:InvokeServer("SetTeam", "Pirates")
+                
+                -- Bồi thêm lệnh click ẩn cho chắc cốp
+                local btn = lplr.PlayerGui.Main.ChooseTeam.Container.Pirates.Frame.TextButton
+                if getconnections then
+                    for _, conn in pairs(getconnections(btn.Activated)) do conn.Function() end
                 end
             end)
         end
-    end)
-
-    -- KHÓA TỬ: Bắt toàn bộ cái Hub HoangPhuc phải ĐỨNG IM chờ đến khi mày vào game thành công!
-    repeat 
-        task.wait(0.5) 
-    until lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
-    
-    -- Nghỉ thêm 2 giây cho Map và Quái load ra hết rồi mới bung Hub
-    task.wait(2)
+    end
     -- ================================================================
     alert("team assembled")
     repeat wait() until game.Players.LocalPlayer.Character
