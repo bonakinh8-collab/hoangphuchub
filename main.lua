@@ -3606,13 +3606,11 @@ task.spawn(function()
     end
 end)
 -- ================================================================
-    -- BẢN VÁ TỐI THƯỢNG V6: ÉP MỞ MENU STATS BẰNG LỆNH GỐC & TẨY ĐIỂM
+    -- BẢN VÁ V8: CHỜ BẤM REFUND BẰNG TAY -> AUTO CỘNG ĐIỂM + DÙNG BRING GỐC
     -- ================================================================
     task.spawn(function()
         local lplr = game:GetService("Players").LocalPlayer
         local CommF = game:GetService("ReplicatedStorage").Remotes.CommF_
-        local rs = game:GetService("ReplicatedStorage")
-        local isStatsOpenedByCommand = false -- Cờ kiểm tra trạng thái mở menu
 
         while task.wait(0.5) do
             pcall(function()
@@ -3621,7 +3619,7 @@ end)
                     local maxMas = 350
                     local currentMas = 0
                     
-                    -- Lấy Mastery chuẩn xác
+                    -- Lấy Mastery hiện tại
                     pcall(function()
                         if ScriptStorage.Backpack and ScriptStorage.Backpack[swordName] then
                             currentMas = ScriptStorage.Backpack[swordName].Mastery
@@ -3638,71 +3636,48 @@ end)
                         return
                     end
                     
-                    -- NẾU MÀY THẤY CHỮ NÀY LÀ MÀY COPY ĐÚNG RỒI ĐÓ SẾP!
-                    if SetTask then SetTask("MainTask", "SIÊU VIP V6 | Ép Mở Menu Stats Bằng Lệnh Gốc cày " .. swordName) end
-                    
-                    local char = lplr.Character
-                    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                    
-                    -- ====================================================
-                    -- 1. AUTO TẨY STATS SIÊU BÁ ĐẠO (DÙNG LỆNH GỐC)
-                    -- ====================================================
                     local stats = lplr:FindFirstChild("Data") and lplr.Data:FindFirstChild("Stats")
                     local points = lplr.Data:FindFirstChild("Points")
                     
+                    -- KIỂM TRA XEM ĐÃ MAX ĐIỂM SWORD CHƯA
                     if stats and stats:FindFirstChild("Sword") and stats.Sword.Level.Value < 2800 then
+                        
+                        -- NẾU HẾT ĐIỂM DƯ -> NHẮC SẾP BẤM REFUND
                         if points and points.Value == 0 then
-                            -- ÉP MỞ BẢNG STATS CÔNG KHAI BẰNG LỆNH SỰ KIỆN GỐC CỦA GAME (NÓ SẼ HIỆN RA GIỮA MÀN HÌNH!)
-                            if not isStatsOpenedByCommand then
-                                pcall(function()
-                                    local mainUI = lplr.PlayerGui.Main
-                                    firesignal(mainUI.UI_Controller.ToggleStatsMenu.Activated) -- Gọi lệnh gốc
-                                    isStatsOpenedByCommand = true
-                                end)
-                                task.wait(0.5) -- Chờ game và server load xong
-                            end
-                            
-                            -- Kích hoạt Refund bằng lệnh firesignal chìm (đéo thèm click chuột)
-                            local refundBtn = lplr.PlayerGui.Main:FindFirstChild("Stats") and lplr.PlayerGui.Main.Stats:FindFirstChild("Refund")
-                            if refundBtn and refundBtn.Visible and firesignal then
-                                firesignal(refundBtn.Activated)
-                                firesignal(refundBtn.MouseButton1Click)
-                                task.wait(2) -- Chờ server nhả điểm về Points
-                            end
+                            if SetTask then SetTask("MainTask", "V8 | SẾP ƠI MỞ BẢNG LÊN BẤM NÚT REFUND 1 PHÁT ĐI!") end
                         end
                         
-                        -- CỘNG ĐIỂM (Cộng lần lượt 3 cột max ping 2800)
+                        -- NẾU SẾP VỪA BẤM VÀ CÓ ĐIỂM DƯ -> AUTO DỒN ĐIỂM
                         if points and points.Value > 0 then
+                            if SetTask then SetTask("MainTask", "V8 | Đang dồn 2800 điểm vào Sword, Melee, Defense!") end
                             CommF:InvokeServer("AddPoint", "Defense", 2800)
                             CommF:InvokeServer("AddPoint", "Melee", 2800)
                             CommF:InvokeServer("AddPoint", "Sword", 2800)
-                            
-                            -- Đã cộng điểm thành công, tắt bảng
-                            if isStatsOpenedByCommand then
-                                pcall(function()
-                                    local mainUI = lplr.PlayerGui.Main
-                                    firesignal(mainUI.UI_Controller.ToggleStatsMenu.Activated)
-                                    isStatsOpenedByCommand = false
-                                end)
-                            end
                         end
-                    end
-                    
-                    -- ====================================================
-                    -- 2. ÉP CẦM KIẾM VÀ BẬT HAKI
-                    -- ====================================================
-                    local sword = lplr.Backpack:FindFirstChild(swordName) or char:FindFirstChild(swordName)
-                    if sword then char.Humanoid:EquipTool(sword) end
-                    if not char:FindFirstChild("HasBuso") then CommF:InvokeServer("Buso") end
+                        
+                    else
+                        -- KHI ĐÃ MAX ĐIỂM -> BẬT BRING MOB GỐC
+                        if SetTask then 
+                            SetTask("MainTask", "VIP V8 | Xài Bring Mob Gốc cày " .. swordName) 
+                            SetTask("SubTask", "Mastery: " .. tostring(currentMas) .. " / " .. tostring(maxMas))
+                        end
+                        
+                        local char = lplr.Character
+                        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+                        
+                        local sword = lplr.Backpack:FindFirstChild(swordName) or char:FindFirstChild(swordName)
+                        if sword then char.Humanoid:EquipTool(sword) end
+                        if not char:FindFirstChild("HasBuso") then CommF:InvokeServer("Buso") end
 
-                    -- ====================================================
-                    -- 3. BRING MOB GỐC + MỞ RỘNG BÁN KÍNH
-                    -- ====================================================
-                    if CombatController then
-                        CombatController.GRAB_DISTANCE = 1000 
-                        if CombatController.Attack then
-                            -- Danh sách quái farm Mastery tối ưu
-                            CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"})
+                        -- XÀI CHUẨN 100% LÕI GỐC CỦA HUB, ĐÉO TỰ CHẾ LỖ ĐEN NỮA
+                        if CombatController and CombatController.Attack then
+                            -- Chích cho cái Bring gốc nó hút xa 1000 studs
+                            CombatController.GRAB_DISTANCE = 1000 
+                            -- Gọi lệnh đánh của Hub, để tự nó lo mọi thứ từ A-Z
+                            CombatController.Attack({
+                                "Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", 
+                                "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"
+                            })
                         end
                     end
                 end
