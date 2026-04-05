@@ -2674,8 +2674,10 @@ function hoangtuveu()
                 return
             end
              elseif W == 'Good' then
-            if h == 2 then
-                -- Ải 2: Phục kích Hải Tặc (V11 - Chống liệt chân tại Portal)
+            elseif h == 2 then
+                -- ==========================================
+                -- Ải 2: Phục kích Hải Tặc (V12 - Bật Khinh Công Chống Rớt)
+                -- ==========================================
                 local castlePos = Vector3.new(-5075, 315, -3150)
                 local lplr = game:GetService("Players").LocalPlayer
                 local root = lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
@@ -2692,9 +2694,9 @@ function hoangtuveu()
                                 local name = mob.Name
                                 local mobDist = (mob.HumanoidRootPart.Position - castlePos).Magnitude
                                 if mobDist < 800 and name ~= "Beautiful Pirate" and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
-                                    SetTask("SubTask", "CDK Quest / ĐANG DIỆT HẢI TẶC: " .. name)
+                                    SetTask("SubTask", "CDK Quest / ĐANG BĂM HẢI TẶC: " .. name)
                                     if CombatController and CombatController.Attack then
-                                        CombatController.Attack(name)
+                                        CombatController.Attack({name})
                                     end
                                     foundPirate = true
                                     _G.IsFlyingToCastle = false
@@ -2713,6 +2715,12 @@ function hoangtuveu()
                             task.spawn(function()
                                 local TS = game:GetService("TweenService")
                                 local tween = TS:Create(root, TweenInfo.new(distToCastle/300, Enum.EasingStyle.Linear), {CFrame = CFrame.new(castlePos)})
+                                
+                                -- Bật lực đẩy chống trọng lực lúc bay
+                                local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
+                                bv.Velocity = Vector3.zero
+                                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                                
                                 tween:Play()
                                 tween.Completed:Wait()
                                 _G.IsFlyingToCastle = false
@@ -2720,8 +2728,13 @@ function hoangtuveu()
                         end
                     else
                         _G.IsFlyingToCastle = false
-                        SetTask("SubTask", "CDK Quest / Đã tới Castle! Đang canh cửa Hải Tặc...")
-                        if root:FindFirstChild("BodyVelocity") then root.BodyVelocity:Destroy() end
+                        SetTask("SubTask", "CDK Quest / Đã tới Castle! Đang lơ lửng chờ Hải Tặc...")
+                        
+                        -- CHỐNG TƯNG TỬNG: Khóa cứng tọa độ trên không và giữ nguyên Khinh Công!
+                        root.CFrame = CFrame.new(castlePos)
+                        local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
+                        bv.Velocity = Vector3.zero
+                        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
                     end
                 end
                 return
