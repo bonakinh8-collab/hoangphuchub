@@ -3606,7 +3606,7 @@ task.spawn(function()
     end
 end)
 -- ================================================================
-    -- BẢN VÁ V8: CHỜ BẤM REFUND BẰNG TAY -> AUTO CỘNG ĐIỂM + DÙNG BRING GỐC
+    -- BẢN VÁ V9: AUTO TẨY NPC (2500 FRAG) + BRING GỐC CỦA HUB
     -- ================================================================
     task.spawn(function()
         local lplr = game:GetService("Players").LocalPlayer
@@ -3638,27 +3638,37 @@ end)
                     
                     local stats = lplr:FindFirstChild("Data") and lplr.Data:FindFirstChild("Stats")
                     local points = lplr.Data:FindFirstChild("Points")
+                    local frags = lplr.Data:FindFirstChild("Fragments")
                     
                     -- KIỂM TRA XEM ĐÃ MAX ĐIỂM SWORD CHƯA
                     if stats and stats:FindFirstChild("Sword") and stats.Sword.Level.Value < 2800 then
                         
-                        -- NẾU HẾT ĐIỂM DƯ -> NHẮC SẾP BẤM REFUND
+                        -- NẾU HẾT ĐIỂM DƯ -> GỌI THẲNG NPC TẨY BẰNG FRAGMENT (ĐÉO CẦN MỞ UI)
                         if points and points.Value == 0 then
-                            if SetTask then SetTask("MainTask", "V8 | SẾP ƠI MỞ BẢNG LÊN BẤM NÚT REFUND 1 PHÁT ĐI!") end
+                            if frags and frags.Value >= 2500 then
+                                if SetTask then SetTask("MainTask", "V9 | Bắn 2500 Frag cho NPC Plokster tẩy điểm...") end
+                                
+                                -- Lệnh tối thượng gọi NPC: Đéo cần tới gần, đéo cần click!
+                                CommF:InvokeServer("BlackbeardReward", "Refund", "1")
+                                CommF:InvokeServer("BlackbeardReward", "Refund", "2")
+                                task.wait(1.5) -- Chờ Server trừ Frag và nạp điểm
+                            else
+                                if SetTask then SetTask("MainTask", "V9 | LỖI: Cần 2500 Fragments để tẩy điểm!") end
+                            end
                         end
                         
-                        -- NẾU SẾP VỪA BẤM VÀ CÓ ĐIỂM DƯ -> AUTO DỒN ĐIỂM
+                        -- NẾU ĐÃ CÓ ĐIỂM (Sau khi tẩy) -> TỰ DỒN 2800
                         if points and points.Value > 0 then
-                            if SetTask then SetTask("MainTask", "V8 | Đang dồn 2800 điểm vào Sword, Melee, Defense!") end
+                            if SetTask then SetTask("MainTask", "V9 | Đang đập 2800 điểm vào Sword, Melee, Defense!") end
                             CommF:InvokeServer("AddPoint", "Defense", 2800)
                             CommF:InvokeServer("AddPoint", "Melee", 2800)
                             CommF:InvokeServer("AddPoint", "Sword", 2800)
                         end
                         
                     else
-                        -- KHI ĐÃ MAX ĐIỂM -> BẬT BRING MOB GỐC
+                        -- KHI ĐÃ MAX ĐIỂM -> BẬT BRING MOB GỐC ĐI BĂM QUÁI
                         if SetTask then 
-                            SetTask("MainTask", "VIP V8 | Xài Bring Mob Gốc cày " .. swordName) 
+                            SetTask("MainTask", "VIP V9 | Tẩy xong! Đang xài Bring Gốc cày " .. swordName) 
                             SetTask("SubTask", "Mastery: " .. tostring(currentMas) .. " / " .. tostring(maxMas))
                         end
                         
@@ -3669,11 +3679,9 @@ end)
                         if sword then char.Humanoid:EquipTool(sword) end
                         if not char:FindFirstChild("HasBuso") then CommF:InvokeServer("Buso") end
 
-                        -- XÀI CHUẨN 100% LÕI GỐC CỦA HUB, ĐÉO TỰ CHẾ LỖ ĐEN NỮA
+                        -- Giao toàn quyền gom quái cho não Hub (Ép hút xa 1000)
                         if CombatController and CombatController.Attack then
-                            -- Chích cho cái Bring gốc nó hút xa 1000 studs
                             CombatController.GRAB_DISTANCE = 1000 
-                            -- Gọi lệnh đánh của Hub, để tự nó lo mọi thứ từ A-Z
                             CombatController.Attack({
                                 "Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", 
                                 "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"
