@@ -2674,70 +2674,70 @@ function hoangtuveu()
                 return
             end
              elseif W == 'Good' then
-            elseif h == 2 then
-                -- ==========================================
-                -- Ải 2: Phục kích Hải Tặc (V12 - Bật Khinh Công Chống Rớt)
-                -- ==========================================
-                local castlePos = Vector3.new(-5075, 315, -3150)
-                local lplr = game:GetService("Players").LocalPlayer
-                local root = lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
-                
-                if not root then return end
-                
-                local distToCastle = (root.Position - castlePos).Magnitude
-                local foundPirate = false
-                
-                pcall(function()
-                    if workspace:FindFirstChild("Enemies") then
-                        for _, mob in pairs(workspace.Enemies:GetChildren()) do
-                            if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
-                                local name = mob.Name
-                                local mobDist = (mob.HumanoidRootPart.Position - castlePos).Magnitude
-                                if mobDist < 800 and name ~= "Beautiful Pirate" and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
-                                    SetTask("SubTask", "CDK Quest / ĐANG BĂM HẢI TẶC: " .. name)
-                                    if CombatController and CombatController.Attack then
-                                        CombatController.Attack({name})
+            if h == 2 then
+                    -- ==========================================
+                    -- Ải 2: Phục kích Hải Tặc (V12 - Bật Khinh Công Chống Rớt)
+                    -- ==========================================
+                    local castlePos = Vector3.new(-5075, 315, -3150)
+                    local lplr = game:GetService("Players").LocalPlayer
+                    local root = lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
+                    
+                    if not root then return end
+                    
+                    local distToCastle = (root.Position - castlePos).Magnitude
+                    local foundPirate = false
+                    
+                    pcall(function()
+                        if workspace:FindFirstChild("Enemies") then
+                            for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                                if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
+                                    local name = mob.Name
+                                    local mobDist = (mob.HumanoidRootPart.Position - castlePos).Magnitude
+                                    if mobDist < 800 and name ~= "Beautiful Pirate" and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
+                                        SetTask("SubTask", "CDK Quest / ĐANG BĂM HẢI TẶC: " .. name)
+                                        if CombatController and CombatController.Attack then
+                                            CombatController.Attack({name})
+                                        end
+                                        foundPirate = true
+                                        _G.IsFlyingToCastle = false
+                                        break
                                     end
-                                    foundPirate = true
-                                    _G.IsFlyingToCastle = false
-                                    break
                                 end
                             end
                         end
-                    end
-                end)
-                
-                if not foundPirate then
-                    if distToCastle > 150 then 
-                        SetTask("SubTask", "CDK Quest / Đang bay ra Castle phục kích...")
-                        if not _G.IsFlyingToCastle then
-                            _G.IsFlyingToCastle = true
-                            task.spawn(function()
-                                local TS = game:GetService("TweenService")
-                                local tween = TS:Create(root, TweenInfo.new(distToCastle/300, Enum.EasingStyle.Linear), {CFrame = CFrame.new(castlePos)})
-                                
-                                -- Bật lực đẩy chống trọng lực lúc bay
-                                local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
-                                bv.Velocity = Vector3.zero
-                                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                                
-                                tween:Play()
-                                tween.Completed:Wait()
-                                _G.IsFlyingToCastle = false
-                            end)
+                    end)
+                    
+                    if not foundPirate then
+                        if distToCastle > 150 then 
+                            SetTask("SubTask", "CDK Quest / Đang bay ra Castle phục kích...")
+                            if not _G.IsFlyingToCastle then
+                                _G.IsFlyingToCastle = true
+                                task.spawn(function()
+                                    local TS = game:GetService("TweenService")
+                                    local tween = TS:Create(root, TweenInfo.new(distToCastle/300, Enum.EasingStyle.Linear), {CFrame = CFrame.new(castlePos)})
+                                    
+                                    -- Bật lực đẩy chống trọng lực lúc bay
+                                    local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
+                                    bv.Velocity = Vector3.zero
+                                    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                                    
+                                    tween:Play()
+                                    tween.Completed:Wait()
+                                    _G.IsFlyingToCastle = false
+                                end)
+                            end
+                        else
+                            _G.IsFlyingToCastle = false
+                            SetTask("SubTask", "CDK Quest / Đã tới Castle! Đang lơ lửng chờ Hải Tặc...")
+                            
+                            -- CHỐNG TƯNG TỬNG: Khóa cứng tọa độ trên không và giữ nguyên Khinh Công!
+                            root.CFrame = CFrame.new(castlePos)
+                            local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
+                            bv.Velocity = Vector3.zero
+                            bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
                         end
-                    else
-                        _G.IsFlyingToCastle = false
-                        SetTask("SubTask", "CDK Quest / Đã tới Castle! Đang lơ lửng chờ Hải Tặc...")
-                        
-                        -- CHỐNG TƯNG TỬNG: Khóa cứng tọa độ trên không và giữ nguyên Khinh Công!
-                        root.CFrame = CFrame.new(castlePos)
-                        local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
-                        bv.Velocity = Vector3.zero
-                        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
                     end
-                end
-                return
+                    return
             elseif h == 3 then
                 -- ==========================================
                 -- ẢI 3: CAKE QUEEN (V22 - CHUỘC LỖI TRẢ LẠI HÀM THẮP ĐUỐC)
