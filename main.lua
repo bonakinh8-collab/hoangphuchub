@@ -3692,7 +3692,7 @@ end)
             end)
         end
     end)
-    -- ================================================================
+-- ================================================================
     -- LUỒNG NGẦM ÉP RANDOM FRUIT + CẤT RƯƠNG (CHẠY ĐỘC LẬP VỚI HUB)
     -- ================================================================
     task.spawn(function()
@@ -3707,8 +3707,8 @@ end)
                 
                 task.wait(2) -- Chờ 2 giây cho trái rớt vào túi
                 
-                -- Hàm lục soát và cất giấu
-                local function giấu_trái_ác_quỷ(container)
+                -- Hàm lục soát và cất giấu (Đã sửa tên không dấu chống lỗi)
+                local function StoreFruitToStash(container)
                     for _, item in pairs(container:GetChildren()) do
                         if item:IsA("Tool") and string.find(item.Name, "Fruit") then
                             -- Ép cất vào Stash (Kho)
@@ -3724,8 +3724,8 @@ end)
                 end
                 
                 -- Lục soát trên tay và trong túi xách
-                if lplr.Character then giấu_trái_ác_quỷ(lplr.Character) end
-                if lplr:FindFirstChild("Backpack") then giấu_trái_ác_quỷ(lplr.Backpack) end
+                if lplr.Character then StoreFruitToStash(lplr.Character) end
+                if lplr:FindFirstChild("Backpack") then StoreFruitToStash(lplr.Backpack) end
             end)
         end
     end)
