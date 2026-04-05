@@ -3533,44 +3533,111 @@ task.spawn(function()
                     end
                 end
                 
- end
-            end)
-        end
-    end) -- Đây là cái end của mớ code CDK của mày
-
-    -- ================================================================
-    -- BẢN VÁ TRỊ BỆNH ĐỨNG IM (ÉP FARM MASTERY KHI MAX LEVEL)
+            end
+        end)
+    end
+end)
+-- ================================================================
+    -- BẢN VÁ TRỊ BỆNH ĐỨNG IM (AUTO MASTERY TẠI ĐẢO BONE / CAKE)
     -- ================================================================
     task.spawn(function()
-        while task.wait(0.5) do
-            pcall(function()
-                if FunctionsHandler and FunctionsHandler.MeleesController and FunctionsHandler.MeleesController.Methods and FunctionsHandler.MeleesController.Methods.Start then
-                    FunctionsHandler.MeleesController.Methods.Start:Call()
+        local TweenService = game:GetService("TweenService")
+        local lplr = game:GetService("Players").LocalPlayer
+        local vim = game:GetService("VirtualInputManager")
+
+        -- Hàm lướt tự lái đéo cần phụ thuộc vào Hub gốc
+        local function FastTween(targetCFrame)
+            local char = lplr.Character
+            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            local root = char.HumanoidRootPart
+            local dist = (root.Position - targetCFrame.Position).Magnitude
+            if dist < 15 then return end
+            
+            local tweenInfo = TweenInfo.new(dist / 300, Enum.EasingStyle.Linear)
+            local tween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
+            local bv = Instance.new("BodyVelocity", root)
+            bv.Velocity = Vector3.zero
+            bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            
+            local noclip = game:GetService("RunService").Stepped:Connect(function()
+                for _, v in pairs(char:GetDescendants()) do
+                    if v:IsA("BasePart") then v.CanCollide = false end
                 end
-                
+            end)
+
+            tween:Play()
+            tween.Completed:Wait()
+            bv:Destroy()
+            noclip:Disconnect()
+        end
+
+        -- Danh sách quái dồi dào XP ở Bone & Cake
+        local farmMobs = {
+            "Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", 
+            "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"
+        }
+        
+        -- Tọa độ trung tâm bãi Reborn Skeleton ở Đảo Bone (Haunted Castle)
+        local boneIslandPos = CFrame.new(-9490, 142, 5530)
+
+        while task.wait(0.1) do
+            pcall(function()
+                -- Nếu Script gốc báo cần cày Mastery (có tên kiếm)
                 if ScriptStorage and ScriptStorage.ForceToUseSword then
                     local swordName = ScriptStorage.ForceToUseSword[1]
+                    
                     if SetTask then 
-                        SetTask("MainTask", "Auto Mastery Bypass | Đang đi đấm quái cày " .. swordName) 
+                        SetTask("MainTask", "Auto Mastery Độc Lập | Đang vã quái Bone/Cake bằng " .. swordName) 
                     end
                     
-                    local lplr = game:GetService("Players").LocalPlayer
-                    local sword = lplr.Backpack:FindFirstChild(swordName) or lplr.Character:FindFirstChild(swordName)
-                    if sword and lplr.Character:FindFirstChild("Humanoid") then
-                        lplr.Character.Humanoid:EquipTool(sword)
+                    local char = lplr.Character
+                    if not char or not char:FindFirstChild("Humanoid") then return end
+                    
+                    -- Ép lôi kiếm ra cầm
+                    local sword = lplr.Backpack:FindFirstChild(swordName) or char:FindFirstChild(swordName)
+                    if sword then char.Humanoid:EquipTool(sword) end
+                    
+                    if not char:FindFirstChild("HasBuso") then
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Buso")
+                    end
+
+                    -- Dò radar tìm quái Bone hoặc Cake xung quanh
+                    local targetMob = nil
+                    for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                        if table.find(farmMobs, mob.Name) and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
+                            targetMob = mob
+                            break
+                        end
                     end
                     
-                    local farmMobs = {
-                        "Isle Champion", "Fishman Raider", "Fishman Captain", 
-                        "Forest Pirate", "Mythological Pirate", "Peanut Scout", "Ice Cream Chef"
-                    }
-                    if CombatController and CombatController.Attack then
-                        CombatController.Attack(farmMobs)
+                    if targetMob then
+                        local tRoot = targetMob.HumanoidRootPart
+                        local mRoot = char:FindFirstChild("HumanoidRootPart")
+                        if tRoot and mRoot then
+                            -- Dán chặt trên đầu quái, bóp cổ nó
+                            mRoot.CFrame = tRoot.CFrame * CFrame.new(0, 5, 0)
+                            
+                            -- Spam click chuột chém tay
+                            if sword and sword.Parent == char then sword:Activate() end
+                            
+                            -- Xả skill Z và X liên tục để nhanh max Mastery
+                            for _, key in ipairs({Enum.KeyCode.Z, Enum.KeyCode.X}) do
+                                task.spawn(function()
+                                    vim:SendKeyEvent(true, key, false, game)
+                                    task.wait(0.05)
+                                    vim:SendKeyEvent(false, key, false, game)
+                                end)
+                            end
+                        end
+                    else
+                        -- NẾU XUNG QUANH ĐÉO CÓ QUÁI NÀO TÊN LÀ SKELETON HAY ZOMBIE -> BAY THẲNG RA ĐẢO BONE!
+                        FastTween(boneIslandPos)
                     end
                 end
             end)
         end
     end)
+
 
 end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
 
