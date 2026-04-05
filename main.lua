@@ -3550,7 +3550,7 @@ end)
                     local maxMas = ScriptStorage.ForceToUseSword[3]
                     
                     if SetTask then 
-                        SetTask("MainTask", "Auto Mastery | Đang gom quái Đảo Bone/Cake cày " .. swordName) 
+                        SetTask("MainTask", "Auto Mastery Chuẩn | Đang cày " .. swordName .. " tại Bone/Cake") 
                         SetTask("SubTask", "Mastery: " .. tostring(currentMas) .. " / " .. tostring(maxMas))
                     end
                     
@@ -3569,13 +3569,13 @@ end)
                         end
                     end
 
-                    -- DÙNG THẲNG LÕI COMBAT GỐC ĐỂ BRING MOB VÀ FAST ATTACK
+                    -- DÙNG THẲNG LÕI COMBAT GỐC ĐỂ TỰ TWEEN, BRING MOB VÀ FAST ATTACK
                     if CombatController and CombatController.Attack then
                         local farmMobs = {
                             "Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", 
                             "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"
                         }
-                        -- Ném danh sách quái cho não gốc, nó sẽ tự quét, bay tới, gom quái và chém tốc độ bàn thờ!
+                        -- Ném danh sách này cho não gốc, nó sẽ tự quét tọa độ, Tween tới đó, gom quái và chém M1
                         CombatController.Attack(farmMobs)
                     end
                 end
