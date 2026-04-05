@@ -2668,11 +2668,50 @@ function hoangtuveu()
         local k = ScriptStorage.CdkCache
         if not k then return end
         local W, h = k[1], k[2]
-        if W == "Evil" and h == 3 then
-            if not ScriptStorage.Enemies['Soul Reaper'] then
-                ForceToRollBone = true
-                return
+if W == "Evil" and h == 3 then
+            -- =========================================================
+            -- BẢN VÁ YAMA ẢI 3 CHUẨN: QUÉT CÓ LỬA TÍM THẬT MỚI ĐƯỢC BAY
+            -- =========================================================
+            local lplr = game:GetService("Players").LocalPlayer
+            local char = lplr.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+
+            local altarPos = Vector3.new(-8936, 142.5, 6060)
+            local essence = lplr.Backpack:FindFirstChild("Hallow Essence") or (char and char:FindFirstChild("Hallow Essence"))
+
+            -- QUÉT ĐÉO THẤY LỬA TÍM -> ÉP DỪNG LẠI CHỜ LÕI HUB TỰ ĐI ROLL XƯƠNG
+            if not essence then
+                if SetTask then SetTask("SubTask", "CDK Quest / ĐÉO CÓ LỬA TÍM! Đang ép Hub dừng bay để đi kiếm...") end
+                if not ScriptStorage.Enemies['Soul Reaper'] then
+                    ForceToRollBone = true
+                end
+                return -- Dừng lệnh tại đây, CẤM BAY BẬY!
             end
+
+            -- NẾU CÓ LỬA TÍM THẬT -> MỚI ĐƯỢC CẤP PHÉP BAY RA ĐÚT LÒ
+            ForceToRollBone = false
+            char.Humanoid:EquipTool(essence)
+
+            local distToAltar = (root.Position - altarPos).Magnitude
+            if distToAltar > 15 then
+                if SetTask then SetTask("SubTask", "CDK Quest / ĐÃ CÓ LỬA TÍM! Đang bay ra bệ đá gọi Boss...") end
+                local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
+                bv.Velocity = Vector3.zero
+                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+
+                local TS = game:GetService("TweenService")
+                local tween = TS:Create(root, TweenInfo.new(distToAltar/300, Enum.EasingStyle.Linear), {CFrame = CFrame.new(altarPos)})
+                tween:Play()
+            else
+                if SetTask then SetTask("SubTask", "CDK Quest / ĐÃ TỚI BỆ ĐÁ! Đang cắm cọc đút lửa vào lò...") end
+                local bv = root:FindFirstChild("BodyVelocity")
+                if bv then bv:Destroy() end
+
+                root.CFrame = CFrame.new(altarPos)
+                task.wait(1) 
+            end
+            return
              elseif W == 'Good' then
             if h == 2 then
                     -- ==========================================
@@ -3512,7 +3551,7 @@ task.spawn(function()
                     return -- CHẶN MỌI HOẠT ĐỘNG KHÁC, CHỈ TẬP TRUNG GHÉP CDK
                 end
 
-                -- =========================================================
+-- =========================================================
                         -- [BẢN VÁ YAMA ẢI 3]: ÉP CHẠM BỆ LỬA + CHỐNG LỖI 267 KICK
                         -- =========================================================
                         local altarPos = Vector3.new(-8936, 142.5, 6060) -- Hạ Y xuống 142.5 để ép chạm đáy bệ lửa
