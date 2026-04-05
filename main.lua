@@ -3692,6 +3692,43 @@ end)
             end)
         end
     end)
+    -- ================================================================
+    -- LUỒNG NGẦM ÉP RANDOM FRUIT + CẤT RƯƠNG (CHẠY ĐỘC LẬP VỚI HUB)
+    -- ================================================================
+    task.spawn(function()
+        local CommF = game:GetService("ReplicatedStorage").Remotes.CommF_
+        local lplr = game:GetService("Players").LocalPlayer
+
+        -- Vòng lặp âm thầm: Cứ 30 giây nó hỏi thăm thằng NPC Zioles 1 lần
+        while task.wait(30) do 
+            pcall(function()
+                -- Bắn lệnh "Ép Mua" thẳng lên máy chủ
+                CommF:InvokeServer("Cousin", "Buy")
+                
+                task.wait(2) -- Chờ 2 giây cho trái rớt vào túi
+                
+                -- Hàm lục soát và cất giấu
+                local function giấu_trái_ác_quỷ(container)
+                    for _, item in pairs(container:GetChildren()) do
+                        if item:IsA("Tool") and string.find(item.Name, "Fruit") then
+                            -- Ép cất vào Stash (Kho)
+                            local tenGoc = item:GetAttribute("OriginalName") or item.Name
+                            CommF:InvokeServer("StoreFruit", tenGoc, item)
+                            
+                            -- Báo cáo lên màn hình cho sếp sướng
+                            if SetTask then
+                                SetTask("SubTask", "💎 VỪA BÚ ĐƯỢC TRÁI: " .. item.Name .. " VÀ CẤT KHO!")
+                            end
+                        end
+                    end
+                end
+                
+                -- Lục soát trên tay và trong túi xách
+                if lplr.Character then giấu_trái_ác_quỷ(lplr.Character) end
+                if lplr:FindFirstChild("Backpack") then giấu_trái_ác_quỷ(lplr.Backpack) end
+            end)
+        end
+    end)
 end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
 
 hoangtuveu() -- KÍCH HOẠT CHẠY SCRIPT NÈ
