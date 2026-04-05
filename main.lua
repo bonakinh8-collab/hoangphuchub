@@ -3606,12 +3606,13 @@ task.spawn(function()
     end
 end)
 -- ================================================================
-    -- BẢN VÁ TỐI THƯỢNG V5: ÉP MỞ BẢNG TẨY ĐIỂM + CHIA ĐỀU 3 CỘT
+    -- BẢN VÁ TỐI THƯỢNG V6: ÉP MỞ MENU STATS BẰNG LỆNH GỐC & TẨY ĐIỂM
     -- ================================================================
     task.spawn(function()
         local lplr = game:GetService("Players").LocalPlayer
         local CommF = game:GetService("ReplicatedStorage").Remotes.CommF_
-        local vim = game:GetService("VirtualInputManager")
+        local rs = game:GetService("ReplicatedStorage")
+        local isStatsOpenedByCommand = false -- Cờ kiểm tra trạng thái mở menu
 
         while task.wait(0.5) do
             pcall(function()
@@ -3637,57 +3638,53 @@ end)
                         return
                     end
                     
-                    if SetTask then SetTask("MainTask", "SIÊU VIP V5 | Ép Mở Bảng Tẩy & Cày " .. swordName) end
+                    -- NẾU MÀY THẤY CHỮ NÀY LÀ MÀY COPY ĐÚNG RỒI ĐÓ SẾP!
+                    if SetTask then SetTask("MainTask", "SIÊU VIP V6 | Ép Mở Menu Stats Bằng Lệnh Gốc cày " .. swordName) end
                     
                     local char = lplr.Character
                     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
                     
                     -- ====================================================
-                    -- 1. AUTO TẨY STATS CHUẨN XÁC 100%
+                    -- 1. AUTO TẨY STATS SIÊU BÁ ĐẠO (DÙNG LỆNH GỐC)
                     -- ====================================================
                     local stats = lplr:FindFirstChild("Data") and lplr.Data:FindFirstChild("Stats")
                     local points = lplr.Data:FindFirstChild("Points")
                     
                     if stats and stats:FindFirstChild("Sword") and stats.Sword.Level.Value < 2800 then
                         if points and points.Value == 0 then
-                            local statsMenu = lplr.PlayerGui.Main:FindFirstChild("Stats")
-                            local refundBtn = statsMenu and statsMenu:FindFirstChild("Refund")
+                            -- ÉP MỞ BẢNG STATS CÔNG KHAI BẰNG LỆNH SỰ KIỆN GỐC CỦA GAME (NÓ SẼ HIỆN RA GIỮA MÀN HÌNH!)
+                            if not isStatsOpenedByCommand then
+                                pcall(function()
+                                    local mainUI = lplr.PlayerGui.Main
+                                    firesignal(mainUI.UI_Controller.ToggleStatsMenu.Activated) -- Gọi lệnh gốc
+                                    isStatsOpenedByCommand = true
+                                end)
+                                task.wait(0.5) -- Chờ game và server load xong
+                            end
                             
-                            if statsMenu and refundBtn and refundBtn.Visible then
-                                -- ÉP MỞ BẢNG LÊN ĐỂ CHUỘT VẬT LÝ BẤM TRÚNG
-                                local wasVisible = statsMenu.Visible
-                                statsMenu.Visible = true
-                                statsMenu.Position = UDim2.new(0.5, -statsMenu.Size.X.Offset/2, 0.5, -statsMenu.Size.Y.Offset/2)
-                                task.wait(0.3)
-                                
-                                -- Bóp cổ Executor: Bắn lệnh chìm
-                                pcall(function()
-                                    if firesignal then
-                                        firesignal(refundBtn.Activated)
-                                    elseif getconnections then
-                                        for _, c in pairs(getconnections(refundBtn.MouseButton1Click)) do c.Function() end
-                                    end
-                                end)
-                                
-                                -- Bóp cổ Game: Dùng chuột vật lý đấm thẳng vào nút
-                                pcall(function()
-                                    local pos = refundBtn.AbsolutePosition
-                                    local size = refundBtn.AbsoluteSize
-                                    vim:SendMouseButtonEvent(pos.X + (size.X / 2), pos.Y + (size.Y / 2) + 36, 0, true, game, 1)
-                                    task.wait(0.1)
-                                    vim:SendMouseButtonEvent(pos.X + (size.X / 2), pos.Y + (size.Y / 2) + 36, 0, false, game, 1)
-                                end)
-                                
-                                task.wait(1.5)
-                                statsMenu.Visible = wasVisible -- Tắt đi cho gọn màn hình
+                            -- Kích hoạt Refund bằng lệnh firesignal chìm (đéo thèm click chuột)
+                            local refundBtn = lplr.PlayerGui.Main:FindFirstChild("Stats") and lplr.PlayerGui.Main.Stats:FindFirstChild("Refund")
+                            if refundBtn and refundBtn.Visible and firesignal then
+                                firesignal(refundBtn.Activated)
+                                firesignal(refundBtn.MouseButton1Click)
+                                task.wait(2) -- Chờ server nhả điểm về Points
                             end
                         end
                         
-                        -- CỘNG ĐIỂM KHI ĐÃ CÓ ĐIỂM DƯ (Mỗi cột 2800 = 8400 điểm tổng)
+                        -- CỘNG ĐIỂM (Cộng lần lượt 3 cột max ping 2800)
                         if points and points.Value > 0 then
                             CommF:InvokeServer("AddPoint", "Defense", 2800)
                             CommF:InvokeServer("AddPoint", "Melee", 2800)
                             CommF:InvokeServer("AddPoint", "Sword", 2800)
+                            
+                            -- Đã cộng điểm thành công, tắt bảng
+                            if isStatsOpenedByCommand then
+                                pcall(function()
+                                    local mainUI = lplr.PlayerGui.Main
+                                    firesignal(mainUI.UI_Controller.ToggleStatsMenu.Activated)
+                                    isStatsOpenedByCommand = false
+                                end)
+                            end
                         end
                     end
                     
@@ -3704,6 +3701,7 @@ end)
                     if CombatController then
                         CombatController.GRAB_DISTANCE = 1000 
                         if CombatController.Attack then
+                            -- Danh sách quái farm Mastery tối ưu
                             CombatController.Attack({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy", "Head Baker", "Baking Staff", "Cookie Crafter", "Cake Guard"})
                         end
                     end
