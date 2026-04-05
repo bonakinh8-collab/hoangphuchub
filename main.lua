@@ -268,33 +268,36 @@ function hoangtuveu()
     OldSessionTime = isfile("HoangPhucHub/.tdif-" .. game.Players.LocalPlayer.Name) and 
     tonumber(readfile("HoangPhucHub/.tdif-" .. game.Players.LocalPlayer.Name)) or 0
     -- ================================================================
-    -- BẢN VÁ: CHỜ LOAD DATA XONG -> BẤM CHỌN HẢI TẶC -> MỚI CHẠY SCRIPT
+    -- BẢN VÁ V3: CHỜ GAME LOAD XONG 100% MỚI BẤM HẢI TẶC (CHỐNG KẸT)
     -- ================================================================
-    local UI_Main = game.Players.LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("Main")
+    local lplr = game:GetService("Players").LocalPlayer
     
-    -- Chờ đến khi game load xong chữ "Loading Data..." và bung cái bảng chọn phe ra
+    -- BƯỚC 1: Chờ an toàn cho đến khi cái bảng chọn phe thực sự load ra
     repeat 
-        task.wait(0.5) 
-    until (UI_Main:FindFirstChild("ChooseTeam") and UI_Main.ChooseTeam.Visible) or game.Players.LocalPlayer.Character
-    
-    -- Bắt đầu spam lệnh chọn Pirates cho đến khi xác nhân vật rớt xuống map
-    while not game.Players.LocalPlayer.Character or not game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") do
-        task.wait(0.5)
+        task.wait(1) 
+    until lplr:FindFirstChild("PlayerGui") and lplr.PlayerGui:FindFirstChild("Main") and lplr.PlayerGui.Main:FindFirstChild("ChooseTeam")
+
+    -- BƯỚC 2: Spam lệnh nhịp độ chậm (1 giây/lần) để Server không block
+    while not lplr.Character or not lplr.Character:FindFirstChild("HumanoidRootPart") do
+        task.wait(1)
+        
+        -- Gọi lệnh Server chuẩn
         pcall(function()
-            -- Cách 1: Bắn lệnh thẳng lên Server (Nhanh, chuẩn)
             game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("SetTeam", "Pirates")
-            
-            -- Cách 2: Ép click vật lý vào nút Hải Tặc (Dự phòng Executor cùi hoặc Server lag)
-            local pirateBtn = UI_Main.ChooseTeam.Container.Pirates.Frame.TextButton
-            if getconnections then
-                for _, conn in pairs(getconnections(pirateBtn.Activated)) do conn.Function() end
-                for _, conn in pairs(getconnections(pirateBtn.MouseButton1Click)) do conn.Function() end
+        end)
+        
+        -- Dự phòng: Ép click ẩn thẳng vào nút Pirates
+        pcall(function()
+            local btn = lplr.PlayerGui.Main.ChooseTeam.Container.Pirates.Frame.TextButton
+            if btn and getconnections then
+                for _, conn in pairs(getconnections(btn.Activated)) do conn.Function() end
+                for _, conn in pairs(getconnections(btn.MouseButton1Click)) do conn.Function() end
             end
         end)
     end
     
-    -- Khóa chốt an toàn: Đợi nhân vật đứng vững trên mặt đất 100% rồi mới cho Script chạy tiếp
-    repeat task.wait(0.1) until game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    -- BƯỚC 3: Đợi nhân vật rơi hẳn xuống đất rồi mới cho Hub chạy tiếp
+    task.wait(2)
     -- ================================================================
     alert("team assembled")
     repeat wait() until game.Players.LocalPlayer.Character
