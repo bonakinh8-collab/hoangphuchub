@@ -3116,41 +3116,40 @@ function hoangtuveu()
     function RefreshTasksData()
         if _G.Stop then return end
         for _, taskName in ipairs(TasksOrder) do
-            local module = FunctionsHandler[taskName]
-            if module then
-                if not module.Initalized then
-                    if not k[taskName] then
-                        print("[ Debug ] Task", taskName, "is not registered yet")
-                        k[taskName] = true
-                    end
-                else
-                    local refresh = module.Methods.Refresh
-                    local start = module.Methods.Start
-                    
-                    if refresh and refresh.Call then
-                        -- BỎ CÁI ĐIỀU KIỆN ĐỢI 100 NHỊP NGU HỌC ĐI!
-                        local result = refresh:Call(true)
-                        
-                        if result then
-                            CurrentTask = taskName
-                            pcall(function()
-                                if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
-                                    ScriptStorage.Interface.SetText('DebugLine', taskName)
-                                elseif SetText then
-                                    SetText('DebugLine', taskName)
-                                end
-                            end)
-                            
-                            if start and start.Call then
-                                start:Call(result)
+        local module = FunctionsHandler[taskName]
+                    if module then
+                        if not module.Initalized then
+                            if not k[taskName] then
+                                print("[ Debug ] Task", taskName, "is not registered yet")
+                                k[taskName] = true
                             end
-                            return -- Đã tìm thấy task thì dừng vòng lặp, chạy luôn!
-                        end 
-                    end 
-                end 
-            end 
-        end 
-    end
+                        else
+        local refresh = module.Methods.Refresh
+                            local start = module.Methods.Start
+                            -- Mặc giáp: Kiểm tra refresh có tồn tại hàm Call không
+                            if refresh and refresh.Call then
+                                local result = refresh:Call(ParsingTimes < 100)
+                                ParsingTimes = ParsingTimes + 1
+                                if result and ParsingTimes > 100 then
+                                    CurrentTask = taskName
+                                    pcall(function()
+                                        if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
+                                            ScriptStorage.Interface.SetText('DebugLine', taskName)
+                                        elseif SetText then
+                                            SetText('DebugLine', taskName)
+                                        end
+                                    end)
+                                    -- Mặc giáp: Kiểm tra start có tồn tại không rồi mới Call
+                                    if start and start.Call then
+                                        start:Call(result)
+                                    end
+                                    return
+                                end -- Đóng if result
+                            end -- Đóng if refresh
+                        end -- Đóng if not module.Initialized / else
+                    end -- Đóng if module then
+                end -- Đóng vòng lặp for
+            end -- ĐÓNG HÀM RefreshTasksData CHỐT SỔ!
         -- ==== CÁC LỆNH SETTEXT VÀ BỌC GIÁP BÊN DƯỚI ====
         pcall(function()
             if ScriptStorage and ScriptStorage.Interface and ScriptStorage.Interface.SetText then
@@ -3534,10 +3533,44 @@ task.spawn(function()
                     end
                 end
                 
-            end
-        end)
-    end
-end)
+ end
+            end)
+        end
+    end) -- Đây là cái end của mớ code CDK của mày
+
+    -- ================================================================
+    -- BẢN VÁ TRỊ BỆNH ĐỨNG IM (ÉP FARM MASTERY KHI MAX LEVEL)
+    -- ================================================================
+    task.spawn(function()
+        while task.wait(0.5) do
+            pcall(function()
+                if FunctionsHandler and FunctionsHandler.MeleesController and FunctionsHandler.MeleesController.Methods and FunctionsHandler.MeleesController.Methods.Start then
+                    FunctionsHandler.MeleesController.Methods.Start:Call()
+                end
+                
+                if ScriptStorage and ScriptStorage.ForceToUseSword then
+                    local swordName = ScriptStorage.ForceToUseSword[1]
+                    if SetTask then 
+                        SetTask("MainTask", "Auto Mastery Bypass | Đang đi đấm quái cày " .. swordName) 
+                    end
+                    
+                    local lplr = game:GetService("Players").LocalPlayer
+                    local sword = lplr.Backpack:FindFirstChild(swordName) or lplr.Character:FindFirstChild(swordName)
+                    if sword and lplr.Character:FindFirstChild("Humanoid") then
+                        lplr.Character.Humanoid:EquipTool(sword)
+                    end
+                    
+                    local farmMobs = {
+                        "Isle Champion", "Fishman Raider", "Fishman Captain", 
+                        "Forest Pirate", "Mythological Pirate", "Peanut Scout", "Ice Cream Chef"
+                    }
+                    if CombatController and CombatController.Attack then
+                        CombatController.Attack(farmMobs)
+                    end
+                end
+            end)
+        end
+    end)
 
 end -- ĐÓNG KÍN CÁI HÀM hoangtuveu() Ở TÍT TRÊN CÙNG LẠI
 
