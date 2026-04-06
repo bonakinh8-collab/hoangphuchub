@@ -3129,37 +3129,34 @@ elseif h == 3 then
         while task.wait(180) do GetServers() end
     end)
 -- ================================================================
-    -- BẢN VÁ VĨNH CỬU V3: HỆ THỐNG VOLT-HOP TỐC ĐỘ CAO + CHỐNG CRASH
+    -- BẢN VÁ VĨNH CỬU V4: HỆ THỐNG VOLT-HOP BẠO LỰC (BRUTE FORCE)
     -- ================================================================
     getgenv().Hop = function()
         if _G.IsHoppingNow then return end
         _G.IsHoppingNow = true
+        
+        -- RÚT ỐNG THỞ KHINH CÔNG: Hủy hết mọi lệnh bay để đéo bị lỗi 769
+        pcall(function()
+            if TweenInstance then TweenInstance:Cancel() end
+            if TweenInstance2 then TweenInstance2:Cancel() end
+            if _G.CDK_H3_Tween then _G.CDK_H3_Tween:Cancel() end
+            local root = game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if root and root:FindFirstChild("BodyVelocity") then root.BodyVelocity:Destroy() end
+        end)
+
         if SetTask then SetTask("MainTask", "🚀 ĐANG KÍCH HOẠT VOLT-HOP TÌM SERVER...") end
+        if SetTask then SetTask("SubTask", "Đang khóa mọi hoạt động, lướt UI dọn dẹp lỗi...") end
         
         local lplr = game:GetService("Players").LocalPlayer
         local GuiService = game:GetService("GuiService")
-        local TeleportService = game:GetService("TeleportService")
 
-        -- KHIÊN V3: CÓ CHỐT CHẶN DEBOUNCE CHỐNG LỖI LÚP VÔ HẠN
-        if not _G.ShieldConnected then
-            _G.ShieldConnected = true
-            GuiService.ErrorMessageChanged:Connect(function(msg)
-                if msg and msg ~= "" and not _G.ClearingErr then
-                    _G.ClearingErr = true
-                    pcall(function() GuiService:ClearError() end)
-                    task.wait(1)
-                    _G.ClearingErr = false
-                end
-            end)
-            TeleportService.TeleportInitFailed:Connect(function()
-                if not _G.ClearingErr then
-                    _G.ClearingErr = true
-                    pcall(function() GuiService:ClearError() end)
-                    task.wait(1)
-                    _G.ClearingErr = false
-                end
-            end)
-        end
+        -- KHIÊN V4 (BRUTE FORCE): ĐÉO CẦN LẮNG NGHE LỖI NỮA! SPAM TẮT BẢNG LỖI MỖI 0.5 GIÂY!
+        task.spawn(function()
+            while _G.IsHoppingNow do
+                pcall(function() GuiService:ClearError() end)
+                task.wait(0.5)
+            end
+        end)
 
         task.spawn(function()
             local function TapButton(button)
@@ -3172,9 +3169,7 @@ elseif h == 3 then
                 end)
             end
 
-            while task.wait(2) do
-                if _G.ClearingErr then continue end -- Đang kẹt bảng lỗi thì chờ tắt xong mới lướt
-                
+            while task.wait(2) and _G.IsHoppingNow do
                 local PlayerGui = lplr:WaitForChild("PlayerGui")
                 local clicked = false
                 local refreshBtn = nil
@@ -3197,7 +3192,7 @@ elseif h == 3 then
                                         if count < 11 then
                                             TapButton(desc)
                                             clicked = true
-                                            task.wait(8) -- Chờ bay, xịt thì khiên tự đỡ
+                                            task.wait(10) -- Đứng im 10s chờ bay
                                             break
                                         end
                                     end
