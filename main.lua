@@ -2851,101 +2851,8 @@ elseif h == 3 then
                         task.wait(5)
                         return 
                     end
-                    
-                    -- 3. BỘ MÁY CLICK UI ẢO TỐI THƯỢNG (GIỮ NGUYÊN NHƯ Ý SẾP)
-                    SetTask("SubTask", "CDK Quest / Bật UI Click Ảo để Hop Server...")
-                    
-                    local lplr = game:GetService("Players").LocalPlayer
-                    local GuiService = game:GetService("GuiService")
-
-                -- Lá chắn tự xóa bảng lỗi (VÁ LỖI 769 VÀ MỌI SỐ KHÁC)
-                    if not _G.VoltHop_ErrorHandled then
-                        _G.VoltHop_ErrorHandled = true
-                        _G.IsHopping = false
-                        
-                        -- Cứ hiện bảng lỗi bất kỳ lúc đang Hop là XÓA NGAY!
-                        GuiService.ErrorMessageChanged:Connect(function(msg)
-                            pcall(function() GuiService:ClearError() end)
-                            _G.IsHopping = false 
-                        end)
-                        
-                        game:GetService("TeleportService").TeleportInitFailed:Connect(function()
-                            pcall(function() GuiService:ClearError() end)
-                            _G.IsHopping = false
-                        end)
-                    end
-
-                    if not _G.IsHopping then
-                        _G.IsHopping = true
-                        task.spawn(function()
-                            -- Hàm giả lập Click chuột vào màn hình 
-                            local function TapButton(button)
-                                pcall(function()
-                                    if getconnections then
-                                        for _, conn in pairs(getconnections(button.MouseButton1Click)) do conn:Fire() end
-                                    elseif firesignal then
-                                        firesignal(button.MouseButton1Click)
-                                    end
-                                end)
-                            end
-
-                            while task.wait(2) and _G.IsHopping do 
-                                local PlayerGui = lplr:WaitForChild("PlayerGui")
-                                local joined = false
-                                local refreshBtn = nil
-                                local isBrowserOpen = false
-
-                                for _, desc in pairs(PlayerGui:GetDescendants()) do
-                                    if desc:IsA("TextButton") and desc.Text == "Refresh" then
-                                        refreshBtn = desc
-                                        if desc.Visible or (desc.Parent and desc.Parent.Visible) then isBrowserOpen = true end
-                                    end
-                                    
-                                    if desc:IsA("TextButton") and desc.Text == "Join" then
-                                        local container = desc.Parent
-                                        if container then
-                                            for _, child in pairs(container:GetDescendants()) do
-                                                if child:IsA("TextLabel") and string.find(child.Text, "Players:") then
-                                                    local countStr = string.match(child.Text, "Players:%s*(%d+)")
-                                                    if countStr then
-                                                        local count = tonumber(countStr)
-                                                        -- ĐÉO CẦN LỌC ÍT NGƯỜI! Miễn là chưa Full 12 người là BẤM JOIN LUN!
-                                                        if count < 11 then
-                                                            TapButton(desc)
-                                                            joined = true
-                                                            task.wait(10) -- Nghỉ 10s chờ Roblox nó load bay sang map
-                                                            break
-                                                        end
-                                                    end
-                                                end
-                                            end
-                                        end
-                                    end
-                                    if joined then break end
-                                end
-
-                                -- Nếu đéo thấy nút Join nào bấm được, tự mở bảng Server lên
-                                if not joined then
-                                    if isBrowserOpen and refreshBtn then
-                                        TapButton(refreshBtn)
-                                        task.wait(2) 
-                                    else
-                                        local mainGui = PlayerGui:FindFirstChild("Main")
-                                        if mainGui then
-                                            for _, btn in pairs(mainGui:GetDescendants()) do
-                                                if (btn:IsA("ImageButton") or btn:IsA("TextButton")) and (string.find(btn.Name, "Server") or string.find(btn.Name, "Browser")) then
-                                                    TapButton(btn)
-                                                    task.wait(1)
-                                                end
-                                            end
-                                        end
-                                    end
-                                end
-                            end
-                        end)
-                    end
-
-                else
+                    -- 3. GỌI LỆNH HOP TỔNG ĐÃ FIX CHỐNG CRASH
+                    Hop()
                     -- 4. ĐÁNH BOSS (GIỮ GỐC 100%)
                     if not bossInWorkspace then
                         SetTask("SubTask", "CDK Quest / Boss đang ở Đảo Kem, Tự bay tới để load Map...")
@@ -3222,7 +3129,7 @@ elseif h == 3 then
         while task.wait(180) do GetServers() end
     end)
 -- ================================================================
-    -- BẢN VÁ VĨNH CỬU: HỆ THỐNG VOLT-HOP UI CLICK (ÉP DÙNG CHO TOÀN SCRIPT)
+    -- BẢN VÁ VĨNH CỬU V3: HỆ THỐNG VOLT-HOP TỐC ĐỘ CAO + CHỐNG CRASH
     -- ================================================================
     getgenv().Hop = function()
         if _G.IsHoppingNow then return end
@@ -3233,9 +3140,26 @@ elseif h == 3 then
         local GuiService = game:GetService("GuiService")
         local TeleportService = game:GetService("TeleportService")
 
-        -- KHIÊN TUYỆT ĐỐI: XÓA SẠCH MỌI BẢNG LỖI 769, 773, 267
-        GuiService.ErrorMessageChanged:Connect(function() pcall(function() GuiService:ClearError() end) end)
-        TeleportService.TeleportInitFailed:Connect(function() pcall(function() GuiService:ClearError() end) end)
+        -- KHIÊN V3: CÓ CHỐT CHẶN DEBOUNCE CHỐNG LỖI LÚP VÔ HẠN
+        if not _G.ShieldConnected then
+            _G.ShieldConnected = true
+            GuiService.ErrorMessageChanged:Connect(function(msg)
+                if msg and msg ~= "" and not _G.ClearingErr then
+                    _G.ClearingErr = true
+                    pcall(function() GuiService:ClearError() end)
+                    task.wait(1)
+                    _G.ClearingErr = false
+                end
+            end)
+            TeleportService.TeleportInitFailed:Connect(function()
+                if not _G.ClearingErr then
+                    _G.ClearingErr = true
+                    pcall(function() GuiService:ClearError() end)
+                    task.wait(1)
+                    _G.ClearingErr = false
+                end
+            end)
+        end
 
         task.spawn(function()
             local function TapButton(button)
@@ -3249,8 +3173,10 @@ elseif h == 3 then
             end
 
             while task.wait(2) do
+                if _G.ClearingErr then continue end -- Đang kẹt bảng lỗi thì chờ tắt xong mới lướt
+                
                 local PlayerGui = lplr:WaitForChild("PlayerGui")
-                local joined = false
+                local clicked = false
                 local refreshBtn = nil
                 local isBrowserOpen = false
 
@@ -3270,8 +3196,8 @@ elseif h == 3 then
                                         local count = tonumber(countStr)
                                         if count < 11 then
                                             TapButton(desc)
-                                            joined = true
-                                            task.wait(10) -- Nghỉ 10s chờ bay
+                                            clicked = true
+                                            task.wait(8) -- Chờ bay, xịt thì khiên tự đỡ
                                             break
                                         end
                                     end
@@ -3279,20 +3205,20 @@ elseif h == 3 then
                             end
                         end
                     end
-                    if joined then break end
+                    if clicked then break end
                 end
 
-                if not joined then
+                if not clicked then
                     if isBrowserOpen and refreshBtn then
                         TapButton(refreshBtn)
-                        task.wait(2)
+                        task.wait(1.5)
                     else
                         local mainGui = PlayerGui:FindFirstChild("Main")
                         if mainGui then
                             for _, btn in pairs(mainGui:GetDescendants()) do
                                 if (btn:IsA("ImageButton") or btn:IsA("TextButton")) and (string.find(btn.Name, "Server") or string.find(btn.Name, "Browser")) then
                                     TapButton(btn)
-                                    task.wait(1)
+                                    task.wait(0.5)
                                 end
                             end
                         end
@@ -3301,10 +3227,9 @@ elseif h == 3 then
             end
         end)
     end
-    
-    -- Đè nát cái hàm LowHop cũ bằng VoltHop luôn cho sạch rác
     getgenv().LowHop = getgenv().Hop
     -- ================================================================
+    Storage = { WRITE_DELAY = .5, Data = {} }
     Services = {}
     setmetatable(Services, { __index = function(k, k) return game:GetService(k) end })
     LocalPlayer = game.Players.LocalPlayer
