@@ -2713,71 +2713,90 @@ if W == "Evil" and h == 3 then
             end
             return
              elseif W == 'Good' then
-            if h == 2 then
-                    -- ==========================================
-                    -- Ải 2: Phục kích Hải Tặc (V13 - Chó Săn Ôm Sát Chống KS)
-                    -- ==========================================
-                    local castlePos = Vector3.new(-5075, 315, -3150)
-                    local lplr = game:GetService("Players").LocalPlayer
-                    local root = lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart")
-                    
-                    if not root then return end
-                    
-                    local distToCastle = (root.Position - castlePos).Magnitude
-                    local foundPirate = false
-                    
-                    pcall(function()
-                        if workspace:FindFirstChild("Enemies") then
-                            for _, mob in pairs(workspace.Enemies:GetChildren()) do
-                                if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
-                                    local name = mob.Name
-                                    local mobDist = (mob.HumanoidRootPart.Position - castlePos).Magnitude
-                                    -- Quét sạch mọi ngóc ngách Lâu Đài (Bán kính 1000)
-                                    if mobDist < 1000 and name ~= "Beautiful Pirate" and (string.find(name, "Pirate") or string.find(name, "Billionaire") or name == "Diablo" or name == "Deandre" or name == "Urban") then
-                                        SetTask("SubTask", "CDK Quest / ĐANG BĂM HẢI TẶC: " .. name)
-                                        if CombatController and CombatController.Attack then
-                                            CombatController.Attack({name})
-                                        end
-                                        foundPirate = true
-                                        _G.IsFlyingToCastle = false
-                                        break
-                                    end
+if h == 2 then
+                -- ==========================================
+                -- Ải 2: Phục kích Hải Tặc (V14 - KS CỰC ĐOAN, XÓA ĐỆM KHÍ)
+                -- ==========================================
+                local castlePos = Vector3.new(-5075, 315, -3150)
+                local lplr = game:GetService("Players").LocalPlayer
+                local char = lplr.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                
+                if not root then return end
+                
+                local distToCastle = (root.Position - castlePos).Magnitude
+                local targetMob = nil
+                
+                -- LỌC TÌM BẤT KỲ CON QUÁI NÀO XUẤT HIỆN Ở LÂU ĐÀI (ĐÉO CẦN LỌC TÊN)
+                pcall(function()
+                    if workspace:FindFirstChild("Enemies") then
+                        for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                            if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 and mob:FindFirstChild("HumanoidRootPart") then
+                                local mobDist = (mob.HumanoidRootPart.Position - castlePos).Magnitude
+                                -- Chém sạch mọi con quái trong bán kính 1000 (loại trừ Beautiful Pirate ở Domain of Rose)
+                                if mobDist < 1000 and mob.Name ~= "Beautiful Pirate" then
+                                    targetMob = mob
+                                    break
                                 end
                             end
                         end
+                    end
+                end)
+                
+                if targetMob then
+                    _G.IsFlyingToCastle = false
+                    if SetTask then SetTask("SubTask", "CDK Quest / ĐANG LAO VÀO KS: " .. targetMob.Name) end
+                    
+                    -- [QUAN TRỌNG NHẤT]: PHÁ HỦY ĐỆM KHÍ ĐỂ NHÂN VẬT ĐƯỢC THOÁT KHỎI TÌNH TRẠNG BỊ LIỆT!
+                    local bv = root:FindFirstChild("BodyVelocity")
+                    if bv then bv:Destroy() end
+                    
+                    -- Ép cầm Tushita
+                    pcall(function()
+                        local tushita = lplr.Backpack:FindFirstChild("Tushita") or char:FindFirstChild("Tushita")
+                        if tushita then char.Humanoid:EquipTool(tushita) end
                     end)
                     
-                    if not foundPirate then
-                        -- NẾU ĐANG Ở NGOÀI ĐẢO (Xa hơn 800 studs) -> BAY VÀO LÂU ĐÀI
-                        if distToCastle > 800 then 
-                            SetTask("SubTask", "CDK Quest / Đang bay ra Castle phục kích...")
-                            if not _G.IsFlyingToCastle then
-                                _G.IsFlyingToCastle = true
-                                task.spawn(function()
-                                    local TS = game:GetService("TweenService")
-                                    local tween = TS:Create(root, TweenInfo.new(distToCastle/300, Enum.EasingStyle.Linear), {CFrame = CFrame.new(castlePos)})
-                                    
-                                    local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
-                                    bv.Velocity = Vector3.zero
-                                    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-                                    
-                                    tween:Play()
-                                    tween.Completed:Wait()
-                                    _G.IsFlyingToCastle = false
-                                end)
-                            end
-                        else
-                            -- NẾU ĐÃ Ở TRONG LÂU ĐÀI -> ĐỨNG IM NGAY TẠI CHỖ RÌNH QUÁI (ĐÉO TELE VỀ TÂM NỮA!)
-                            _G.IsFlyingToCastle = false
-                            SetTask("SubTask", "CDK Quest / Đang ôm sát chờ Hải Tặc spawn...")
-                            
-                            -- Chỉ tạo đệm khí chống rớt, đéo can thiệp tọa độ CFrame
-                            local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
-                            bv.Velocity = Vector3.zero
-                            bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                    -- TELEPORT TỨC THỜI VÀO CỔ QUÁI (Đéo dùng Tween chậm chạp, phải giành KS!)
+                    root.CFrame = targetMob.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                    
+                    -- Giao cho Hub chém
+                    if CombatController and CombatController.Attack then
+                        CombatController.Attack({targetMob.Name})
+                    end
+                else
+                    -- NẾU KHÔNG CÓ QUÁI -> MỚI BẬT ĐỆM KHÍ CHỜ ĐỢI
+                    if distToCastle > 800 then 
+                        if SetTask then SetTask("SubTask", "CDK Quest / Đang bay cấp tốc ra Castle...") end
+                        if not _G.IsFlyingToCastle then
+                            _G.IsFlyingToCastle = true
+                            task.spawn(function()
+                                local TS = game:GetService("TweenService")
+                                local tween = TS:Create(root, TweenInfo.new(distToCastle/300, Enum.EasingStyle.Linear), {CFrame = CFrame.new(castlePos)})
+                                local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
+                                bv.Velocity = Vector3.zero
+                                bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                                tween:Play()
+                                tween.Completed:Wait()
+                                _G.IsFlyingToCastle = false
+                            end)
+                        end
+                    else
+                        _G.IsFlyingToCastle = false
+                        if SetTask then SetTask("SubTask", "CDK Quest / Đang ôm sát tâm lâu đài chờ Hải Tặc...") end
+                        
+                        -- Bật đệm khí
+                        local bv = root:FindFirstChild("BodyVelocity") or Instance.new("BodyVelocity", root)
+                        bv.Velocity = Vector3.zero
+                        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+                        
+                        -- Nếu trôi xa quá thì tự giật lại về tâm lâu đài
+                        if distToCastle > 50 then
+                            root.CFrame = CFrame.new(castlePos)
                         end
                     end
-                    return
+                end
+                return
 elseif h == 3 then
                 -- ==========================================================
                 -- ẢI 3: CAKE QUEEN (BẢN V25 - GIỮ CLICK UI ẢO NHƯNG ĐÉO LỌC NGƯỜI)
