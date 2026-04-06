@@ -3221,51 +3221,90 @@ elseif h == 3 then
         GetServers()
         while task.wait(180) do GetServers() end
     end)
-    function Hop(k, W)
-        local h = GetServers()
-        local X = {}
-        for w, D in h do
-            table.insert(X, { JobId = w, Players = D.Count, LastUpdate = D.__LastUpdate, Region = D.Region })
-        end
-        print(#X, "servers received")
-        for h = 1, #X do
-            while task.wait() do
-                local h = math.random(1, #X)
-                ServerData = X[h]
-                if ServerData then
-                    if not k or ServerData.Players < k then
-                        if not W or ServerData.Regoin == W then
-                            print("Found Server:", ServerData.JobId, "Player Count:", ServerData.Players, 'Region:',
-                                ServerData.Region)
-                            break
+-- ================================================================
+    -- BẢN VÁ VĨNH CỬU: HỆ THỐNG VOLT-HOP UI CLICK (ÉP DÙNG CHO TOÀN SCRIPT)
+    -- ================================================================
+    getgenv().Hop = function()
+        if _G.IsHoppingNow then return end
+        _G.IsHoppingNow = true
+        if SetTask then SetTask("MainTask", "🚀 ĐANG KÍCH HOẠT VOLT-HOP TÌM SERVER...") end
+        
+        local lplr = game:GetService("Players").LocalPlayer
+        local GuiService = game:GetService("GuiService")
+        local TeleportService = game:GetService("TeleportService")
+
+        -- KHIÊN TUYỆT ĐỐI: XÓA SẠCH MỌI BẢNG LỖI 769, 773, 267
+        GuiService.ErrorMessageChanged:Connect(function() pcall(function() GuiService:ClearError() end) end)
+        TeleportService.TeleportInitFailed:Connect(function() pcall(function() GuiService:ClearError() end) end)
+
+        task.spawn(function()
+            local function TapButton(button)
+                pcall(function()
+                    if getconnections then
+                        for _, conn in pairs(getconnections(button.MouseButton1Click)) do conn:Fire() end
+                    elseif firesignal then
+                        firesignal(button.MouseButton1Click)
+                    end
+                end)
+            end
+
+            while task.wait(2) do
+                local PlayerGui = lplr:WaitForChild("PlayerGui")
+                local joined = false
+                local refreshBtn = nil
+                local isBrowserOpen = false
+
+                for _, desc in pairs(PlayerGui:GetDescendants()) do
+                    if desc:IsA("TextButton") and desc.Text == "Refresh" then
+                        refreshBtn = desc
+                        if desc.Visible or (desc.Parent and desc.Parent.Visible) then isBrowserOpen = true end
+                    end
+                    
+                    if desc:IsA("TextButton") and desc.Text == "Join" then
+                        local container = desc.Parent
+                        if container then
+                            for _, child in pairs(container:GetDescendants()) do
+                                if child:IsA("TextLabel") and string.find(child.Text, "Players:") then
+                                    local countStr = string.match(child.Text, "Players:%s*(%d+)")
+                                    if countStr then
+                                        local count = tonumber(countStr)
+                                        if count < 11 then
+                                            TapButton(desc)
+                                            joined = true
+                                            task.wait(10) -- Nghỉ 10s chờ bay
+                                            break
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    if joined then break end
+                end
+
+                if not joined then
+                    if isBrowserOpen and refreshBtn then
+                        TapButton(refreshBtn)
+                        task.wait(2)
+                    else
+                        local mainGui = PlayerGui:FindFirstChild("Main")
+                        if mainGui then
+                            for _, btn in pairs(mainGui:GetDescendants()) do
+                                if (btn:IsA("ImageButton") or btn:IsA("TextButton")) and (string.find(btn.Name, "Server") or string.find(btn.Name, "Browser")) then
+                                    TapButton(btn)
+                                    task.wait(1)
+                                end
+                            end
                         end
                     end
                 end
             end
-        end
-        print('Teleporting to', ServerData.JobId, "..")
-        game:GetService("ReplicatedStorage"):WaitForChild('__ServerBrowser'):InvokeServer("teleport", ServerData.JobId)
+        end)
     end
-    LowHop = function(k, k)
-        local k = {}
-        local W = game:HttpGet('https://games.roblox.com/v1/games/' ..
-            game.PlaceId .. '/servers/Public?sortOrder=Asc&limit=100&excludeFullGames=true')
-        local h = game:GetService("HttpService"):JSONDecode(W)
-        if h and h.data then
-            for W, W in next, h.data do
-                if type(W) == "table" and tonumber(W.playing) and tonumber(W.maxPlayers) and W.playing < 5 and W.id ~= JobId then
-                    table.insert(k, 1, W.id)
-                end
-            end
-        end
-        if #k > 0 then
-            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, k[math.random(1, #k)],
-                game.Players.LocalPlayer)
-        else
-            return alert('Serverhop', "Couldn't find a server.")
-        end
-    end
-    Storage = { WRITE_DELAY = .5, Data = {} }
+    
+    -- Đè nát cái hàm LowHop cũ bằng VoltHop luôn cho sạch rác
+    getgenv().LowHop = getgenv().Hop
+    -- ================================================================
     Services = {}
     setmetatable(Services, { __index = function(k, k) return game:GetService(k) end })
     LocalPlayer = game.Players.LocalPlayer
