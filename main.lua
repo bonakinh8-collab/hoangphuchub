@@ -3419,13 +3419,6 @@ elseif h == 3 then
     task.spawn(function()
         while task.wait() do
             pcall(function()
-                if Config and Config.Configuration and Config.Configuration.HopWhenIdle and LastIdling and os.time() - LastIdling > 300.0 then
-                    if type(SetTask) == "function" then SetTask('MainTask', "Rejoining due to idle!") end
-                    task.wait(1)
-                    while task.wait() do game:GetService('TeleportService'):Teleport(game.PlaceId) end
-                end
-            end)
-            pcall(function()
                 if not AnimationDelay or os.time() - AnimationDelay > 60 then
                     AnimationDelay = os.time()
                     local lplr = game:GetService("Players").LocalPlayer
