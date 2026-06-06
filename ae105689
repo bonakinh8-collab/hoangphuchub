@@ -1,1 +1,1673 @@
+--[[
+    
+         ONE CLICK CDK v4  Rewrite Clean         
+      Combat: Tushita/Yama + FastAttack + TP1     
+      GUI Status * Auto Team * Server Hop         
+    
+]]
 
+repeat task.wait() until game:IsLoaded()
+
+-- 
+--  SERVICES
+-- 
+local Players     = game:GetService("Players")
+local RS          = game:GetService("ReplicatedStorage")
+local TweenSvc    = game:GetService("TweenService")
+local RunSvc      = game:GetService("RunService")
+local TpSvc       = game:GetService("TeleportService")
+local HttpSvc     = game:GetService("HttpService")
+local VIM         = game:GetService("VirtualInputManager")
+local VirtualUsr  = game:GetService("VirtualUser")
+
+local plr       = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait() or Players.LocalPlayer
+local PGui      = plr:WaitForChild("PlayerGui", 15)
+local WS        = workspace
+
+-- oi remote san sang
+repeat task.wait(0.3) until RS:FindFirstChild("Remotes")
+    and RS.Remotes:FindFirstChild("CommF_")
+    and RS:FindFirstChild("Modules") and RS.Modules:FindFirstChild("Net")
+
+local CommF   = RS.Remotes.CommF_
+local Net     = RS.Modules.Net
+local Enemies = WS:WaitForChild("Enemies", 30)
+
+-- 
+--  CONFIG
+-- 
+local CFG = {
+    Team          = "Pirates",
+    MasteryTarget = 350,
+    EliteRequired = 30,
+}
+
+-- 
+--  STATE
+-- 
+local Phase    = "IDLE"
+local Detail   = ""
+local Active   = true
+local Noclip_c = nil
+local CurTween = nil
+
+-- 
+--  GUI  Panel trang thai goc trai duoi
+-- 
+local LblPhase, LblDetail
+
+local function BuildGUI()
+    pcall(function()
+        local old = PGui:FindFirstChild("CDK_Status")
+        if old then old:Destroy() end
+
+        local sg = Instance.new("ScreenGui")
+        sg.Name, sg.ResetOnSpawn, sg.DisplayOrder = "CDK_Status", false, 999
+        sg.Parent = PGui
+
+        local bg = Instance.new("Frame", sg)
+        bg.Size = UDim2.new(0, 380, 0, 82)
+        bg.Position = UDim2.new(0, 10, 1, -95)
+        bg.BackgroundColor3 = Color3.fromRGB(8, 8, 20)
+        bg.BackgroundTransparency = 0.05
+        bg.BorderSizePixel = 0
+        Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 12)
+
+        local stroke = Instance.new("UIStroke", bg)
+        stroke.Color = Color3.fromRGB(80, 160, 255)
+        stroke.Thickness = 1.8
+        stroke.Transparency = 0.1
+
+        -- Header
+        local hdr = Instance.new("TextLabel", bg)
+        hdr.Size = UDim2.new(1, 0, 0, 22)
+        hdr.BackgroundColor3 = Color3.fromRGB(25, 80, 200)
+        hdr.BorderSizePixel = 0
+        hdr.Text = "FIRE  One Click CDK v4"
+        hdr.TextColor3 = Color3.new(1, 1, 1)
+        hdr.TextSize = 13
+        hdr.Font = Enum.Font.GothamBold
+        hdr.TextXAlignment = Enum.TextXAlignment.Center
+        Instance.new("UICorner", hdr).CornerRadius = UDim.new(0, 12)
+
+        -- Phase label
+        local pl = Instance.new("TextLabel", bg)
+        pl.Size = UDim2.new(1, -10, 0, 26)
+        pl.Position = UDim2.new(0, 5, 0, 24)
+        pl.BackgroundTransparency = 1
+        pl.TextColor3 = Color3.fromRGB(255, 220, 50)
+        pl.TextSize = 13
+        pl.Font = Enum.Font.GothamSemibold
+        pl.TextXAlignment = Enum.TextXAlignment.Left
+        pl.TextTruncate = Enum.TextTruncate.AtEnd
+        pl.Text = "ang khoi ong..."
+        LblPhase = pl
+
+        -- Detail label
+        local dl = Instance.new("TextLabel", bg)
+        dl.Size = UDim2.new(1, -10, 0, 22)
+        dl.Position = UDim2.new(0, 5, 0, 52)
+        dl.BackgroundTransparency = 1
+        dl.TextColor3 = Color3.fromRGB(120, 255, 130)
+        dl.TextSize = 11
+        dl.Font = Enum.Font.Gotham
+        dl.TextXAlignment = Enum.TextXAlignment.Left
+        dl.TextTruncate = Enum.TextTruncate.AtEnd
+        dl.Text = ""
+        LblDetail = dl
+    end)
+end
+
+BuildGUI()
+PGui.ChildRemoved:Connect(function(c)
+    if c.Name == "CDK_Status" then task.wait(0.5); BuildGUI() end
+end)
+
+local _guiT = 0
+local function Log(phase, detail, force)
+    Phase = phase or Phase
+    Detail = detail or ""
+    print("[CDK] [" .. Phase .. "] " .. Detail)
+    local now = tick()
+    if not force and now - _guiT < 0.8 then return end
+    _guiT = now
+    pcall(function()
+        if LblPhase  then LblPhase.Text  = " " .. Phase end
+        if LblDetail then LblDetail.Text = Detail end
+    end)
+end
+
+-- 
+--  ANTI-AFK
+-- 
+plr.Idled:Connect(function()
+    pcall(function()
+        if getconnections then
+            for _, v in pairs(getconnections(plr.Idled)) do pcall(function() v:Disable() end) end
+        end
+    end)
+    pcall(function() VirtualUsr:CaptureController(); VirtualUsr:ClickButton2(Vector2.new()) end)
+end)
+
+-- 
+--  CHARACTER TRACKING
+-- 
+local Char = plr.Character
+plr.CharacterAdded:Connect(function(c) Char = c end)
+
+-- 
+--  UTILITY FUNCTIONS
+-- 
+local function alive(entity)
+    if not entity or not entity.Parent then return false end
+    local h = entity:FindFirstChild("Humanoid")
+    return h and h.Health > 0 and entity:FindFirstChild("HumanoidRootPart") ~= nil
+end
+
+local function playerOk()
+    local c = plr.Character
+    if not c then return false end
+    local h = c:FindFirstChildOfClass("Humanoid")
+    return h and h.Health > 0 and c:FindFirstChild("HumanoidRootPart") ~= nil
+end
+
+local function dist2D(a, b)
+    return (Vector3.new(a.X, 0, a.Z) - Vector3.new(b.X, 0, b.Z)).Magnitude
+end
+
+local function dist3D(target)
+    local c = plr.Character
+    if not c or not c:FindFirstChild("HumanoidRootPart") then return math.huge end
+    local pos = typeof(target) == "CFrame" and target.Position
+        or typeof(target) == "Vector3" and target
+        or (typeof(target) == "Instance" and target:FindFirstChild("HumanoidRootPart") and target.HumanoidRootPart.Position)
+        or nil
+    if not pos then return math.huge end
+    return (c.HumanoidRootPart.Position - pos).Magnitude
+end
+
+local function has(name)
+    return plr.Backpack:FindFirstChild(name)
+        or (plr.Character and plr.Character:FindFirstChild(name))
+end
+
+local function inBag(name)
+    if has(name) then return true end
+    local ok, inv = pcall(function() return CommF:InvokeServer("getInventory") end)
+    if not ok or type(inv) ~= "table" then return false end
+    for _, v in pairs(inv) do
+        if type(v) == "table" and v.Name == name then return true end
+    end
+    return false
+end
+
+local function mastery(name)
+    local t = has(name)
+    if t and typeof(t) == "Instance" and t:FindFirstChild("Level") then return t.Level.Value end
+    local ok, inv = pcall(function() return CommF:InvokeServer("getInventory") end)
+    if not ok or type(inv) ~= "table" then return 0 end
+    for _, v in pairs(inv) do
+        if type(v) == "table" and v.Name == name then return tonumber(v.Mastery) or 0 end
+    end
+    return 0
+end
+
+local function loadItem(name)
+    if not has(name) then pcall(function() CommF:InvokeServer("LoadItem", name) end); task.wait(0.5) end
+end
+
+-- 
+--  EQUIP  Uu tien Tushita/Yama
+-- 
+local function equipName(name)
+    if not name then return end
+    local c = plr.Character
+    if not c or not c:FindFirstChild("Humanoid") then return end
+    -- a cam roi thi bo qua
+    local held = c:FindFirstChildOfClass("Tool")
+    if held and held.Name == name then return end
+    local t = plr.Backpack:FindFirstChild(name)
+    if t then c.Humanoid:EquipTool(t) end
+end
+
+local function equipBestSword()
+    local c = plr.Character
+    if not c or not c:FindFirstChild("Humanoid") then return end
+    
+    if has("Tushita") then equipName("Tushita"); return end
+    if has("Yama") then equipName("Yama"); return end
+    
+    local types = {"Melee", "Sword"}
+    for _, typeName in ipairs(types) do
+        for _, t in pairs(plr.Backpack:GetChildren()) do
+            if t:IsA("Tool") and t.ToolTip == typeName then
+                c.Humanoid:EquipTool(t); return
+            end
+        end
+    end
+end
+
+-- 
+--  NOCLIP + VELOCITY (tu elite_god_chalice_hunter)
+-- 
+local function noClip()
+    pcall(function()
+        if plr.Character then
+            for _, p in pairs(plr.Character:GetDescendants()) do
+                if p:IsA("BasePart") and p.CanCollide then p.CanCollide = false end
+            end
+        end
+    end)
+end
+
+local function setVelocity(on)
+    pcall(function()
+        local root = plr.Character.HumanoidRootPart
+        if on then
+            if not root:FindFirstChild("_CDKVel") then
+                local bv = Instance.new("BodyVelocity")
+                bv.Name = "_CDKVel"
+                bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                bv.Velocity = Vector3.zero
+                bv.Parent = root
+            end
+        else
+            local bv = root:FindFirstChild("_CDKVel")
+            if bv then bv:Destroy() end
+        end
+    end)
+end
+
+
+local function getCDKBlock()
+    local block = WS:FindFirstChild("getCDKBlock()")
+    if not block then
+        block = Instance.new("Part", WS)
+        block.Name = "getCDKBlock()"
+        block.Size = Vector3.new(1, 1, 1)
+        block.Anchored = true
+        block.CanCollide = false
+        block.CanTouch = false
+        block.Transparency = 1
+    end
+    return block
+end
+
+_G._CDK_TP_Active = false
+
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            if _G._CDK_TP_Active and Active then
+                local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+                if root and getCDKBlock() then
+                    if (root.Position - getCDKBlock().Position).Magnitude <= 200 then
+                        root.CFrame = getCDKBlock().CFrame
+                    else
+                        getCDKBlock().CFrame = root.CFrame
+                    end
+                end
+                noClip()
+                setVelocity(true)
+            else
+                setVelocity(false)
+            end
+        end)
+    end
+end)
+
+local function TP1(pos, condition)
+    if not playerOk() then return end
+    condition = condition or function() return true end
+    local target = typeof(pos) == "CFrame" and pos or CFrame.new(pos)
+
+    local root = plr.Character.HumanoidRootPart
+    getCDKBlock().CFrame = root.CFrame
+    _G._CDK_TP_Active = true
+
+    pcall(function()
+        if plr.Character.Humanoid.Sit then
+            plr.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end)
+
+    local function tweenTo(subTarget)
+        local d = (subTarget.Position - getCDKBlock().Position).Magnitude
+        if d < 5 then return end
+        local tweenTime = d / 300
+        
+        if CurTween then pcall(function() CurTween:Cancel(); CurTween = nil end) end
+        CurTween = TweenSvc:Create(getCDKBlock(), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {CFrame = subTarget})
+        CurTween:Play()
+        
+        local start = tick()
+        repeat
+            task.wait(0.1)
+        until not CurTween or CurTween.PlaybackState ~= Enum.PlaybackState.Playing or not playerOk() or not condition() or not Active or tick() - start > 60
+
+        if CurTween then pcall(function() CurTween:Cancel(); CurTween = nil end) end
+        getCDKBlock().CFrame = subTarget
+    end
+
+    tweenTo(target)
+    _G._CDK_TP_Active = false
+end
+
+
+-- 
+--  TP1  Tween truc tiep HRP (tu elite_god_chalice_hunter)
+--  Muot + NoClip + AddVelocity + Pause moi 10s
+-- 
+
+-- 
+--  CALDIRECTION  Xoay quanh boss khi anh
+-- 
+local SpinAngle, SpinTick = 0, tick()
+local function spinPos(center)
+    if SpinAngle > 6000 then SpinAngle = 60 end
+    SpinAngle = SpinAngle + (tick() - SpinTick > 0.5 and 90 or 0)
+    SpinTick = tick() - SpinTick > 0.5 and tick() or SpinTick
+    return CFrame.new(
+        center.X + math.sin(math.rad(SpinAngle + 360)) * 30,
+        center.Y,
+        center.Z + math.cos(math.rad(SpinAngle + 360)) * 30
+    )
+end
+
+-- 
+--  FAST ATTACK  RegisterAttack(0) + RegisterHit
+--  User-verified: A TEST HOAT ONG
+-- 
+local RegAttack = Net:WaitForChild("RE/RegisterAttack", 10)
+local RegHit    = Net:WaitForChild("RE/RegisterHit", 10)
+
+local LastAttack = 0
+
+local function fastAttack()
+    local c = plr.Character
+    if not c then return end
+
+    local tool = c:FindFirstChildOfClass("Tool")
+    if not tool then return end
+
+    -- Tranh spam remote qua nhanh gay kick (Error 267)
+    local cd = tool:FindFirstChild("Cooldown") and tool.Cooldown.Value or 0.25
+    if tick() - LastAttack < cd then return end
+    LastAttack = tick()
+
+    local hrp = c:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    -- Thu thap targets trong range (giong getHead)
+    local hitTable = {}
+    for _, mob in pairs(Enemies:GetChildren()) do
+        if mob ~= c and alive(mob) then
+            local d = (hrp.Position - mob.HumanoidRootPart.Position).Magnitude
+            if d <= 60 then
+                table.insert(hitTable, { mob, mob.HumanoidRootPart })
+            end
+        end
+    end
+    if #hitTable == 0 then return end
+
+    -- Tach firstTarget khoi hitTable
+    local firstTarget = table.remove(hitTable, 1)[2]
+
+    -- Khoi tao Attack
+    RegAttack:FireServer()
+
+    -- Kiem tra Thread/Anti-cheat moi cua game
+    local useThread = false
+    local hitFn = nil
+    pcall(function() useThread = require(RS.Modules.Flags).COMBAT_REMOTE_THREAD or false end)
+    pcall(function() hitFn = getrenv()._G.SendHitsToServer end)
+
+    if useThread and hitFn then
+        local v1 = tostring(plr.UserId):sub(2,4) .. tostring(coroutine.running()):sub(11,15)
+        hitFn(firstTarget, hitTable, nil, v1)
+    else
+        pcall(function() RegHit:FireServer(firstTarget, hitTable) end)
+    end
+end
+
+-- 
+--  AUTO HAKI
+-- 
+task.spawn(function()
+    while task.wait(1.5) do
+        pcall(function()
+            if plr.Character and not plr.Character:FindFirstChild("HasBuso") then
+                CommF:InvokeServer("Buso")
+            end
+        end)
+    end
+end)
+
+-- 
+--  BRING MOB  Chi gom mob GAN (< 25 studs)
+--  Khong keo xa khoi spawn  tranh mob bi ket/mat dame
+-- 
+local BossNames = {
+    ["Longma"]=1, ["Soul Reaper"]=1, ["Ghost"]=1, ["Cursed Skeleton Boss"]=1,
+    ["rip_indra True Form"]=1, ["Cake Queen"]=1, ["Dough King"]=1,
+    ["Darkbeard"]=1, ["Tide Keeper"]=1, ["Tyrant of the Skies"]=1,
+}
+
+local BRING_SAFE = 25  -- chi gom mob trong 25 studs (trong vung spawn)
+
+local function bringClose(anchorPos)
+    if not playerOk() then return end
+    -- Chi gom mob a o gan san  don lai 1 cho duoi chan
+    local bringTarget = CFrame.new(anchorPos.X, anchorPos.Y - 15, anchorPos.Z)
+    for _, mob in pairs(Enemies:GetChildren()) do
+        if BossNames[mob.Name] then continue end
+        if not alive(mob) then continue end
+        local mRoot = mob.HumanoidRootPart
+        local d = (mRoot.Position - anchorPos).Magnitude
+        if d > BRING_SAFE then continue end  -- chi mob gan
+        pcall(function()
+            mRoot.CFrame = bringTarget
+            mRoot.CanCollide = false
+            mRoot.AssemblyLinearVelocity = Vector3.zero
+            mRoot.AssemblyAngularVelocity = Vector3.zero
+            if mob.Humanoid:FindFirstChild("Animator") then mob.Humanoid.Animator:Destroy() end
+            if not mRoot:FindFirstChild("_BV") then
+                local bv = Instance.new("BodyVelocity")
+                bv.Name = "_BV"; bv.MaxForce = Vector3.new(1e9,1e9,1e9)
+                bv.Velocity = Vector3.zero; bv.Parent = mRoot
+            else
+                mRoot._BV.Velocity = Vector3.zero
+            end
+        end)
+        pcall(function() sethiddenproperty(plr, "SimulationRadius", math.huge) end)
+    end
+end
+
+-- 
+--  KILL ENEMY  Bay toi mob TAI CHO + ung tren au
+--  Mob o au thi anh o o, khong keo i xa
+-- 
+local HOVER_Y = 35
+local MIN_Y   = 50
+
+local function bringMob(targetMob)
+    if not targetMob or not targetMob:FindFirstChild("HumanoidRootPart") then return end
+    local posMon = targetMob.HumanoidRootPart.CFrame
+    local count = 0
+    
+    pcall(function() sethiddenproperty(plr, "SimulationRadius", math.huge) end)
+
+    for _, v in pairs(WS.Enemies:GetChildren()) do
+        if v.Name == targetMob.Name and v ~= targetMob then
+            local hum = v:FindFirstChild("Humanoid")
+            local pp = v:FindFirstChild("HumanoidRootPart")
+            if hum and pp and hum.Health > 0 then
+                if (pp.Position - posMon.Position).Magnitude <= 350 then
+                    count = count + 1
+                    if count >= 6 then break end
+                    
+                    pcall(function()
+                        pp.CanCollide = false
+                        hum.WalkSpeed = 0
+                        hum.JumpPower = 0
+                        if hum:FindFirstChild("Animator") then hum.Animator:Destroy() end
+                        
+                        pp.CFrame = posMon
+                        pp.AssemblyLinearVelocity = Vector3.zero
+                        pp.AssemblyAngularVelocity = Vector3.zero
+                    end)
+                end
+            end
+        end
+    end
+end
+
+local function killMob(enemy, check, noBring, weaponName)
+    if not alive(enemy) then return end
+    pcall(function() enemy:AddTag("realmob") end)
+
+    if dist3D(enemy) > 50 then
+        Log(Phase, "Bay toi " .. enemy.Name .. "...")
+        TP1(enemy.HumanoidRootPart.CFrame * CFrame.new(0, HOVER_Y, 0),
+            function() return alive(enemy) and dist3D(enemy) > 20 end)
+    end
+
+    -- Removed dist3D > 50 abort condition to prevent running away when knocked back
+
+    local function equipWeapon()
+        if weaponName then
+            loadItem(weaponName)
+            equipName(weaponName)
+        else
+            equipBestSword()
+        end
+    end
+
+    equipWeapon()
+    local lastEquip = tick()
+    setVelocity(true)
+    local hoverTween = nil
+    
+    local v3v4Loop = true
+    task.spawn(function()
+        local vim = game:GetService("VirtualInputManager")
+        while v3v4Loop and Active do
+            pcall(function()
+                vim:SendKeyEvent(true, Enum.KeyCode.T, false, game)
+                task.wait(0.1)
+                vim:SendKeyEvent(false, Enum.KeyCode.T, false, game)
+                task.wait(0.5)
+                vim:SendKeyEvent(true, Enum.KeyCode.Y, false, game)
+                task.wait(0.1)
+                vim:SendKeyEvent(false, Enum.KeyCode.Y, false, game)
+            end)
+            task.wait(5)
+        end
+    end)
+    
+    local attackConn = RunSvc.Heartbeat:Connect(function()
+        if Active and alive(enemy) and playerOk() then
+            pcall(function() fastAttack() end)
+            pcall(function()
+                local eHum = enemy:FindFirstChild("Humanoid")
+                local eRoot = enemy:FindFirstChild("HumanoidRootPart")
+                if eHum then eHum.WalkSpeed = 0; eHum.JumpPower = 0 end
+                if eRoot then
+                    eRoot.CanCollide = false
+                    eRoot.Velocity = Vector3.new(0,0,0)
+                end
+            end)
+            if not noBring then pcall(function() bringMob(enemy) end) end
+        end
+    end)
+
+    repeat
+        task.wait(0.15)
+        if not Active then break end
+        if check and not check() then break end
+        if not playerOk() then task.wait(2); continue end
+        if not alive(enemy) then break end
+        local ePos = enemy.HumanoidRootPart.Position
+        local hoverCF
+        if enemy.Name:find("Cake Queen") or enemy.Name:find("Boss") then
+            -- May thich bay cao thi tao cho bay thang len troi 45 met luon
+            local safeY = math.max(ePos.Y + 45, MIN_Y)
+            hoverCF = CFrame.new(ePos.X, safeY, ePos.Z)
+        else
+            -- Quai thuong thi ung tren au. Neu noBring = true (anh tu xa) thi bay len cao 25m
+            local hoverDist = noBring and 25 or HOVER_Y
+            local safeY = math.max(ePos.Y + hoverDist, MIN_Y)
+            hoverCF = CFrame.new(ePos.X, safeY, ePos.Z)
+        end
+
+        pcall(function()
+            local root = plr.Character.HumanoidRootPart
+            _G._CDK_TP_Active = true
+            
+            local d = (getCDKBlock().Position - hoverCF.Position).Magnitude
+            if d > 200 then
+                if hoverTween then pcall(function() hoverTween:Cancel() end) end
+                TP1(hoverCF, function() return alive(enemy) end)
+            elseif d > 3 then
+                if hoverTween then pcall(function() hoverTween:Cancel() end) end
+                local tweenTime = math.clamp(d / 250, 0.1, 1.5)
+                hoverTween = TweenSvc:Create(getCDKBlock(),
+                    TweenInfo.new(tweenTime, Enum.EasingStyle.Linear),
+                    {CFrame = hoverCF})
+                hoverTween:Play()
+            else
+                if hoverTween then pcall(function() hoverTween:Cancel() end) end
+                getCDKBlock().CFrame = hoverCF
+            end
+            root.AssemblyLinearVelocity = Vector3.zero
+            noClip()
+        end)
+        if tick() - lastEquip > 5 then
+            equipWeapon()
+            lastEquip = tick()
+        end
+    until not Active or not alive(enemy) or (check and not check())
+    --_G._CDK_TP_Active = false
+    if hoverTween then pcall(function() hoverTween:Cancel() end) end
+    if attackConn then pcall(function() attackConn:Disconnect() end) end
+    v3v4Loop = false
+    setVelocity(false)
+end
+
+local function findMob(names)
+    if type(names) == "string" then names = {names} end
+    for _, src in ipairs({RS, Enemies}) do
+        for _, child in pairs(src:GetChildren()) do
+            if child:IsA("Model") and alive(child) then
+                for _, n in ipairs(names) do
+                    if child.Name == n then return child end
+                end
+            end
+        end
+    end
+    return nil
+end
+
+-- 
+--  SERVER HOP (tu hop.txt  hoat ong tot)
+-- 
+local hopping = false
+local hopRetry = 0
+
+-- [ HAM HOP TOI UU 1-REQUEST ]
+local isHopping = false
+local ServerBrowser = RS:WaitForChild("__ServerBrowser")
+local function hop()
+    if isHopping then return end
+    isHopping = true
+    Log("HOP", "Dang tim server moi...", true)
+
+    local function getServersFromAPI()
+        local servers = {}
+        local cursor = ""
+        local ok = false
+        repeat
+            local s, r = pcall(function() return HttpSvc:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100&cursor=" .. cursor)) end)
+            if s and r and type(r) == "table" and r.data then
+                ok = true
+                for _, sv in pairs(r.data) do
+                    if type(sv) == "table" and sv.playing and sv.id and sv.playing >= 1 and sv.playing <= 10 and sv.id ~= game.JobId then
+                        table.insert(servers, sv)
+                        if #servers >= 10 then break end
+                    end
+                end
+                cursor = r.nextPageCursor or ""
+            else
+                cursor = ""
+            end
+        until cursor == "" or #servers >= 10
+        if ok and #servers > 0 then return servers end
+        return nil
+    end
+
+    local function getServersFromBrowser()
+        local collectedServers = {}
+        for page = 1, 100 do
+            local success, data = pcall(function() return ServerBrowser:InvokeServer(page) end)
+            if success and type(data) == "table" then
+                for jobId, info in pairs(data) do
+                    if jobId ~= game.JobId and type(info) == "table" then
+                        table.insert(collectedServers, {id = jobId, playing = info.Count or 0})
+                    end
+                end
+                if #collectedServers >= 30 then break end
+            end
+            task.wait(0.05)
+        end
+        if #collectedServers > 0 then
+            table.sort(collectedServers, function(a, b) return a.playing < b.playing end)
+            local top10 = {}
+            for i = 1, math.min(10, #collectedServers) do table.insert(top10, collectedServers[i]) end
+            return top10
+        end
+        return nil
+    end
+
+    task.spawn(function()
+        local teleportFailed = false
+        TpSvc.TeleportInitFailed:Connect(function() teleportFailed = true end)
+        while true do
+            local servers = getServersFromAPI()
+            if not servers then
+                Log("HOP", "API bi gioi han, dung ServerBrowser...", true)
+                servers = getServersFromBrowser()
+            end
+            if servers and #servers > 0 then
+                local pick = servers[math.random(1, #servers)]
+                Log("HOP", "Dang ket noi Server moi...", true)
+                teleportFailed = false
+                pcall(function() ServerBrowser:InvokeServer("teleport", pick.id) end)
+                pcall(function() TpSvc:TeleportToPlaceInstance(game.PlaceId, pick.id, plr) end)
+                local waitTime = 0
+                while waitTime < 15 do
+                    if teleportFailed then break end
+                    task.wait(1)
+                    waitTime = waitTime + 1
+                end
+                if teleportFailed then Log("HOP", "Ket noi that bai, thu lai...", true) else Log("HOP", "Dang tim server khac do loi...", true) end
+            else
+                Log("HOP", "Khong tim thay server, cho 10s...", true)
+                task.wait(10)
+            end
+        end
+    end)
+end
+
+TpSvc.TeleportInitFailed:Connect(function()
+    isHopping = false
+    task.wait(3)
+    hop()
+end)
+
+-- 
+--  TEAM SELECT  Cho UI hien roi moi chon
+-- 
+local function selectTeam()
+    if plr.Team then 
+        Log("TEAM", "? Phe: " .. plr.Team.Name, true)
+        return 
+    end
+    
+    Log("TEAM", "Ch? UI ch?n phe load xong...", true)
+    local main = PGui:WaitForChild("Main", 10)
+    if main then
+        local chooseTeam = main:WaitForChild("ChooseTeam", 10)
+        if chooseTeam then
+            local waited = 0
+            while not chooseTeam.Visible and waited < 20 do
+                if plr.Team then return end
+                task.wait(1)
+                waited = waited + 1
+            end
+            
+            if chooseTeam.Visible then
+                Log("TEAM", "ang ch?n phe: " .. CFG.Team, true)
+                for k=1, 10 do
+                    if plr.Team then break end
+                    pcall(function() CommF:InvokeServer("SetTeam", CFG.Team) end)
+                    pcall(function()
+                        for _, v in pairs(getconnections(chooseTeam.Container[CFG.Team].Frame.ViewportFrame.TextButton.Activated)) do
+                            v.Function()
+                        end
+                    end)
+                    task.wait(1)
+                end
+            end
+        end
+    end
+    
+    if not plr.Team then
+        pcall(function() CommF:InvokeServer("SetTeam", CFG.Team) end)
+    end
+    task.wait(1)
+    Log("TEAM", "? Phe: " .. (plr.Team and plr.Team.Name or CFG.Team), true)
+end
+task.spawn(selectTeam)
+
+-- 
+--  ELITE PROGRESS
+-- 
+local function eliteKills()
+    local ok, r = pcall(function() return CommF:InvokeServer("EliteHunter", "Progress") end)
+    return ok and tonumber(r) or 0
+end
+
+-- 
+--  PHASE 1  TUSHITA
+-- 
+local function p1_tushita()
+    Log("TUSHITA", "Kiem tra Tushita...", true)
+    if inBag("Tushita") then Log("TUSHITA", "OK a co!", true); return true end
+
+    Log("TUSHITA", "Farm Longma lay Tushita...", true)
+    while Active and not inBag("Tushita") do
+        pcall(function()
+            local turtle = WS.Map:FindFirstChild("Turtle")
+            if turtle and turtle:FindFirstChild("TushitaGate") then
+                if not has("Holy Torch") then
+                    Log("TUSHITA", "i lay Holy Torch...", true)
+                    TP1(CFrame.new(5148, 162, 910))
+                    task.wait(1)
+                else
+                    Log("TUSHITA", "Thap uoc...", true)
+                    equipName("Holy Torch"); task.wait(1)
+                    local torches = {
+                        CFrame.new(-10752,417,-9366), CFrame.new(-11672,334,-9474),
+                        CFrame.new(-12132,521,-10655), CFrame.new(-13336,486,-6985),
+                        CFrame.new(-13489,332,-7925),
+                    }
+                    for i, pos in ipairs(torches) do
+                        if not Active then return end
+                        Log("TUSHITA", "uoc " .. i .. "/5", true)
+                        TP1(pos); task.wait(0.7)
+                    end
+                end
+            else
+                local boss = findMob("Longma")
+                if boss then
+                    Log("TUSHITA", "ATK anh Longma!", true)
+                    killMob(boss, function() return Active and not inBag("Tushita") end)
+                else
+                    Log("TUSHITA", "Longma chua spawn  ang Hop Server...", true)
+                    hop()
+                    task.wait(10)
+                end
+            end
+        end)
+        task.wait(0.5)
+    end
+    return inBag("Tushita")
+end
+
+-- 
+--  PHASE 2+3  ELITE + YAMA
+-- 
+local function p23_eliteYama()
+    Log("ELITE_YAMA", "Kiem tra Yama...", true)
+    if inBag("Yama") then Log("ELITE_YAMA", "OK a co Yama!", true); return true end
+
+    local kills = eliteKills()
+    Log("ELITE_YAMA", "Elite: " .. kills .. "/" .. CFG.EliteRequired, true)
+
+    if kills < CFG.EliteRequired then
+        Log("ELITE_YAMA", "Farm Elite...", true)
+        local names = {"Diablo", "Urban", "Deandre"}
+        local noSpawn = 0
+        local questFail = 0
+
+        while Active and not inBag("Yama") do
+            kills = eliteKills()
+            if kills >= CFG.EliteRequired then Log("ELITE_YAMA", "OK u Elite!", true); break end
+            Log("ELITE_YAMA", "Elite: " .. kills .. "/" .. CFG.EliteRequired)
+
+            pcall(function()
+                local qUI = PGui.Main.Quest
+                if not qUI.Visible then
+                    questFail = questFail + 1
+                    Log("ELITE_YAMA", "Nhan quest... (" .. questFail .. "/5)")
+
+                    if questFail >= 5 then
+                        Log("ELITE_YAMA", "FIRE 5 lan fail  HOP!", true)
+                        questFail = 0; hop(); return
+                    end
+
+                    local res = CommF:InvokeServer("EliteHunter")
+                    Log("ELITE_YAMA", "Result: " .. tostring(res))
+
+                    if res == nil then
+                        Log("ELITE_YAMA", " Nil  HOP!", true)
+                        questFail = 0; hop(); return
+                    end
+                    if type(res) == "string" then
+                        local lo = res:lower()
+                        if lo:find("cool") or lo:find("wait") or lo:find("already")
+                            or lo:find("don't have") or lo:find("come back")
+                            or lo:find("anything") or lo:find("later") then
+                            Log("ELITE_YAMA", " " .. res .. "  HOP!", true)
+                            questFail = 0; hop(); return
+                        end
+                    end
+
+                    task.wait(1)
+                    if qUI.Visible then questFail = 0 end
+                else
+                    questFail = 0
+                    local title = qUI.Container.QuestTitle.Title.Text
+                    local target = nil
+                    for _, n in ipairs(names) do if title:find(n) then target = n; break end end
+
+                    if target then
+                        local elite = findMob(target)
+                        if elite then
+                            Log("ELITE_YAMA", "ATK anh " .. target .. "!", true)
+                            noSpawn = 0
+                            killMob(elite, function() return Active and qUI.Visible and not inBag("Yama") end, false)
+                            task.wait(1)
+                        else
+                            -- Tim trong ReplicatedStorage neu no chua load vao Workspace
+                            local repElite = game:GetService("ReplicatedStorage"):FindFirstChild(target)
+                            if repElite and repElite:FindFirstChild("HumanoidRootPart") then
+                                Log("ELITE_YAMA", "Phat hien " .. target .. " chua load, ang bay toi...")
+                                TP1(repElite.HumanoidRootPart.CFrame)
+                                task.wait(2)
+                            else
+                                noSpawn = noSpawn + 1
+                                Log("ELITE_YAMA", target .. " chua spawn (" .. noSpawn .. "/3)")
+                                if noSpawn >= 3 then
+                                    Log("ELITE_YAMA", "FIRE Khong thay  HOP!", true)
+                                    noSpawn = 0; hop()
+                                else task.wait(3) end
+                            end
+                        end
+                    else
+                        Log("ELITE_YAMA", "Quest sai  bo + HOP", true)
+                        CommF:InvokeServer("AbandonQuest"); task.wait(1); hop()
+                    end
+                end
+            end)
+            task.wait(1)
+        end
+    end
+
+    if inBag("Yama") then Log("ELITE_YAMA", "OK Co Yama!", true); return true end
+
+    -- Lay Yama
+    Log("GET_YAMA", "i lay Yama...", true)
+    local YAMA_ROOM_POS = Vector3.new(5254.8, 16.7, 451.5)
+
+    while Active and not inBag("Yama") do
+        pcall(function()
+            local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+            local wf = WS.Map:FindFirstChild("Waterfall")
+            local katana = wf and wf:FindFirstChild("SealedKatana")
+            local handle = katana and katana:FindFirstChild("Handle")
+            
+            -- Uu tien so 1: Giet het Ghost trong phong truoc!
+            local ghost = findMob("Ghost")
+            if ghost then
+                Log("GET_YAMA", "ATK anh Ghost!", true)
+                killMob(ghost, function() return Active and not inBag("Yama") end, false)
+                task.wait(0.5)
+                return
+            end
+
+            -- Sau khi khong con Ghost, toi tan noi phong Yama
+            if root and (root.Position - YAMA_ROOM_POS).Magnitude > 20 then
+                Log("GET_YAMA", "ang bay toi phong Yama...", true)
+                TP1(CFrame.new(YAMA_ROOM_POS))
+                task.wait(1)
+                return
+            end
+
+            Log("GET_YAMA", "ang rut kiem...", true)
+            pcall(function()
+                fireclickdetector(workspace.Map.Waterfall.SealedKatana.Hitbox.ClickDetector)
+            end)
+            task.wait(1)
+        end)
+        task.wait(0.5)
+    end
+    return inBag("Yama")
+end
+
+-- 
+--  PHASE 4  MASTERY
+-- 
+local function p4_mastery()
+    Log("MASTERY", "Farm mastery len " .. CFG.MasteryTarget .. "...", true)
+    local boneCamps = {
+        { pos = CFrame.new(-8764, 142, 5963),  mobs = {"Reborn Skeleton"} },
+        { pos = CFrame.new(-9579, 6, 6194),    mobs = {"Demonic Soul", "Posessed Mummy"} },
+        { pos = CFrame.new(-10227, 421, 6161), mobs = {"Living Zombie"} }
+    }
+    local currentCamp = 1
+    while Active do
+        local mT, mY = mastery("Tushita"), mastery("Yama")
+        if mT >= CFG.MasteryTarget and mY >= CFG.MasteryTarget then
+            Log("MASTERY", "OK Ca 2 dat " .. CFG.MasteryTarget .. "!", true)
+            return true
+        end
+        local sword = mT < CFG.MasteryTarget and "Tushita" or "Yama"
+        local cur = sword == "Tushita" and mT or mY
+        Log("MASTERY", sword .. ": " .. cur .. "/" .. CFG.MasteryTarget)
+        loadItem(sword); equipName(sword)
+        
+        local targetData = boneCamps[currentCamp]
+        local mob = findMob(targetData.mobs)
+        if mob then
+            equipName(sword)
+            killMob(mob, function() return Active and mastery(sword) < CFG.MasteryTarget end, false, sword)
+        else
+            local char = plr.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local dist = dist2D(char.HumanoidRootPart.Position, targetData.pos.Position)
+                if dist > 150 then
+                    Log("MASTERY", "Bay toi bai Bone " .. currentCamp .. "...")
+                    TP1(targetData.pos)
+                else
+                    currentCamp = currentCamp + 1
+                    if currentCamp > #boneCamps then currentCamp = 1 end
+                end
+            end
+            task.wait(1)
+        end
+        task.wait(0.3)
+    end
+    return false
+end
+
+-- 
+--  PHASE 5  CDK QUEST
+-- 
+local function cdkCmd(action, p1, p2)
+    pcall(function()
+        if p2 ~= nil then CommF:InvokeServer("CDKQuest", action, p1, p2)
+        elseif p1 ~= nil then CommF:InvokeServer("CDKQuest", action, p1)
+        else CommF:InvokeServer("CDKQuest", action) end
+    end)
+end
+
+local function cdkProgress()
+    local ok, r = pcall(function() return CommF:InvokeServer("CDKQuest", "Progress") end)
+    return ok and r or nil
+end
+
+local PosMsList = {
+    ["Pirate Millionaire"] = CFrame.new(-712, 98, 5711), ["Pistol Billionaire"] = CFrame.new(-723, 147, 5931),
+    ["Dragon Crew Warrior"] = CFrame.new(7021, 55, -730), ["Dragon Crew Archer"] = CFrame.new(6625, 378, 244),
+    ["Hydra Enforcer"] = CFrame.new(4584, 1002, 705), ["Candy Pirate"] = CFrame.new(-1310, 26, -14562),
+    ["Female Islander"] = CFrame.new(4692, 797, 858), ["Venomous Assailant"] = CFrame.new(4902, 670, 39),
+    ["Marine Commodore"] = CFrame.new(2401, 123, -7589), ["Marine Rear Admiral"] = CFrame.new(3588, 229, -7085),
+    ["Fishman Raider"] = CFrame.new(-10941, 332, -8760), ["Fishman Captain"] = CFrame.new(-11035, 332, -9087),
+    ["Forest Pirate"] = CFrame.new(-13446, 413, -7760), ["Mythological Pirate"] = CFrame.new(-13510, 584, -6987),
+    ["Jungle Pirate"] = CFrame.new(-11778, 426, -10592), ["Musketeer Pirate"] = CFrame.new(-13282, 496, -9565),
+    ["Reborn Skeleton"] = CFrame.new(-8764, 142, 5963), ["Living Zombie"] = CFrame.new(-10227, 421, 6161),
+    ["Demonic Soul"] = CFrame.new(-9579, 6, 6194), ["Posessed Mummy"] = CFrame.new(-9579, 6, 6194),
+    ["Peanut Scout"] = CFrame.new(-1993, 187, -10103), ["Peanut President"] = CFrame.new(-2215, 159, -10474),
+    ["Ice Cream Chef"] = CFrame.new(-877, 118, -11032), ["Ice Cream Commander"] = CFrame.new(-877, 118, -11032),
+    ["Cookie Crafter"] = CFrame.new(-2021, 38, -12028), ["Cake Guard"] = CFrame.new(-2024, 38, -12026),
+    ["Baking Staff"] = CFrame.new(-1932, 38, -12848), ["Head Baker"] = CFrame.new(-1932, 38, -12848),
+    ["Cocoa Warrior"] = CFrame.new(95, 73, -12309), ["Chocolate Bar Battler"] = CFrame.new(647, 42, -12401),
+    ["Sweet Thief"] = CFrame.new(116, 36, -12478), ["Candy Rebel"] = CFrame.new(47, 61, -12889),
+    ["Ghost"] = CFrame.new(5254.8, 16.7, 451.5),
+    ["Isle Outlaw"] = CFrame.new(-16479, 226, -300), ["Island Boy"] = CFrame.new(-16849, 192, -150),
+    ["Sun-kissed Warrior"] = CFrame.new(-16347, 64, 984), ["Isle Champion"] = CFrame.new(-16602, 130, 1087),
+    ["Giant Islander"] = CFrame.new(5308, 12, 408),
+}
+
+
+
+local lastEvYama = nil
+local function questYama(skipIfWaiting)
+    local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return false end
+    local p = cdkProgress()
+    if not p then return end
+    local ev = tonumber(p.Evil)
+    if lastEvYama == -5 and (ev == -6 or ev >= 3 or ev == 0) then
+        Log("CDK_YAMA", "HOAN THANH YAMA! Hop server de nhuong cho...", true)
+        hop(); task.wait(10); return "wait"
+    end
+    lastEvYama = ev
+    if ev >= 3 then Log("CDK_YAMA", "OK Done!", true); return true end
+    if skipIfWaiting and ev ~= -3 and ev ~= -4 and ev ~= -5 then return "wait" end
+
+    local success, result = pcall(function()
+        if ev == 1 or ev == 2 or ev == 0 then
+            Log("CDK_YAMA", "Dang nhan nhiem vu moi...")
+            cdkCmd("StartTrial", "Evil")
+            task.wait(1)
+            return
+        end
+        if ev == -3 then
+            Log("CDK_YAMA", "Q1: Forest Pirate (Pain & Suffering)")
+            local m = findMob("Forest Pirate")
+            if m and alive(m) then
+                loadItem("Yama")
+                equipName("Yama")
+                pcall(function()
+                    TP1(m.HumanoidRootPart.CFrame)
+                    getCDKBlock().CFrame = m.HumanoidRootPart.CFrame
+                    _G._CDK_TP_Active = true
+                    task.wait(2)
+                end)
+            else 
+                TP1(CFrame.new(-13223, 428, -7766)) 
+            end
+        elseif ev == -4 then
+            Log("CDK_YAMA", "Q2: HazeESP mobs (Haze of Misery)")
+            local targetName, targetPos = nil, nil
+            local qHaze = plr:FindFirstChild("QuestHaze")
+            if qHaze then
+                for _, hitMon in pairs(qHaze:GetChildren()) do
+                    if hitMon.Value > 0 then
+                        local foundPos = nil
+                        for name, pos in pairs(PosMsList) do
+                            if hitMon.Name:find(name) then foundPos = pos; break end
+                        end
+                        if not foundPos then
+                            local spawns = workspace:FindFirstChild("_WorldOrigin") and workspace._WorldOrigin:FindFirstChild("EnemySpawns")
+                            if spawns then
+                                for _, sp in pairs(spawns:GetChildren()) do
+                                    if hitMon.Name:find(sp.Name) or sp.Name:find(hitMon.Name) then
+                                        foundPos = sp.CFrame; break
+                                    end
+                                end
+                            end
+                        end
+                        if foundPos then
+                            targetName = hitMon.Name; targetPos = foundPos; break
+                        end
+                    end
+                end
+                if not targetName then
+                    local missing = {}
+                    for _, hitMon in pairs(qHaze:GetChildren()) do
+                        if hitMon.Value > 0 then table.insert(missing, hitMon.Name) end
+                    end
+                    if #missing > 0 then Log("CDK_YAMA", "Thieu mob: " .. table.concat(missing, ", ")) end
+                end
+            end
+            if targetName and targetPos then
+                if (targetPos.Position - plr.Character.HumanoidRootPart.Position).Magnitude > 1000 then
+                    Log("CDK_YAMA", "Bay toi dao co " .. targetName)
+                    TP1(targetPos)
+                else
+                    local found = false
+                    for _, e in pairs(Enemies:GetChildren()) do
+                        if alive(e) and e.Name:find(targetName) and e:FindFirstChild("HazeESP") then
+                            found = true
+                            killMob(e, function() return Active end, false, "Yama")
+                            break
+                        end
+                    end
+                    if not found then TP1(targetPos) end
+                end
+            end
+        elseif ev == -5 then
+            Log("CDK_YAMA", "Q3: Hell Dimension (Fear the Reaper)")
+            
+            local hell = WS.Map:FindFirstChild("HellDimension")
+            local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+            if hell and hell:FindFirstChild("Spawn") and (root.Position - hell.Spawn.Position).Magnitude <= 300 then
+                Log("CDK_YAMA", "FIREFIRE Da vao Dia nguc! Thap duoc...")
+                for i = 1, 3 do
+                    local t = hell:FindFirstChild("Torch" .. i)
+                    if t then
+                        local target = t:FindFirstChild("Particles") or (t:IsA("Model") and t.PrimaryPart) or t
+                        if target and target:IsA("BasePart") then
+                            if (root.Position - target.Position).Magnitude > 5 then
+                                TP1(target.CFrame)
+                                task.wait(0.5)
+                            end
+                            for _, v in pairs(hell:GetDescendants()) do
+                                if v:IsA("ProximityPrompt") then fireproximityprompt(v) end
+                            end
+                            task.wait(1)
+                            -- Giet sach quai trong Dia Nguc (Spawn sau khi thap duoc)
+                            while Active do
+                                local hellMob = nil
+                                for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                                    if mob:IsA("Model") and alive(mob) and mob:FindFirstChild("HumanoidRootPart") then
+                                        if (mob.HumanoidRootPart.Position - hell.Spawn.Position).Magnitude <= 1000 then
+                                            hellMob = mob
+                                            break
+                                        end
+                                    end
+                                end
+                                if not hellMob then break end
+                                Log("CDK_YAMA", "Dang giet quai bao ve Duoc...")
+                                killMob(hellMob, function() return Active and alive(hellMob) end, false)
+                            end
+                        end
+                    end
+                end
+                task.wait(1)
+                Log("CDK_YAMA", "FIRE Vao cong mau xanh de thoat!")
+                local foundPortal = false
+                for _, p in pairs(hell:GetDescendants()) do
+                    if p:IsA("BasePart") and (p.Name:lower():find("portal") or p.Name:lower():find("exit")) then
+                        TP1(p.CFrame)
+                        foundPortal = true
+                        task.wait(1)
+                        break
+                    end
+                end
+                if not foundPortal then
+                    TP1(hell.Spawn.CFrame * CFrame.new(0, 0, -50))
+                    task.wait(1)
+                end
+            else
+                -- Buoc 1: Doc file de join server cua anh em (neu co)
+                local joinedShared = false
+                if not getgenv().FailedSharedServers then getgenv().FailedSharedServers = {} end
+                pcall(function()
+                    if readfile and isfile and isfile("CDK_Reaper_Server.txt") then
+                        local data = readfile("CDK_Reaper_Server.txt")
+                        local parts = string.split(data, "|")
+                        if #parts == 2 then
+                            local savedId = parts[1]
+                            local savedTime = tonumber(parts[2]) or 0
+                            local failCount = getgenv().FailedSharedServers[savedId] or 0
+                            -- Chi join neu file moi luu (< 3 phut) va chua that bai qua 2 lan
+                            if savedId ~= game.JobId and (os.time() - savedTime) < 180 and failCount < 2 then
+                                Log("CDK_YAMA", "Tim thay Server anh em! Dang Join...", true)
+                                joinedShared = true
+                                getgenv().FailedSharedServers[savedId] = failCount + 1
+                                pcall(function() TpSvc:TeleportToPlaceInstance(game.PlaceId, savedId, plr) end)
+                                task.wait(10)
+                            end
+                        end
+                    end
+                end)
+                if joinedShared then return "wait" end
+
+                -- Buoc 2: Tim Soul Reaper trong server hien tai
+                local sr = findMob("Soul Reaper")
+                if sr then
+                    -- Luu server lai de goi anh em vao
+                    pcall(function()
+                        if writefile then
+                            writefile("CDK_Reaper_Server.txt", tostring(game.JobId) .. "|" .. tostring(os.time()))
+                        end
+                    end)
+                    Log("CDK_YAMA", "FIRE De Soul Reaper giet de vao Dia nguc...", true)
+                    TP1(sr.HumanoidRootPart.CFrame)
+                else
+                    if inBag("Hallow Essence") then
+                        pcall(function()
+                            if writefile then
+                                writefile("CDK_Reaper_Server.txt", tostring(game.JobId) .. "|" .. tostring(os.time()))
+                            end
+                        end)
+                        Log("CDK_YAMA", "FIREFIRE Di goi Soul Reaper!", true)
+                        TP1(CFrame.new(-8932, 146, 6062))
+                        equipName("Hallow Essence")
+                    else
+                        -- Kiem tra neu dang o dung server anh em ma khong co Reaper -> Xoa file
+                        pcall(function()
+                            if isfile and delfile and isfile("CDK_Reaper_Server.txt") then
+                                local data = readfile("CDK_Reaper_Server.txt")
+                                local parts = string.split(data, "|")
+                                if #parts == 2 and parts[1] == tostring(game.JobId) then
+                                    local savedTime = tonumber(parts[2]) or 0
+                                    -- Neu file khong duoc update trong 10 giay (tuc la thang cam Hallow Essence da chet hoac Reaper da chet)
+                                    if (os.time() - savedTime) > 10 then
+                                        delfile("CDK_Reaper_Server.txt")
+                                        Log("CDK_YAMA", "Reaper da chet, xoa Server ID...", true)
+                                    end
+                                end
+                            end
+                        end)
+
+                        local playerCount = #game:GetService("Players"):GetPlayers()
+                        if playerCount > 5 then
+                            -- Hop toi server it nguoi nhat nhung KHONG GOI ANH EM vao luc nay
+                            Log("CDK_YAMA", "Server nay dong (" .. playerCount .. " nguoi). Hop server it nguoi...", true)
+                            local hopped = false
+                            pcall(function()
+                                local url = "https://games.roblox.com/v1/games/" .. game.PlaceId
+                                    .. "/servers/Public?sortOrder=Asc&limit=100"
+                                local ok, data = pcall(function() return HttpSvc:JSONDecode(game:HttpGet(url)) end)
+                                if ok and data and data.data then
+                                    local pool = {}
+                                    for _, sv in pairs(data.data) do
+                                        if type(sv) == "table" and sv.id and sv.id ~= game.JobId
+                                            and sv.playing and sv.maxPlayers
+                                            and sv.playing < sv.maxPlayers then
+                                            table.insert(pool, sv)
+                                        end
+                                    end
+                                    table.sort(pool, function(a, b) return a.playing < b.playing end)
+                                    if #pool > 0 then
+                                        local target = pool[1].id
+                                        Log("CDK_YAMA", "Hop toi server " .. pool[1].playing .. " nguoi de farm xuong!", true)
+                                        pcall(function() TpSvc:TeleportToPlaceInstance(game.PlaceId, target, plr) end)
+                                        hopped = true
+                                        task.wait(10)
+                                    end
+                                end
+                            end)
+                            if not hopped then
+                                hop()
+                                task.wait(10)
+                            end
+                            return "wait"
+                        else
+                            -- Dang o server it nguoi (<= 5). Thuc hien farm xuong "random"
+                            if skipIfWaiting then return "wait" end
+                            
+                            Log("CDK_YAMA", "Server it nguoi (" .. playerCount .. "). Dang farm xuong mua Hallow Essence...", true)
+                            local e = findMob({"Demonic Soul", "Posessed Mummy", "Living Zombie", "Reborn Skeleton"})
+                            if e then
+                                killMob(e, function() return Active and not inBag("Hallow Essence") end, false, "Yama")
+                            else
+                                local spawns = workspace:FindFirstChild("_WorldOrigin") and workspace._WorldOrigin:FindFirstChild("EnemySpawns")
+                                local validSpawns = {}
+                                if spawns then
+                                    for _, sp in pairs(spawns:GetChildren()) do
+                                        if sp.Name:find("Demonic") or sp.Name:find("Mummy") or sp.Name:find("Zombie") or sp.Name:find("Skeleton") then
+                                            table.insert(validSpawns, sp.CFrame)
+                                        end
+                                    end
+                                end
+                                if #validSpawns > 0 then
+                                    TP1(validSpawns[math.random(1, #validSpawns)])
+                                else
+                                    local boneCamp = CFrame.new(-9579, 6, 6194)
+                                    if root and (root.Position - boneCamp.Position).Magnitude > 200 then
+                                        TP1(boneCamp)
+                                    end
+                                end
+                            end
+                            Log("CDK_YAMA", "Dang thu Roll Xuc Xac Random Surprise...")
+                            task.spawn(function()
+                                for i = 1, 3 do
+                                    pcall(function() CommF:InvokeServer("Bones", "Buy", 1, 1) end)
+                                    task.wait(0.1)
+                                end
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    if not success then Log("ERROR", "Loi trong quest: " .. tostring(result)); return false end
+    if success and result == "wait" then return "wait" end
+    return false
+end
+
+local function questTushita(skipIfWaiting)
+    local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return false end
+    local p = cdkProgress()
+    if not p then return end
+    local gd = tonumber(p.Good)
+    if gd and gd >= 3 then Log("CDK_TUSHITA", "OK Done!", true); return true end
+    if not gd then
+        if skipIfWaiting then return "wait" end
+        return false
+    end
+
+    local success, result = pcall(function()
+        if gd == 1 or gd == 2 or gd == 0 then
+            Log("CDK_TUSHITA", "Dang nhan nhiem vu moi...")
+            cdkCmd("StartTrial", "Good")
+            task.wait(1)
+            return
+        end
+        if gd == -3 then
+            Log("CDK_TUSHITA", "Q1: Boat Dealers (Dock Legend)")
+            local dockCFs = {
+                CFrame.new(-4602, 16, -2881), -- Castle on the Sea
+                CFrame.new(-9531, 7, -8376),  -- Floating Turtle
+                CFrame.new(5734, 18, 185),    -- Hydra Island
+                CFrame.new(-312, 17, 5492)    -- Port Town
+            }
+            for _, pos in ipairs(dockCFs) do
+                if not Active then return end
+                
+                -- Bay toi ben tau va CHO toi khi en noi (chong vu cancel tween lien tuc)
+                while Active and (plr.Character.HumanoidRootPart.Position - pos.Position).Magnitude > 30 do
+                    TP1(pos)
+                    task.wait(1)
+                end
+                
+                if CurTween then pcall(function() CurTween:Cancel() end) end
+                
+                -- a toi ben tau, tim NPC e noi chuyen
+                local talkedToThisOne = false
+                local waitCount = 0
+                while Active and not talkedToThisOne and waitCount < 5 do
+                    for _, npc in pairs(WS.NPCs:GetChildren()) do
+                        if npc.Name:find("Luxury Boat Dealer") and npc.PrimaryPart then
+                            pcall(function() plr.Character.HumanoidRootPart.CFrame = npc.PrimaryPart.CFrame end)
+                            task.wait(0.5)
+                            CommF:InvokeServer("CDKQuest", "BoatQuest", npc, "Check")
+                            task.wait(0.5)
+                            CommF:InvokeServer("CDKQuest", "BoatQuest", npc)
+                            task.wait(0.5)
+                            talkedToThisOne = true
+                            break
+                        end
+                    end
+                    if not talkedToThisOne then
+                        task.wait(1)
+                        waitCount = waitCount + 1
+                    end
+                end
+                
+                -- Kiem tra xem nhiem vu a xong chua
+                local p = cdkProgress()
+                if p and tonumber(p.Good) ~= -3 then
+                    return
+                end
+            end
+            
+            -- Neu a quet het ben tau ma van o Q1, co the la do a lay uoc Fragment
+            -- nhung game bat buoc phai tuong tac lai voi Scroll e qua Q2.
+            Log("CDK_TUSHITA", "a check xong cac Boat Dealer. Gui lenh nhan Q2...")
+            cdkCmd("StartTrial", "Good")
+            task.wait(1)
+            
+        elseif gd == -4 then
+            Log("CDK_TUSHITA", "Q2: Raid Castle (Sense of Duty)")
+            local castlePos = CFrame.new(-5539, 314, -2972)
+            
+            -- Bay toi Castle truoc tien
+            while Active and (plr.Character.HumanoidRootPart.Position - castlePos.Position).Magnitude > 300 do
+                TP1(castlePos)
+                task.wait(1)
+            end
+            if CurTween then pcall(function() CurTween:Cancel() end) end
+            
+            -- Doi map va quai spawn
+            task.wait(2)
+            
+            -- Kiem tra xem co quai cua Pirate Raid khong
+            local raidEnemyFound = false
+            for _, e in pairs(Enemies:GetChildren()) do
+                local eRoot = e:FindFirstChild("HumanoidRootPart")
+                if alive(e) and eRoot and (eRoot.Position - castlePos.Position).Magnitude <= 2000 then
+                    raidEnemyFound = true
+                    killMob(e, function() return Active end, false, "Tushita")
+                    break
+                end
+            end
+
+            -- Neu khong co quai, dung cho
+            if not raidEnemyFound then
+                Log("CDK_TUSHITA", "ang ung cho Raid Hai Tac tai Lau ai...")
+                task.wait(2)
+                return "wait"
+            end
+            
+            -- Thu StartTrial e check qua bai
+            local p = cdkProgress()
+            if p and tonumber(p.Good) == -4 and not raidEnemyFound then
+                cdkCmd("StartTrial", "Good")
+            end
+        elseif gd == -5 then
+            if not _G.SoullessStarted then
+                _G.SoullessStarted = true
+                cdkCmd("StartTrial", "Good")
+                task.wait(1.5)
+            end
+            
+            Log("CDK_TUSHITA", "Q3: Heavenly Dimension (Soulless)")
+            local heaven = WS.Map:FindFirstChild("HeavenlyDimension")
+            local root = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+            if heaven and heaven:FindFirstChild("Spawn") and (root.Position - heaven.Spawn.Position).Magnitude <= 1000 then
+                
+                local isGateOpen = false
+                if heaven:FindFirstChild("Exit") and #heaven.Exit:GetChildren() >= 2 then
+                    isGateOpen = true
+                end
+                
+                if isGateOpen then
+                    Log("CDK_TUSHITA", "OK Cong a mo! Bay vao cong e hoan thanh nhiem vu...")
+                    if CurTween then pcall(function() CurTween:Cancel() end) end
+                    _G._CDK_TP_Active = true
+                    getCDKBlock().CFrame = heaven.Exit.CFrame
+                    root.CFrame = heaven.Exit.CFrame
+                    task.wait(1)
+                    return "wait"
+                end
+                
+                Log("CDK_TUSHITA", "FIREFIRE Da len Thien Duong! Thap duoc...")
+                
+                -- May noi chuan cmnr! Game no co StreamingEnabled, ung xa qua no eo load cai nut E!
+                -- Tao a tim uoc toa o UNG cua cay uoc so 3 tu 1 file script xin khac.
+                local torches = {
+                    CFrame.new(-22529.6, 5275.8, 3873.6),
+                    CFrame.new(-22637.3, 5281.4, 3749.3),
+                    CFrame.new(-22791.1, 5277.2, 3764.6) -- Toa o chuan xac cua cay thu 3!
+                }
+                
+                for i, pos in ipairs(torches) do
+                    Log("CDK_TUSHITA", "FIREFIRE ang bay toi thap uoc so " .. i .. "...")
+                    
+                    if CurTween then pcall(function() CurTween:Cancel() end) end
+                    _G._CDK_TP_Active = true
+                    getCDKBlock().CFrame = pos
+                    root.CFrame = pos
+                    
+                    task.wait(0.5) -- oi game load chunk e hien nut E
+                    
+                    -- ung tai cho quet lua
+                    for k = 1, 5 do
+                        if not Active then break end
+                        getCDKBlock().CFrame = pos
+                        for _, v in pairs(heaven:GetDescendants()) do
+                            if v:IsA("ProximityPrompt") and v.Parent and v.Parent:IsA("BasePart") then
+                                if (v.Parent.Position - pos.Position).Magnitude < 30 then
+                                    pcall(function() fireproximityprompt(v) end)
+                                end
+                            end
+                        end
+                        task.wait(0.2)
+                    end
+                end
+                task.wait(0.5)
+                Log("CDK_TUSHITA", "ATK Danh quai trong Thien Duong!")
+                for _, e in pairs(Enemies:GetChildren()) do
+                    if alive(e) and (e.PrimaryPart.Position - heaven.Spawn.Position).Magnitude <= 300 then
+                        -- oi false thanh true e KHONG keo quai, giu quai o duoi at!
+                        killMob(e, function() return Active end, true, "Tushita")
+                    end
+                end
+            else
+                local bm = findMob("Cake Queen")
+                if bm then
+                    Log("CDK_TUSHITA", "FIRE Bay toi Big Mom...")
+                    -- Fix Tween Loop bay toi Big Mom
+                    while Active and alive(bm) and (plr.Character.HumanoidRootPart.Position - bm.HumanoidRootPart.Position).Magnitude > 100 do
+                        TP1(bm.HumanoidRootPart.CFrame)
+                        task.wait(1)
+                    end
+                    if CurTween then pcall(function() CurTween:Cancel() end) end
+                    
+                    if alive(bm) then
+                        killMob(bm, function() return Active end, false, "Tushita")
+                    end
+                else
+                    -- Cake Queen khong co mat (chua spawn hoac vua bi chet)
+                    local portalPos = CFrame.new(-655, 381, -10667)
+                    
+                    Log("CDK_TUSHITA", " ang toi Cong Thien uong / Cho Cong mo...")
+                    
+                    local inHeaven = false
+                    -- Thu tiep can Cong hoac cho trong toi a 20 giay (Danh cho truong hop vua giet xong, ung cho Cong)
+                    for t = 1, 20 do
+                        if not Active or findMob("Cake Queen") then break end
+                        
+                        local dist = (plr.Character.HumanoidRootPart.Position - portalPos.Position).Magnitude
+                        if dist > 1000 then
+                            -- Neu o ao khac (rat xa), dung TP1 e bay qua tu tu
+                            TP1(portalPos)
+                        else
+                            -- Neu a toi ao Banh (< 1000 studs), Dich Chuyen Tuc Thoi thang vao Cong luon!
+                            -- (Khong dung TP1 o khoang cach ngan e tranh bi ket vo han)
+                            if CurTween then pcall(function() CurTween:Cancel() end) end
+                            _G._CDK_TP_Active = true
+                            getCDKBlock().CFrame = portalPos
+                        end
+                        task.wait(1)
+                        
+                        -- Kiem tra xem a bi hut vao Thien uong chua
+                        local heaven2 = WS.Map:FindFirstChild("HeavenlyDimension")
+                        if heaven2 and heaven2:FindFirstChild("Spawn") and (plr.Character.HumanoidRootPart.Position - heaven2.Spawn.Position).Magnitude <= 1000 then
+                            inHeaven = true
+                            break
+                        end
+                    end
+                    
+                    if inHeaven then
+                        return -- a vao Thien uong, vong lap sau se tu i thap uoc!
+                    end
+                    
+                    -- Neu sau 20s khong vao uoc Thien uong va cung khong co Big Mom -> Cong khong ton tai (Boss chua spawn), Hop!
+                    if not findMob("Cake Queen") then
+                        Log("CDK_TUSHITA", "FIRE Khong co Cong / Khong co Big Mom! ang Hop Server...")
+                        hop()
+                        task.wait(10)
+                        return "wait"
+                    end
+                end
+            end
+        end
+        return "wait"
+    end)
+    if success and result == "wait" then return "wait" end
+    return false
+end
+
+local function p5_cdk()
+    Log("CDK", "Bat dau CDK Quest!", true)
+    if inBag("Cursed Dual Katana") then Log("CDK", "OK Da co CDK!", true); return true end
+
+    cdkCmd("OpenDoor"); task.wait(0.5)
+    cdkCmd("OpenDoor", true); task.wait(1)
+    
+
+
+    local yOk, tOk = false, false
+    while Active and not (yOk and tOk) do
+        local pr = cdkProgress()
+        if pr then
+            if tonumber(pr.Evil) and tonumber(pr.Evil) >= 3 then yOk = true end
+            if tonumber(pr.Good) and tonumber(pr.Good) >= 3 then tOk = true end
+        end
+
+        if not yOk then
+            local status = questYama(false)
+            if status == true then yOk = true end
+        elseif not tOk then
+            local status = questTushita(false)
+            if status == true then tOk = true end
+        end
+        task.wait(1)
+    end
+
+    if yOk and tOk then
+        Log("CDK", "FIREFIRE FINAL BOSS FIREFIRE", true)
+        while Active and not inBag("Cursed Dual Katana") do
+            local boss = findMob("Cursed Skeleton Boss")
+            if boss then
+                Log("CDK", "ATK Final Boss!", true)
+                equipBestSword()
+                killMob(boss, function() return Active and not inBag("Cursed Dual Katana") end, false, "Tushita")
+            else
+                TP1(CFrame.new(-12318, 602, -6539))
+                task.wait(1)
+                
+                pcall(function()
+                    if workspace.Map:FindFirstChild("Turtle") and workspace.Map.Turtle:FindFirstChild("Cursed") and workspace.Map.Turtle.Cursed:FindFirstChild("BossDoor") then
+                        TP1(workspace.Map.Turtle.Cursed.BossDoor.CFrame)
+                    end
+                end)
+                task.wait(0.5)
+                
+                cdkCmd("Progress", "Good")
+                cdkCmd("Progress", "Evil")
+                cdkCmd("StartTrial", "Boss")
+                task.wait(2)
+            end
+            task.wait(1)
+        end
+    end
+    return inBag("Cursed Dual Katana")
+end
+
+-- 
+--  MAIN LOOP
+-- 
+task.spawn(function()
+    while Active do
+        local s, e = pcall(function()
+            if not inBag("Yama") or not inBag("Tushita") then
+                Log("MAIN", "Chua du 2 kiem Yama & Tushita! Bat dau farm...")
+                if not inBag("Tushita") then p1_tushita() end
+                if not inBag("Yama") then p23_eliteYama() end
+            elseif mastery("Yama") < CFG.MasteryTarget or mastery("Tushita") < CFG.MasteryTarget then
+                Log("MAIN", "Dang farm Mastery 350 cho 2 kiem...")
+                p4_mastery()
+            else
+                Log("MAIN", "Du dieu kien! Bat dau lam chuoi Q CDK...")
+                p5_cdk()
+                if inBag("Cursed Dual Katana") then
+                    Log("MAIN", " DA HOAN THANH CDK! TAT SCRIPT! ", true)
+                    Active = false
+                end
+            end
+        end)
+        if not s then Log("ERROR", "Loi: " .. tostring(e)) end
+        task.wait(1)
+    end
+end)
