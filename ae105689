@@ -1645,12 +1645,94 @@ local function p5_cdk()
     return inBag("Cursed Dual Katana")
 end
 
+-- [[ QUY TRINH RE-STATS (Tu dong dua theo script 75 dong cua ban) ]] --
+local StatsToUpgrade = {"Melee", "Defense", "Sword"}
+local TargetValue = 2800
+
+local function WaitForPoints()
+    local Player = game:GetService("Players").LocalPlayer
+    for i = 1, 40 do -- Chờ tối đa 20 giây để server đồng bộ lại điểm
+        local data = Player:FindFirstChild("Data")
+        local pts = data and (data:FindFirstChild("StatPoints") or data:FindFirstChild("Points"))
+        if pts and tonumber(pts.Value) > 0 then
+            return tonumber(pts.Value)
+        end
+        task.wait(0.5)
+    end
+    return 0
+end
+
+local function ForceResetStats()
+    local RS = game:GetService("ReplicatedStorage")
+    local CommF = RS.Remotes:FindFirstChild("CommF_")
+    Log("CDK_YAMA", "Dang thuc hien Reset Stats (Su dung Fragments)...", true)
+    pcall(function()
+        CommF:InvokeServer("BlackbeardReward", "Refund", "2")
+    end)
+end
+
+local function checkAndResetStatsForSword()
+    local Player = game:GetService("Players").LocalPlayer
+    
+    -- Kiem tra muc Stats hien tai cua Sword tu GUI (Chinh xac nhat)
+    local swordStat = 0
+    pcall(function()
+        for _, v in pairs(Player.PlayerGui.Main:GetDescendants()) do
+            if v.Name == "Sword" and v:IsA("Frame") and v:FindFirstChild("Level") then
+                local m = string.match(v.Level.Text, "(%d+)")
+                if m then swordStat = tonumber(m) end
+            end
+        end
+    end)
+    
+    if swordStat == 0 then swordStat = 1 end
+    
+    -- Kiem tra neu ko dat 2800 Sword thi doi
+    if swordStat < TargetValue - 100 then 
+        Log("CDK_YAMA", "Phat hien Stats Sword hien tai ("..swordStat..") chua max. Bat dau quy trinh Re-Stats...", true)
+        
+        ForceResetStats()
+        
+        local points = WaitForPoints()
+        if points > 0 then
+            Log("CDK_YAMA", "Tim thay " .. points .. " diem. Dang don vao Melee, Defense, Sword ("..TargetValue..")...", true)
+            local RS = game:GetService("ReplicatedStorage")
+            local CommF = RS.Remotes:FindFirstChild("CommF_")
+            
+            for _, stat in pairs(StatsToUpgrade) do
+                pcall(function()
+                    CommF:InvokeServer("AddPoint", stat, TargetValue)
+                end)
+                task.wait(0.5)
+            end
+            
+            -- Don not diem le vao Sword (Neu co)
+            pcall(function()
+                local data = Player:FindFirstChild("Data")
+                local leftover = data and (data:FindFirstChild("StatPoints") or data:FindFirstChild("Points"))
+                if leftover and tonumber(leftover.Value) > 0 then
+                    CommF:InvokeServer("AddPoint", "Sword", tonumber(leftover.Value))
+                end
+            end)
+            
+            Log("CDK_YAMA", "TAT CA DA HOAN TAT!", true)
+        else
+            Log("CDK_YAMA", "Dang doi server tra diem hoac loi mang...", true)
+        end
+    end
+end
+
 -- 
 --  MAIN LOOP
 -- 
 task.spawn(function()
     while Active do
         local s, e = pcall(function()
+            if not getgenv().CheckedStatsCDK then
+                checkAndResetStatsForSword()
+                getgenv().CheckedStatsCDK = true
+            end
+
             if not inBag("Yama") or not inBag("Tushita") then
                 Log("MAIN", "Chua du 2 kiem Yama & Tushita! Bat dau farm...")
                 if not inBag("Tushita") then p1_tushita() end
