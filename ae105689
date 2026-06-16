@@ -2,8 +2,13 @@
 -- KAITUN V4 FULL AUTO (10 MAIN - 2 HELP) - SYNCHRONIZED VIA LOCAL FILE
 -- =========================================================================
 
-if not _G.Config then
-    _G.Config = {
+local CONFIG = nil
+if getgenv and getgenv().Config then
+    CONFIG = getgenv().Config
+elseif _G.Config then
+    CONFIG = _G.Config
+else
+    CONFIG = {
         MainAccounts = {"Main1", "Main2", "Main3", "Main4", "Main5", "Main6", "Main7", "Main8", "Main9", "Main10"},
         HelpAccounts = {"Help1", "Help2"}
     }
@@ -24,6 +29,27 @@ local Workspace = game:GetService("Workspace")
 local lp = Players.LocalPlayer
 local rs = ReplicatedStorage
 local CommF_ = rs:WaitForChild("Remotes"):WaitForChild("CommF_")
+
+-- ================= TEAM & HAKI =================
+task.spawn(function()
+    while task.wait(1) do
+        local lp = Players.LocalPlayer
+        if lp and (not lp.Team or lp.Team.Name ~= "Pirates") then
+            pcall(function()
+                CommF_:InvokeServer("SetTeam", "Pirates")
+            end)
+        else
+            break
+        end
+    end
+    
+    local char = Players.LocalPlayer.Character
+    pcall(function()
+        if not char or not char:FindFirstChild("HasBuso") then
+            CommF_:InvokeServer("Buso")
+        end
+    end)
+end)
 
 -- ================= SYNC ENGINE (LOCAL FILES) =================
 local SyncFolder = "KaitunV4_Sync"
@@ -55,10 +81,10 @@ end
 
 -- ================= ROLE & STATE =================
 local MyRole = "None"
-for _, name in ipairs(_G.Config.MainAccounts) do
+for _, name in ipairs(CONFIG.MainAccounts) do
     if name == lp.Name then MyRole = "Main" end
 end
-for _, name in ipairs(_G.Config.HelpAccounts) do
+for _, name in ipairs(CONFIG.HelpAccounts) do
     if name == lp.Name then MyRole = "Help" end
 end
 
@@ -116,13 +142,94 @@ local function BypassToTemple()
     CommF_:InvokeServer("requestEntrance", TEMPLE_ENTRANCE)
 end
 
+local function AutoTrial()
+    local char = lp.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not char or not hrp then return end
+    
+    local race = MyState.Race
+    
+    pcall(function()
+        if race == "Mink" then
+            -- Bypass mê cung thỏ
+            if Workspace.Map:FindFirstChild("MinkTrial") and Workspace.Map.MinkTrial:FindFirstChild("Ceiling") then
+                hrp.CFrame = Workspace.Map.MinkTrial.Ceiling.CFrame * CFrame.new(0, -20, 0)
+            end
+            
+        elseif race == "Cyborg" then
+            -- Né tên lửa bằng cách bay lên trời
+            if Workspace.Map:FindFirstChild("CyborgTrial") and Workspace.Map.CyborgTrial:FindFirstChild("Floor") then
+                hrp.CFrame = Workspace.Map.CyborgTrial.Floor.CFrame * CFrame.new(0, 500, 0)
+            end
+            
+        elseif race == "Skypiea" then
+            -- Dịch chuyển thẳng tới đích nhảy mây
+            if Workspace.Map:FindFirstChild("SkyTrial") and Workspace.Map.SkyTrial:FindFirstChild("Model") then
+                hrp.CFrame = Workspace.Map.SkyTrial.Model.FinishPart.CFrame
+            end
+            
+        elseif race == "Fishman" then
+            -- Trial Cá (Shark): Đánh SeaBeast
+            local seaBeasts = Workspace:FindFirstChild("SeaBeasts")
+            if seaBeasts then
+                for _, v in pairs(seaBeasts:GetChildren()) do
+                    if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Health") and v.Health.Value > 0 then
+                        -- Bay lên trên đầu SeaBeast xả skill
+                        hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0, 150, 0)
+                        
+                        -- Spam skills
+                        VirtualInput:SendKeyEvent(true, "Z", false, game)
+                        VirtualInput:SendKeyEvent(false, "Z", false, game)
+                        VirtualInput:SendKeyEvent(true, "X", false, game)
+                        VirtualInput:SendKeyEvent(false, "X", false, game)
+                        VirtualInput:SendKeyEvent(true, "C", false, game)
+                        VirtualInput:SendKeyEvent(false, "C", false, game)
+                    end
+                end
+            end
+            
+        elseif race == "Human" or race == "Ghoul" then
+            -- Đánh quái (Zombie, Vampire, Boss, SeaBeast)
+            -- Logic đánh chung: Quét toàn bộ Enemies gần đó trong phòng Trial và tự động vả
+            local enemies = Workspace:FindFirstChild("Enemies")
+            if enemies then
+                for _, v in pairs(enemies:GetChildren()) do
+                    if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                        local dist = (hrp.Position - v.HumanoidRootPart.Position).Magnitude
+                        -- Nếu quái ở gần (trong bán kính phòng trial)
+                        if dist < 300 then
+                            -- Dịch chuyển ra sau lưng quái
+                            hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0, 30, 0)
+                            
+                            -- Spam click/skill
+                            VirtualInput:SendKeyEvent(true, "Z", false, game)
+                            VirtualInput:SendKeyEvent(false, "Z", false, game)
+                            VirtualInput:SendKeyEvent(true, "X", false, game)
+                            VirtualInput:SendKeyEvent(false, "X", false, game)
+                            
+                            -- Tận dụng FastAttack nếu được nhúng vào
+                            pcall(function()
+                                local hitPart = v:FindFirstChild("Head") or v.HumanoidRootPart
+                                local RegisterAttack = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net"):WaitForChild("RE/RegisterAttack")
+                                local RegisterHit = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net"):WaitForChild("RE/RegisterHit")
+                                RegisterAttack:FireServer(0.1)
+                                RegisterHit:FireServer(hitPart, {{v, hitPart}})
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
 -- ================= CONDITIONS CHECK =================
 local function isFullMoon()
     return game:GetService("Lighting"):GetAttribute("MoonPhase") == 5
 end
 
 local function GetActiveMain()
-    for _, mainName in ipairs(_G.Config.MainAccounts) do
+    for _, mainName in ipairs(CONFIG.MainAccounts) do
         local st = ReadStatus(mainName)
         if not st or st.Phase ~= "Done" then
             return mainName
@@ -190,7 +297,15 @@ local function HelpLoop()
         end
 
         -- Nếu đang sống và không ở PvP
-        if mainStatus.Phase == "WaitingForMoon" or mainStatus.Phase == "AtDoor" then
+        if mainStatus.Phase == "WaitingForMoon" or mainStatus.Phase == "AtDoor" or mainStatus.Phase == "InTrial" then
+            
+            -- Nếu Main đang trong Trial, Help cũng tự vượt ải của mình
+            if mainStatus.Phase == "InTrial" then
+                UpdatePhase("InTrial")
+                AutoTrial()
+                continue
+            end
+            
             BypassToTemple()
             task.wait(1)
             local doorPos = RaceDoors[MyState.Race]
@@ -247,8 +362,8 @@ local function MainLoop()
         if IsInPvP() then
             UpdatePhase("InPvP")
             -- Check xem 2 Help đã chết chưa
-            local help1Status = ReadStatus(_G.Config.HelpAccounts[1])
-            local help2Status = ReadStatus(_G.Config.HelpAccounts[2])
+            local help1Status = ReadStatus(CONFIG.HelpAccounts[1])
+            local help2Status = ReadStatus(CONFIG.HelpAccounts[2])
             
             if (not help1Status or help1Status.Phase == "Dead") and (not help2Status or help2Status.Phase == "Dead") then
                 print("🏆 Đã thắng PvP, đợi game chuyển tới Ancient One")
@@ -275,8 +390,8 @@ local function MainLoop()
             end
             
             -- Check 2 Help đã ở cửa chưa
-            local h1 = ReadStatus(_G.Config.HelpAccounts[1])
-            local h2 = ReadStatus(_G.Config.HelpAccounts[2])
+            local h1 = ReadStatus(CONFIG.HelpAccounts[1])
+            local h2 = ReadStatus(CONFIG.HelpAccounts[2])
             
             if h1 and h1.Phase == "AtDoor" and h2 and h2.Phase == "AtDoor" then
                 if isFullMoon() then
@@ -285,7 +400,16 @@ local function MainLoop()
                     PressV3()
                     task.wait(1)
                     PullLever()
-                    -- Đoạn này cần logic Auto Minigame
+                    
+                    UpdatePhase("InTrial")
+                    local trialTimeout = tick() + 60 -- 1 phút vượt ải max
+                    while tick() < trialTimeout do
+                        -- Nếu đã bị ném vào phòng PvP thì break
+                        if IsInPvP() then break end
+                        
+                        AutoTrial()
+                        task.wait(0.5)
+                    end
                 else
                     UpdatePhase("WaitingForMoon")
                 end
