@@ -1,5 +1,5 @@
 -- =========================================================================
--- KAITUN V4 FULL AUTO (10 MAIN - 2 HELP) - SYNCHRONIZED VIA LOCAL FILE
+-- KAITUN V4 STANDALONE (TỔNG HỢP LOGIC TỪ AURA/REDZ/BEAR)
 -- =========================================================================
 
 local CONFIG = nil
@@ -18,449 +18,408 @@ repeat task.wait() until game:IsLoaded()
 repeat task.wait() until game.Players and game.Players.LocalPlayer
 task.wait(2)
 
-local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local TeleportService = game:GetService("TeleportService")
-local VirtualInput = game:GetService("VirtualInputManager")
-local Workspace = game:GetService("Workspace")
-
-local lp = Players.LocalPlayer
-local rs = ReplicatedStorage
+local lp = game.Players.LocalPlayer
+local rs = game:GetService("ReplicatedStorage")
+local vu = game:GetService("VirtualUser")
+local vim = game:GetService("VirtualInputManager")
 local CommF_ = rs:WaitForChild("Remotes"):WaitForChild("CommF_")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
--- ================= TEAM & HAKI =================
-task.spawn(function()
-    while task.wait(1) do
-        local lp = Players.LocalPlayer
-        if lp and (not lp.Team or lp.Team.Name ~= "Pirates") then
-            pcall(function()
-                CommF_:InvokeServer("SetTeam", "Pirates")
-            end)
-        else
-            break
-        end
-    end
-    
-    local char = Players.LocalPlayer.Character
+-- ================= STATE =================
+local MyState = {
+    Role = "None",
+    Race = "Unknown",
+    Phase = "INIT",
+}
+
+for _, name in pairs(CONFIG.MainAccounts) do
+    if name == lp.Name then MyState.Role = "Main"; break end
+end
+for _, name in pairs(CONFIG.HelpAccounts) do
+    if name == lp.Name then MyState.Role = "Help"; break end
+end
+
+if MyState.Role == "None" then
+    print("❌ Tên acc không có trong Config!")
+    return
+end
+
+-- ================= ANTI-AFK =================
+lp.Idled:Connect(function()
+    vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
+
+-- ================= NOCLIP =================
+RunService.Stepped:Connect(function()
     pcall(function()
-        if not char or not char:FindFirstChild("HasBuso") then
-            CommF_:InvokeServer("Buso")
+        if lp.Character then
+            for _, v in pairs(lp.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then
+                    v.CanCollide = false
+                end
+            end
         end
     end)
 end)
 
--- ================= SYNC ENGINE (LOCAL FILES) =================
-local SyncFolder = "KaitunV4_Sync"
-if not isfolder(SyncFolder) then makefolder(SyncFolder) end
-
-local JobIdStr = game.JobId
-if JobIdStr == "" then JobIdStr = "PrivateServer" end
-local ServerFolder = SyncFolder .. "/" .. JobIdStr
-if not isfolder(ServerFolder) then makefolder(ServerFolder) end
-
-local function WriteStatus(statusData)
-    local path = ServerFolder .. "/" .. lp.Name .. ".json"
-    pcall(function()
-        writefile(path, HttpService:JSONEncode(statusData))
-    end)
-end
-
-local function ReadStatus(playerName)
-    local path = ServerFolder .. "/" .. playerName .. ".json"
-    local data = nil
-    pcall(function()
-        if isfile(path) then
-            local content = readfile(path)
-            data = HttpService:JSONDecode(content)
-        end
-    end)
-    return data
-end
-
--- ================= ROLE & STATE =================
-local MyRole = "None"
-for _, name in ipairs(CONFIG.MainAccounts) do
-    if name == lp.Name then MyRole = "Main" end
-end
-for _, name in ipairs(CONFIG.HelpAccounts) do
-    if name == lp.Name then MyRole = "Help" end
-end
-
-local MyState = {
-    Role = MyRole,
-    Phase = "Init", -- Init, Waiting, AtDoor, InTrial, InPvP, Dead, Done
-    Race = "Unknown",
-    JobId = JobIdStr,
-    LastUpdate = os.time()
-}
-
-local function UpdatePhase(phase)
-    MyState.Phase = phase
-    MyState.LastUpdate = os.time()
-    WriteStatus(MyState)
-    print("[KaitunV4] Phase changed to: " .. phase)
-end
-
--- ================= RACE DOORS & TELEPORT =================
+-- ================= UTILS & COMBAT =================
 local RaceDoors = {
-    ["Mink"]    = CFrame.new(29020.66, 14889.42, -379.26),
-    ["Fishman"] = CFrame.new(28224.05, 14889.42, -210.58),
+    ["Mink"]    = CFrame.new(28292.01, 14896.85, 93.30),
+    ["Fishman"] = CFrame.new(28243.60, 14894.42, 103.54),
+    ["Shark"]   = CFrame.new(28243.60, 14894.42, 103.54),
     ["Cyborg"]  = CFrame.new(28492.41, 14894.42, -422.11),
     ["Skypiea"] = CFrame.new(28967.40, 14918.07, 234.31),
+    ["Angel"]   = CFrame.new(28967.40, 14918.07, 234.31),
     ["Ghoul"]   = CFrame.new(28672.72, 14889.12, 454.59),
     ["Human"]   = CFrame.new(29237.29, 14889.42, -206.94)
 }
 
-local ANCIENT_CLOCK_POS = CFrame.new(29549, 15069, -88)
-local ANCIENT_ONE_POS = CFrame.new(28981.55, 14888.42, -120.24)
-local TEMPLE_ENTRANCE = Vector3.new(-12538.42, 340.89, -7817.07)
-
 local function GetMyRace()
-    local success, data = pcall(function() return lp.Data.Race.Value end)
-    if success and data then
-        MyState.Race = tostring(data)
-        return tostring(data)
-    end
-    return "Unknown"
+    pcall(function() MyState.Race = tostring(lp.Data.Race.Value) end)
 end
 
-local function TweenTo(cframe, speed)
+local function BypassToTemple()
+    pcall(function()
+        local stash = rs:FindFirstChild("MapStash")
+        if stash and stash:FindFirstChild("Temple of Time") then
+            stash["Temple of Time"].Parent = workspace.Map
+        end
+    end)
+end
+
+local function TweenTo(targetCFrame, speed)
     speed = speed or 300
     local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-    local dist = (hrp.Position - cframe.Position).Magnitude
-    if dist < 10 then hrp.CFrame = cframe; return end
     
-    local ts = TweenService:Create(hrp, TweenInfo.new(dist/speed, Enum.EasingStyle.Linear), {CFrame = cframe})
+    local dist = (hrp.Position - targetCFrame.Position).Magnitude
+    if dist < 10 then 
+        hrp.CFrame = targetCFrame
+        return 
+    end
+    
+    local ts = TweenService:Create(hrp, TweenInfo.new(dist/speed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
     ts:Play()
     ts.Completed:Wait()
 end
 
-local function BypassToTemple()
-    -- Load map "Temple of Time" từ ReplicatedStorage ra Workspace để không bị rớt xuống gầm trời
+local function FastAttack(target)
     pcall(function()
-        local rs = game:GetService("ReplicatedStorage")
-        local stash = rs:FindFirstChild("MapStash")
-        if stash and stash:FindFirstChild("Temple of Time") then
-            stash["Temple of Time"].Parent = Workspace.Map
+        local hitPart = target:FindFirstChild("Head") or target:FindFirstChild("HumanoidRootPart")
+        if not hitPart then return end
+        local Net = rs:WaitForChild("Modules"):WaitForChild("Net")
+        Net:WaitForChild("RE/RegisterAttack"):FireServer(0.1)
+        Net:WaitForChild("RE/RegisterHit"):FireServer(hitPart, {{target, hitPart}})
+    end)
+end
+
+local function EquipWeapon()
+    pcall(function()
+        for _, v in pairs(lp.Backpack:GetChildren()) do
+            if v:IsA("Tool") and v.ToolTip == "Melee" then
+                lp.Character.Humanoid:EquipTool(v)
+                break
+            end
         end
     end)
 end
 
+local function AutoKillMobs(mobNames)
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
+
+    local enemies = workspace:FindFirstChild("Enemies")
+    if not enemies then return false end
+
+    for _, v in pairs(enemies:GetChildren()) do
+        local isTarget = false
+        if type(mobNames) == "table" then
+            for _, name in pairs(mobNames) do
+                if v.Name:find(name) then isTarget = true; break end
+            end
+        else
+            if v.Name:find(mobNames) then isTarget = true end
+        end
+
+        if isTarget and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+            hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+            EquipWeapon()
+            FastAttack(v)
+            vim:SendKeyEvent(true, "Z", false, game)
+            vim:SendKeyEvent(false, "Z", false, game)
+            vim:SendKeyEvent(true, "X", false, game)
+            vim:SendKeyEvent(false, "X", false, game)
+            return true
+        end
+    end
+    return false
+end
+
+-- ================= HUB LOGIC - COMPLETE TRIALS =================
 local function AutoTrial()
-    local char = lp.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not char or not hrp then return end
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
     
     local race = MyState.Race
-    
     pcall(function()
         if race == "Mink" then
-            -- Bypass mê cung thỏ
-            if Workspace.Map:FindFirstChild("MinkTrial") and Workspace.Map.MinkTrial:FindFirstChild("Ceiling") then
-                hrp.CFrame = Workspace.Map.MinkTrial.Ceiling.CFrame * CFrame.new(0, -20, 0)
+            if workspace.Map:FindFirstChild("MinkTrial") and workspace.Map.MinkTrial:FindFirstChild("Ceiling") then
+                hrp.CFrame = workspace.Map.MinkTrial.Ceiling.CFrame * CFrame.new(0, -20, 0)
             end
-            
         elseif race == "Cyborg" then
-            -- Né tên lửa bằng cách bay lên trời
-            if Workspace.Map:FindFirstChild("CyborgTrial") and Workspace.Map.CyborgTrial:FindFirstChild("Floor") then
-                hrp.CFrame = Workspace.Map.CyborgTrial.Floor.CFrame * CFrame.new(0, 500, 0)
+            if workspace.Map:FindFirstChild("CyborgTrial") and workspace.Map.CyborgTrial:FindFirstChild("Floor") then
+                hrp.CFrame = workspace.Map.CyborgTrial.Floor.CFrame * CFrame.new(0, 500, 0)
             end
-            
-        elseif race == "Skypiea" then
-            -- Dịch chuyển thẳng tới đích nhảy mây
-            if Workspace.Map:FindFirstChild("SkyTrial") and Workspace.Map.SkyTrial:FindFirstChild("Model") then
-                hrp.CFrame = Workspace.Map.SkyTrial.Model.FinishPart.CFrame
+        elseif race == "Skypiea" or race == "Angel" then
+            if workspace.Map:FindFirstChild("SkyTrial") and workspace.Map.SkyTrial:FindFirstChild("Model") then
+                hrp.CFrame = workspace.Map.SkyTrial.Model.FinishPart.CFrame
             end
-            
-        elseif race == "Fishman" then
-            -- Trial Cá (Shark): Đánh SeaBeast
-            local seaBeasts = Workspace:FindFirstChild("SeaBeasts")
+        elseif race == "Fishman" or race == "Shark" then
+            local seaBeasts = workspace:FindFirstChild("SeaBeasts")
             if seaBeasts then
                 for _, v in pairs(seaBeasts:GetChildren()) do
                     if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Health") and v.Health.Value > 0 then
-                        -- Bay lên trên đầu SeaBeast xả skill
-                        hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0, 150, 0)
-                        
-                        -- Spam skills
-                        VirtualInput:SendKeyEvent(true, "Z", false, game)
-                        VirtualInput:SendKeyEvent(false, "Z", false, game)
-                        VirtualInput:SendKeyEvent(true, "X", false, game)
-                        VirtualInput:SendKeyEvent(false, "X", false, game)
-                        VirtualInput:SendKeyEvent(true, "C", false, game)
-                        VirtualInput:SendKeyEvent(false, "C", false, game)
+                        hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0, 300, 0)
+                        EquipWeapon()
+                        vim:SendKeyEvent(true, "Z", false, game)
+                        vim:SendKeyEvent(true, "X", false, game)
+                        vim:SendKeyEvent(true, "C", false, game)
+                        break
                     end
                 end
             end
-            
         elseif race == "Human" or race == "Ghoul" then
-            -- Đánh quái (Zombie, Vampire, Boss, SeaBeast)
-            -- Logic đánh chung: Quét toàn bộ Enemies gần đó trong phòng Trial và tự động vả
-            local enemies = Workspace:FindFirstChild("Enemies")
-            if enemies then
-                for _, v in pairs(enemies:GetChildren()) do
-                    if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                        local dist = (hrp.Position - v.HumanoidRootPart.Position).Magnitude
-                        -- Nếu quái ở gần (trong bán kính phòng trial)
-                        if dist < 300 then
-                            -- Dịch chuyển ra sau lưng quái
-                            hrp.CFrame = v.HumanoidRootPart.CFrame * CFrame.new(0, 30, 0)
-                            
-                            -- Spam click/skill
-                            VirtualInput:SendKeyEvent(true, "Z", false, game)
-                            VirtualInput:SendKeyEvent(false, "Z", false, game)
-                            VirtualInput:SendKeyEvent(true, "X", false, game)
-                            VirtualInput:SendKeyEvent(false, "X", false, game)
-                            
-                            -- Tận dụng FastAttack nếu được nhúng vào
-                            pcall(function()
-                                local hitPart = v:FindFirstChild("Head") or v.HumanoidRootPart
-                                local RegisterAttack = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net"):WaitForChild("RE/RegisterAttack")
-                                local RegisterHit = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net"):WaitForChild("RE/RegisterHit")
-                                RegisterAttack:FireServer(0.1)
-                                RegisterHit:FireServer(hitPart, {{v, hitPart}})
-                            end)
-                        end
-                    end
-                end
-            end
+            AutoKillMobs({"Ancient Vampire", "Ancient Zombie"})
         end
     end)
 end
 
--- ================= CONDITIONS CHECK =================
-local function isFullMoon()
-    return game:GetService("Lighting"):GetAttribute("MoonPhase") == 5
-end
-
-local function GetActiveMain()
-    for _, mainName in ipairs(CONFIG.MainAccounts) do
-        local st = ReadStatus(mainName)
-        if not st or st.Phase ~= "Done" then
-            return mainName
+-- ================= PVP & LEVER =================
+local function PullLever()
+    pcall(function()
+        local temple = workspace.Map:FindFirstChild("Temple of Time")
+        if temple then
+            for _, c in pairs(temple:GetDescendants()) do
+                if c.Name == "ProximityPrompt" then 
+                    fireproximityprompt(c, math.huge) 
+                end
+            end
         end
-    end
-    return nil
+    end)
 end
 
 local function IsInPvP()
     local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
-    -- Check if close to Ancient Clock
-    return (hrp.Position - ANCIENT_CLOCK_POS.Position).Magnitude < 150
+    local ancientOnePos = Vector3.new(28981, 14888, -120)
+    return (hrp.Position - ancientOnePos).Magnitude < 300
 end
 
-local function PressV3()
-    VirtualInput:SendKeyEvent(true, "T", false, game)
-    task.wait(0.1)
-    VirtualInput:SendKeyEvent(false, "T", false, game)
-    -- Also press Y just in case V4 is needed
-    VirtualInput:SendKeyEvent(true, "Y", false, game)
-    task.wait(0.1)
-    VirtualInput:SendKeyEvent(false, "Y", false, game)
+local function SelfDestruct()
+    pcall(function()
+        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+            lp.Character.Humanoid.Health = 0
+        end
+    end)
 end
 
-local function PullLever()
-    CommF_:InvokeServer("templedoorcheck")
+-- ================= SYNC SYSTEM (Local File) =================
+local FILE_NAME = "V4_SYNC.json"
+local HttpService = game:GetService("HttpService")
+
+local function ReadSync()
+    if not isfile(FILE_NAME) then writefile(FILE_NAME, HttpService:JSONEncode({})) end
+    local ok, data = pcall(function() return HttpService:JSONDecode(readfile(FILE_NAME)) end)
+    if ok and type(data) == "table" then return data end
+    return {}
 end
 
--- ================= HELP ACC LOGIC =================
-local function HelpLoop()
-    while task.wait(1) do
-        local char = lp.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if not char or not hrp then continue end
+local function WriteSync(data)
+    pcall(function() writefile(FILE_NAME, HttpService:JSONEncode(data)) end)
+end
 
+local function UpdatePhase(phase)
+    MyState.Phase = phase
+    local data = ReadSync()
+    data[lp.Name] = { Role = MyState.Role, Phase = phase, Tick = tick() }
+    WriteSync(data)
+end
+
+local function GetActiveMain()
+    local data = ReadSync()
+    local mains = {}
+    for name, info in pairs(data) do
+        if info.Role == "Main" and info.Phase ~= "Done" and (tick() - info.Tick < 10) then
+            table.insert(mains, name)
+        end
+    end
+    table.sort(mains, function(a, b)
+        local ia, ib = 99, 99
+        for i, n in ipairs(CONFIG.MainAccounts) do if n == a then ia = i break end end
+        for i, n in ipairs(CONFIG.MainAccounts) do if n == b then ib = i break end end
+        return ia < ib
+    end)
+    return mains[1]
+end
+
+local function isFullMoon()
+    return game:GetService("Lighting").Sky.MoonTextureId == "http://www.roblox.com/asset/?id=9709149431"
+end
+
+-- ================= MAIN LOOP =================
+local function MainLoop()
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local ok, a = pcall(function() return CommF_:InvokeServer("UpgradeRace", "Check") end)
+    if not ok then return end
+    
+    if a == 5 then
+        UpdatePhase("Done")
+        return
+    end
+
+    if a == 1 or a == 3 or a == 6 or a == 8 then
+        UpdatePhase("Farming")
+        local farmPos = CFrame.new(-9495.68, 453.58, 5977.34)
+        if (hrp.Position - farmPos.Position).Magnitude > 300 then
+            TweenTo(farmPos)
+        else
+            local isFarming = AutoKillMobs({"Reborn Skeleton", "Living Zombie", "Demonic Soul", "Posessed Mummy"})
+            if not isFarming then hrp.CFrame = farmPos end
+            
+            pcall(function()
+                if lp.Character:FindFirstChild("RaceEnergy") and lp.Character.RaceEnergy.Value >= 1 then
+                    vim:SendKeyEvent(true, "Y", false, game)
+                    task.wait(0.1)
+                    vim:SendKeyEvent(false, "Y", false, game)
+                end
+            end)
+        end
+        return
+    end
+
+    if a == 0 or a == 2 or a == 4 or a == 7 then
         local activeMain = GetActiveMain()
-        if not activeMain then
-            UpdatePhase("Done")
-            continue
+        if activeMain ~= lp.Name then
+            UpdatePhase("WaitingTurn")
+            return
         end
 
-        local mainStatus = ReadStatus(activeMain)
-        if not mainStatus then continue end
-
-        GetMyRace()
+        if a == 2 or a == 4 or a == 7 then
+            CommF_:InvokeServer("UpgradeRace", "Buy")
+            task.wait(1)
+            CommF_:InvokeServer("UpgradeRace", "Buy", 2)
+        end
 
         if IsInPvP() then
             UpdatePhase("InPvP")
-            local activeMain = GetActiveMain()
-            if activeMain then
-                -- Đợi Active Main xuất hiện ở phòng PvP
-                local mainPlayer = Players:FindFirstChild(activeMain)
-                if mainPlayer and mainPlayer.Character and mainPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (mainPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-                    if dist < 200 then
-                        print("🔪 Thấy Main trong PvP -> Tự sát!")
-                        lp.Character:BreakJoints()
-                        if lp.Character:FindFirstChild("Humanoid") then
-                            lp.Character.Humanoid.Health = 0
-                        end
-                        UpdatePhase("Dead")
-                        task.wait(5)
+            local enemiesAlive = false
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= lp and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                    local vhrp = v.Character:FindFirstChild("HumanoidRootPart")
+                    if vhrp and (vhrp.Position - hrp.Position).Magnitude < 300 then
+                        enemiesAlive = true
+                        hrp.CFrame = vhrp.CFrame * CFrame.new(0, 0, 5)
+                        EquipWeapon()
+                        FastAttack(v.Character)
                     end
                 end
             end
-            continue
+            if not enemiesAlive then
+                hrp.CFrame = CFrame.new(28981.55, 14888.42, -120.24)
+                task.wait(1)
+                PullLever()
+            end
+            return
         end
 
-        -- Kệ mẹ Main có hay không, cứ bypass lên Temple và tới đứng trước cửa Trial của mình
+        BypassToTemple()
         local doorPos = RaceDoors[MyState.Race]
-        if hrp and doorPos then
-            -- Nếu cách cửa quá xa (> 500 stud), tức là chưa ở trong Đền
-            if (hrp.Position - doorPos.Position).Magnitude > 500 then
-                BypassToTemple()
-                -- Dịch chuyển thẳng tới trước cửa Tộc của mình
-                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-                    lp.Character.HumanoidRootPart.CFrame = doorPos
-                end
-            else
-                -- Nếu đã ở gần cửa rồi thì ráng chui vô đứng cho chuẩn
-                if (hrp.Position - doorPos.Position).Magnitude > 10 then
-                    lp.Character.HumanoidRootPart.CFrame = doorPos
-                end
+        if doorPos then hrp.CFrame = doorPos end
+
+        local syncData = ReadSync()
+        local helpsAtDoor = 0
+        for _, name in pairs(CONFIG.HelpAccounts) do
+            if syncData[name] and syncData[name].Phase == "AtDoor" and (tick() - syncData[name].Tick < 10) then
+                helpsAtDoor = helpsAtDoor + 1
             end
+        end
+
+        if helpsAtDoor >= 2 then
+            if isFullMoon() then
+                UpdatePhase("Pulling")
+                vim:SendKeyEvent(true, "T", false, game)
+                task.wait(1)
+                PullLever()
+                task.wait(1)
+                AutoTrial()
+            else
+                UpdatePhase("WaitingMoon")
+            end
+        else
+            UpdatePhase("WaitingHelps")
+        end
+    end
+end
+
+-- ================= HELP LOOP =================
+local function HelpLoop()
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local syncData = ReadSync()
+    local mainPhase = "INIT"
+    for _, name in pairs(CONFIG.MainAccounts) do
+        if syncData[name] and (tick() - syncData[name].Tick < 10) and syncData[name].Phase ~= "Done" then
+            mainPhase = syncData[name].Phase
+            break
+        end
+    end
+
+    if IsInPvP() then
+        SelfDestruct()
+        UpdatePhase("Dead")
+        return
+    end
+
+    BypassToTemple()
+    local doorPos = RaceDoors[MyState.Race]
+    if doorPos then
+        if (hrp.Position - doorPos.Position).Magnitude > 5 then
+            hrp.CFrame = doorPos
         end
         UpdatePhase("AtDoor")
+    end
 
-        -- Check Main để phối hợp bấm V3
-        local activeMain = GetActiveMain()
-        if not activeMain then
-            continue
-        end
-
-        local mainStatus = ReadStatus(activeMain)
-        if not mainStatus then continue end
-
-        -- Nếu Main đang ở cửa hoặc đang trong trial
-        if mainStatus.Phase == "AtDoor" or mainStatus.Phase == "InTrial" then
-            -- Đồng bộ bật V3
-            if mainStatus.Phase == "AtDoor" and isFullMoon() then
-                -- Đợi tí để khớp nhịp
-                task.wait(math.random() * 0.5) 
-                PressV3()
-            end
-            
-            -- Nếu Main đang trong Trial, Help cũng tự vượt ải của mình
-            if mainStatus.Phase == "InTrial" then
-                UpdatePhase("InTrial")
-                AutoTrial()
-            end
-        end
+    if mainPhase == "Pulling" then
+        vim:SendKeyEvent(true, "T", false, game)
+    elseif mainPhase == "InPvP" then
+        SelfDestruct()
     end
 end
 
--- ================= MAIN ACC LOGIC =================
-local function MainLoop()
-    while task.wait(1) do
-        local activeMain = GetActiveMain()
-        
-        -- Nếu đã max V4
-        if MyState.Phase == "Done" then
-            continue
-        end
-        
-        if activeMain ~= lp.Name then
-            UpdatePhase("Waiting")
-            continue
-        end
-        
-        local char = lp.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if not char or not hrp then continue end
-        
-        GetMyRace()
-
-        -- Check Training (Tái sử dụng logic Check V4 từ v4_auto_train)
-        local a, b = CommF_:InvokeServer("UpgradeRace","Check")
-        if a == 5 then
-            UpdatePhase("Done")
-            print("🎉 MAX V4 CHUYỂN ACC TIẾP THEO!")
-            continue
-        end
-
-        if IsInPvP() then
-            UpdatePhase("InPvP")
-            -- Check xem 2 Help đã chết chưa
-            local help1Status = ReadStatus(CONFIG.HelpAccounts[1])
-            local help2Status = ReadStatus(CONFIG.HelpAccounts[2])
-            
-            if (not help1Status or help1Status.Phase == "Dead") and (not help2Status or help2Status.Phase == "Dead") then
-                print("🏆 Đã thắng PvP, đợi game chuyển tới Ancient One")
-                task.wait(5)
+-- ================= EXECUTION =================
+task.spawn(function()
+    while task.wait(0.5) do
+        pcall(function()
+            if not lp.Team or lp.Team.Name ~= "Pirates" then
+                CommF_:InvokeServer("SetTeam", "Pirates")
             end
-            continue
-        end
-        
-        -- Nếu cần Trial
-        if a == 0 or a == 2 or a == 4 or a == 7 then
-            -- Mua gear nếu có thể
-            if a == 2 or a == 4 or a == 7 then
-                CommF_:InvokeServer("UpgradeRace", "Buy")
-                task.wait(1)
-                CommF_:InvokeServer("UpgradeRace", "Buy", 2)
-            end
-
-            -- Chờ Full Moon và vào Trial
-            BypassToTemple()
-            local doorPos = RaceDoors[MyState.Race]
-            if doorPos then
-                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-                    lp.Character.HumanoidRootPart.CFrame = doorPos
-                end
+            if lp.Character and not lp.Character:FindFirstChild("HasBuso") then
+                CommF_:InvokeServer("Buso")
             end
             
-            -- Check 2 Help đã ở cửa chưa
-            local h1 = ReadStatus(CONFIG.HelpAccounts[1])
-            local h2 = ReadStatus(CONFIG.HelpAccounts[2])
+            GetMyRace()
             
-            if h1 and h1.Phase == "AtDoor" and h2 and h2.Phase == "AtDoor" then
-                if isFullMoon() then
-                    UpdatePhase("AtDoor") -- Tín hiệu cho Help bấm V3
-                    task.wait(1)
-                    PressV3()
-                    task.wait(1)
-                    PullLever()
-                    
-                    UpdatePhase("InTrial")
-                    local trialTimeout = tick() + 60 -- 1 phút vượt ải max
-                    while tick() < trialTimeout do
-                        -- Nếu đã bị ném vào phòng PvP thì break
-                        if IsInPvP() then break end
-                        
-                        AutoTrial()
-                        task.wait(0.5)
-                    end
-                else
-                    UpdatePhase("WaitingForMoon")
-                end
-            else
-                UpdatePhase("WaitingForHelps")
+            if MyState.Role == "Main" then
+                MainLoop()
+            elseif MyState.Role == "Help" then
+                HelpLoop()
             end
-            continue
-        end
-        
-        -- Nếu cần Train
-        if a == 1 or a == 3 or a == 6 or a == 8 then
-            UpdatePhase("Training")
-            -- Chỗ này sẽ load logic farm mob xương từ file v4_auto_train.txt
-            -- Để file gọn gàng, ta require hoặc loadstring file đó
-            -- (Chi tiết triển khai sau)
-            print("⚔️ Bắt đầu đi farm quái xương để Train...")
-            task.wait(5)
-        end
+        end)
     end
-end
-
--- ================= ENTRY POINT =================
-GetMyRace()
-WriteStatus(MyState)
-print("🚀 Khởi động Kaitun Race V4 cho: " .. lp.Name .. " | Role: " .. MyRole)
-
-if MyRole == "Help" then
-    task.spawn(HelpLoop)
-elseif MyRole == "Main" then
-    task.spawn(MainLoop)
-end
+end)
