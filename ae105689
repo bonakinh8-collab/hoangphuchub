@@ -139,8 +139,14 @@ local function TweenTo(cframe, speed)
 end
 
 local function BypassToTemple()
-    -- Bypass teleport to Temple of Time
-    CommF_:InvokeServer("requestEntrance", Vector3.new(-12538.42, 340.89, -7817.07))
+    -- Load map "Temple of Time" từ ReplicatedStorage ra Workspace để không bị rớt xuống gầm trời
+    pcall(function()
+        local rs = game:GetService("ReplicatedStorage")
+        local stash = rs:FindFirstChild("MapStash")
+        if stash and stash:FindFirstChild("Temple of Time") then
+            stash["Temple of Time"].Parent = Workspace.Map
+        end
+    end)
 end
 
 local function AutoTrial()
@@ -306,7 +312,6 @@ local function HelpLoop()
             -- Nếu cách cửa quá xa (> 500 stud), tức là chưa ở trong Đền
             if (hrp.Position - doorPos.Position).Magnitude > 500 then
                 BypassToTemple()
-                task.wait(1.5) -- Chờ server teleport
                 -- Dịch chuyển thẳng tới trước cửa Tộc của mình
                 if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
                     lp.Character.HumanoidRootPart.CFrame = doorPos
@@ -400,7 +405,6 @@ local function MainLoop()
 
             -- Chờ Full Moon và vào Trial
             BypassToTemple()
-            task.wait(1.5)
             local doorPos = RaceDoors[MyState.Race]
             if doorPos then
                 if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
