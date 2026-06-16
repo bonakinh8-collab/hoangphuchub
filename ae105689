@@ -2,7 +2,7 @@
 -- BẠN KHÔNG CẦN CHỈNH SỬA GÌ Ở ĐÂY NỮA, HÃY UP FILE NÀY LÊN GITHUB
 -- NGƯỜI DÙNG PHẢI NHẬP KEY TRONG EXECUTOR TRƯỚC KHI CHẠY SCRIPT
 -- ==============================================================
-repeat task.wait() until game:GetService("Players").LocalPlayer
+repeat wait() until game:GetService("Players").LocalPlayer
 
 if not getgenv().Key or getgenv().Key == "" then
     game:GetService("Players").LocalPlayer:Kick("Vui lòng nhập Key vào script!")
@@ -67,7 +67,7 @@ getgenv().NAH = {
 
 
 repeat
-    task.wait()
+    wait()
 until game:IsLoaded()
 Notify = function(text) 
     pcall(function() 
@@ -90,7 +90,7 @@ local MainUI = PlayerGui:WaitForChild("Main", 10) or PlayerGui:WaitForChild("Mai
 
 if MainUI then
     repeat
-        task.wait(0.5)
+        wait(0.5)
         pcall(function()
             if MainUI:FindFirstChild("ChooseTeam") then
                 for i, v in pairs(getconnections(MainUI.ChooseTeam.Container.Marines.Frame.TextButton.Activated)) do
@@ -102,7 +102,7 @@ if MainUI then
 end
 Notify("select team done")
 repeat
-task.wait()
+wait()
 until game.Players.LocalPlayer.Character
 if workspace:GetAttribute('MAP') == "Sea1" then
     World1 = true
@@ -266,7 +266,7 @@ local function FruitCheck(v)
                (currentFruit == "" or not table.find(NAH.TableFruit.ListFruit, currentFruit)) and 
                table.find(NAH.TableFruit.ListFruit, originalName) 
             then
-                while not LocalPlayer.Character:FindFirstChild(v.Name) and task.wait() do
+                while not LocalPlayer.Character:FindFirstChild(v.Name) and wait() do
                     local fruitInBackpack = LocalPlayer.Backpack:FindFirstChild(v.Name)
                     if fruitInBackpack then
                         LocalPlayer.Character.Humanoid:EquipTool(fruitInBackpack)
@@ -299,7 +299,7 @@ local function SetupCharacter(char)
             if hum.Sit then
                 hum.Jump = true
                 game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                repeat task.wait(0.1) until not hum.Sit
+                repeat wait(0.1) until not hum.Sit
                 hum.Jump = false
                 game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
             end
@@ -365,7 +365,7 @@ do
         spawn(function()
             for _, v in ipairs(rest) do
                 PD[v.Name] = v
-                task.wait(0.01)
+                wait(0.01)
             end
         end)
     end
@@ -673,7 +673,7 @@ Players = game:GetService("Players")
 LP = Players.LocalPlayer
 function CheckKick(v)
     if v.Name == "ErrorPrompt" then
-        task.wait(5)
+        wait(5)
         warn(v.TitleFrame.ErrorTitle.Text)
         warn(v.MessageArea.ErrorFrame.ErrorMessage.Text)
         if v.TitleFrame.ErrorTitle.Text == "Teleport Failed" then
@@ -683,7 +683,7 @@ function CheckKick(v)
             end
         else
             print("Checkkick rejoin")
-            while task.wait() do 
+            while wait() do 
                 game:GetService("TeleportService"):Teleport(game.PlaceId)
             end
         end
@@ -693,7 +693,7 @@ end
 game:GetService('CoreGui').RobloxPromptGui.promptOverlay.ChildAdded:Connect(CheckKick)
 GetNearSpawn = function(TargetedPos)
     while not IsPlayerAlive() do
-        task.wait()
+        wait()
     end
     if Character.HumanoidRootPart then
         if GetDistance(TargetedPos) < 1000 then
@@ -706,7 +706,7 @@ GetNearSpawn = function(TargetedPos)
             local Pos = Request_Places[request_place]
             if GetDistance(Pos, TargetedPos) < 2000 and GetDistance(Pos, TargetedPos) < GetDistance(TargetedPos) then
                 rqentrance(request_place)
-                task.wait(.1)
+                wait(.1)
                 return nil
             end
         end
@@ -753,7 +753,7 @@ function rqentrance(request_place)
         repeat
             CommF:InvokeServer("requestEntrance",
                 Request_Places[request_place].Position)
-            task.wait(1)
+            wait(1)
         until GetDistance(Request_Places[request_place]) < 50
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = game.Players.LocalPlayer.Character
             .HumanoidRootPart.CFrame * CFrame.new(30, 50, 0)
@@ -762,7 +762,7 @@ function rqentrance(request_place)
             repeat
                 CommF:InvokeServer("requestEntrance",
                     Request_Places["Temple Of Time"].Position)
-                task.wait()
+                wait()
             until workspace.NPCs:FindFirstChild("Mysterious Force3")
         end
         if workspace.NPCs:FindFirstChild("Mysterious Force3") then
@@ -772,7 +772,7 @@ function rqentrance(request_place)
             repeat
                 CommF:InvokeServer("RaceV4Progress",
                     "TeleportBack")
-                task.wait()
+                wait()
             until workspace.NPCs:FindFirstChild("Mysterious Force")
         end
     end
@@ -805,7 +805,7 @@ for _, v14 in pairs(workspace._WorldOrigin.Locations:GetChildren()) do
     end;
 end;
 workspace._WorldOrigin.Locations.ChildAdded:Connect(function(v14)
-    task.wait(3)
+    wait(3)
     BypassTpLocation[v14.Name] = BypassTpLocation[v14.Name] or {};
     for _, v16 in pairs(PlayerSpawnsLot) do
         if (v16[2] - v14.Position).Magnitude <= v14.Size.X * v14.Mesh.Scale.X / 2 then
@@ -877,7 +877,7 @@ function SSS(Pos, donttp)
                 return GetDistance(a, Pos) < GetDistance(b, Pos)
             end)
         end
-        task.wait()
+        wait()
         local Found = false
         for i, v in pairs(ListPos) do
             if GetDistance(v, Pos) + 500 < GetDistance(Pos, Character) and GetDistance(v, LP.Character) >= 1000 then
@@ -887,13 +887,13 @@ function SSS(Pos, donttp)
                 local SP, Tag = GetTPLocation(v)
                 if Character:FindFirstChild('LastSpawnPoint') then game:GetService("Players").LocalPlayer.Character.LastSpawnPoint.Disabled = true end
                 game.ReplicatedStorage.Remotes.CommF_:InvokeServer("SetLastSpawnPoint", SP);
-                task.wait()
+                wait()
                 if game.Players.LocalPlayer.Data.LastSpawnPoint.Value == SP then
                     game.Players.LocalPlayer.Character.Humanoid.Health = 0
                     game.Players.LocalPlayer.Character.Head:Destroy()
-                    task.wait()
+                    wait()
                     while not IsPlayerAlive() do
-                        task.wait()
+                        wait()
                     end
                     return SSS(Pos)
                 end
@@ -916,13 +916,13 @@ function TP1(pos, normal, Condition)
     local r = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if r and q1(Pos.Position, r.Position) > 1000 then
         SSS(GetNearSpawn(Pos), normal)
-        task.wait() -- Đợi một nhịp ngắn để ổn định sau khi SSS (Reset/Portal)
+        wait() -- Đợi một nhịp ngắn để ổn định sau khi SSS (Reset/Portal)
     end
     if game.Players.LocalPlayer.Character.Humanoid.Sit then 
     game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
     end
     repeat
-        task.wait()
+        wait()
         AddVelocity(true)
         if Noclipping then
             Noclipping:Disconnect()
@@ -945,7 +945,7 @@ function TP1(pos, normal, Condition)
             if tween then
                 tween:Pause()
             end
-            task.wait(.5)
+            wait(.5)
             if tween then tween:Play() end
             lastPauseTime = tick()
         end
@@ -964,7 +964,7 @@ function TP1(pos, normal, Condition)
                         if tween then tween:Cancel() tween = nil end 
                         repeat
                             game:GetService("ReplicatedStorage").Modules.Net["RF/SubmarineWorkerSpeak"]:InvokeServer("TravelToSubmergedIsland")
-                            task.wait(2)
+                            wait(2)
                         until workspace.Map:FindFirstChild('Submerged Island') or not IsPlayerAlive()
                     end
                 end
@@ -978,7 +978,7 @@ function TP1(pos, normal, Condition)
                 Pos.Position.Y,
                 game.Players.LocalPlayer.Character.HumanoidRootPart.Position.Z
             )
-            task.wait()
+            wait()
         end
         
         local Time = 0
@@ -1058,7 +1058,7 @@ function HopServer(max)
             )
         end
         for i = 1, #ArrayServers do
-            while task.wait() do
+            while wait() do
                 local Index = math.random(1, #ArrayServers)
                 ServerData = ArrayServers[Index]
                 if ServerData then
@@ -1076,7 +1076,7 @@ function HopServer(max)
         end
     end)
 
-    task.wait(math.random(3, 15))
+    wait(math.random(3, 15))
     return HopServer(max)
 end
 
@@ -1138,7 +1138,7 @@ function StartLegendarySword()
         end)
     end
     spawn(function()
-        while World2 and task.wait(60) do
+        while World2 and wait(60) do
             if not FoundLegendarySword and game.ReplicatedStorage.Remotes.CommF_:InvokeServer("LegendarySwordDealer", "1")   then
                 DummyFunc(EmptyData[game.ReplicatedStorage.Remotes.CommF_:InvokeServer("LegendarySwordDealer", "1")],"LegendarySword")
                 FoundLegendarySword = true
@@ -1170,13 +1170,13 @@ end
 ---
 OldPosition = nil
 spawn(LPH_NO_VIRTUALIZE(function()
-        while task.wait(1) do
+        while wait(1) do
             local char = game.Players.LocalPlayer.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
                 OldPosition = char.HumanoidRootPart.Position
                 local count = tick()
                 repeat
-                    task.wait()
+                    wait()
                     char = game.Players.LocalPlayer.Character
                 until tick() - count >= 350 or not char or not char:FindFirstChild("HumanoidRootPart") or char.HumanoidRootPart.Position ~= OldPosition
                 if tick() - count >= 350 then HopServer() end
@@ -1339,7 +1339,7 @@ function BringMob(Enemy, BringCFrame, notLimit)
         local count = tick()
         task.spawn(function()
             repeat
-                task.wait()
+                wait()
 				if tick() - count >= 10 and NearestMob.Humanoid.MaxHealth - NearestMob.Humanoid.Health == 0 then
                     NearestMob.HumanoidRootPart.CFrame = CFrame.new(NearestMob:GetAttribute("OldPosition"))
                     print 'tp back 2'; break
@@ -1379,7 +1379,7 @@ function RefreshInventory()
             cc = true
             Notify("Load fruit " .. Value.Name)
             CommF:InvokeServer("LoadFruit", Value.Name)
-            task.wait(1)
+            wait(1)
         end
         backup[Value.Name] = Value
     end
@@ -1396,7 +1396,7 @@ game:GetService("ReplicatedStorage").Remotes.CommE.OnClientEvent:Connect(
 )
 
 task.spawn(LPH_NO_VIRTUALIZE(function()
-    while task.wait(1) do
+    while wait(1) do
         pcall(function()
             FarmTaskText = getgenv().CurrentFarmTask or "None"
             print("Current Farm Task: " .. FarmTaskText)
@@ -1459,12 +1459,12 @@ Notify(GetCurrentFruitMastery())
 function SendKey(key, hold)
     task.spawn(function()
         game:GetService("VirtualInputManager"):SendKeyEvent(true, key, false, game)
-        task.wait(hold)
+        wait(hold)
         game:GetService("VirtualInputManager"):SendKeyEvent(false, key, false, game)
     end)
 end
 
-repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer:FindFirstChild('DataLoaded')
+repeat wait() until game:IsLoaded() and game.Players.LocalPlayer:FindFirstChild('DataLoaded')
 local MT = getrawmetatable(game)
 local OldNameCall = MT.__namecall
 setreadonly(MT, false)
@@ -1507,7 +1507,7 @@ function KillNigga(MobInstance,test)
         local timeout = 20
         local elapsed = 0
         while elapsed < timeout do
-            task.wait(0.5)
+            wait(0.5)
             elapsed = elapsed + 0.5
             if GetDistance(GATE_POSITION) < 50 then break end
         end
@@ -1515,7 +1515,7 @@ function KillNigga(MobInstance,test)
         pcall(function()
             CommF:InvokeServer("requestEntrance", GATE_POSITION)
         end)
-        task.wait(2)
+        wait(2)
     end
     if MobInstance:HasTag('secondmob') then MobInstance:RemoveTag('secondmob') end
     MobInstance:AddTag('realmob')
@@ -1523,7 +1523,7 @@ function KillNigga(MobInstance,test)
     local Count, Count2, Debounce = 0, 0, os.time()
     local SpinIncrement = 0
     repeat
-        task.wait()
+        wait()
         local success, err = pcall(function()
             if not IsPlayerAlive() then return end
             if not skidymf(MobInstance) then return end
@@ -1544,7 +1544,7 @@ function KillNigga(MobInstance,test)
                         MobInstance:SetPrimaryPartCFrame(CFrame.new(oldpos))
                         MobInstance.HumanoidRootPart.CanCollide = false
                         MobInstance:SetAttribute("Count", (MobInstance:GetAttribute("Count") or 0) + 1)
-                        task.wait()
+                        wait()
                         return
                     end
                 end
@@ -1816,7 +1816,7 @@ end
 function tweenfruit()
     local i = 1
     while i <= #ServerData.ServerFruit do
-        task.wait()
+        wait()
         local v = ServerData.ServerFruit[i]
         local condition = function()
             return v and v.Parent and v.Parent == game.workspace and v:IsDescendantOf(workspace) and v:FindFirstChild("Handle") and v.Handle.Position.Y > 0 and #ServerData.ServerFruit > 0
@@ -1828,12 +1828,12 @@ function tweenfruit()
             getgenv().CurrentFarmTaskDoing = 'Collecting ' .. v.Name
 
             local handle = v.Handle
-            while condition() and task.wait() do
+            while condition() and wait() do
                 TP1(handle.CFrame, nil, condition)
             end
             if v and v.Parent and v:FindFirstChild("Handle") then
                 game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                task.wait(0.1)
+                wait(0.1)
                 game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.Space, false, game)
             end
 
@@ -1931,7 +1931,7 @@ function buychip()
     if fruitToUse then
         getgenv().CurrentFarmTask = "Buying Chip"
         CommF:InvokeServer("LoadFruit", fruitToUse)
-        task.wait(0.5) 
+        wait(0.5) 
     end
 
     if Notify then Notify(FruitSelected) end
@@ -1974,7 +1974,7 @@ function autohaki()
     end
 end
 spawn(function()
-    while task.wait(1) do
+    while wait(1) do
         LPH_NO_VIRTUALIZE(function()
             -- Đã vô hiệu hóa logic tự động mua chip raid và spam mua fruit rác theo yêu cầu của user
             autohaki()
@@ -2087,14 +2087,14 @@ function AutoRaid()
                 if not game.Players.LocalPlayer.Backpack:FindFirstChild("Special Microchip") and not game.Players.LocalPlayer.Character:FindFirstChild("Special Microchip") then
                     local aaa = os.time()
                     repeat
-                        task.wait(1)
+                        wait(1)
                     until (LocalPlayer:GetAttribute("IslandRaiding") == true and getNextIsland()) or os.time() - aaa > 20 or not IsPlayerAlive()
                 end
             end
         elseif LocalPlayer:GetAttribute("IslandRaiding") == true then
             CommF:InvokeServer("AbandonQuest")
             repeat
-                task.wait()
+                wait()
                 if getNextIsland() and GetDistance(getNextIsland().CFrame) > 200 then
                     TP1(getNextIsland().CFrame * CFrame.new(0, 20, 0))
                 end
@@ -2168,7 +2168,7 @@ function UnlockDough()
         getgenv().MochiUnlocked = true
         pcall(function()
             CommF:InvokeServer("CakeScientist", "Check")
-            task.wait(1)
+            wait(1)
             CommF:InvokeServer("RaidsNpc", "Check")
         end)
     end
@@ -2226,8 +2226,8 @@ function farmelite()
                 return _G.CurrentElite and skidymf(_G.CurrentElite) and
                     GetDistance(_G.CurrentElite.HumanoidRootPart.CFrame) >= 70
             end
-            while condition() and task.wait() do
-                task.wait()
+            while condition() and wait() do
+                wait()
                 TP1(_G.CurrentElite.HumanoidRootPart.CFrame, nil, condition)
             end
             if _G.CurrentElite and skidymf(_G.CurrentElite) then
@@ -2235,7 +2235,7 @@ function farmelite()
             end
         end
     else
-        task.wait()
+        wait()
         HopServer()
     end
 end
@@ -2332,16 +2332,16 @@ function SmartResetStat(PrimaryPoint)
     local UnspentPoints = PlayerData.Points.Value
     if UnspentPoints > 0 then
         game.ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Melee", UnspentPoints)
-        task.wait(0.1)
+        wait(0.1)
         UnspentPoints = PlayerData.Points.Value
         if UnspentPoints > 0 then
             game.ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Defense", UnspentPoints)
-            task.wait(0.1)
+            wait(0.1)
         end
         UnspentPoints = PlayerData.Points.Value
         if UnspentPoints > 0 then
             game.ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", PrimaryPoint, UnspentPoints)
-            task.wait(0.1)
+            wait(0.1)
         end
     end
     if PlayerData.Points.Value < 100 then
@@ -2364,11 +2364,11 @@ function SmartResetStat(PrimaryPoint)
                 return false
             end
             
-            task.wait(1.5)
+            wait(1.5)
            game.ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Melee", 9999)
-            task.wait(0.1)
+            wait(0.1)
             game.ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", "Defense", 9999)
-            task.wait(0.1)
+            wait(0.1)
             game.ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", PrimaryPoint, 9999)
         end
     end
@@ -2393,10 +2393,10 @@ FuncRequirements = {
 }
 AllBosses = {"Dough King"}
 repeat
-    task.wait()
+    wait()
 until check2
 spawn(LPH_NO_VIRTUALIZE(function()
-        while task.wait() do
+        while wait() do
             if getgenv().Config and getgenv().Config.AutoFarm == false then continue end
             local success, err = pcall(function()
             
@@ -2409,7 +2409,7 @@ spawn(LPH_NO_VIRTUALIZE(function()
                         getgenv().MochiUnlocked = true
                         pcall(function()
                             CommF:InvokeServer("CakeScientist", "Check")
-                            task.wait(1)
+                            wait(1)
                             CommF:InvokeServer("RaidsNpc", "Check")
                         end)
                     end
