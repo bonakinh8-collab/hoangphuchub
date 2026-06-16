@@ -67,9 +67,9 @@ end)
 
 -- ================= UTILS & COMBAT =================
 local RaceDoors = {
-    ["Mink"]    = CFrame.new(28292.01, 14896.85, 93.30),
-    ["Fishman"] = CFrame.new(28243.60, 14894.42, 103.54),
-    ["Shark"]   = CFrame.new(28243.60, 14894.42, 103.54),
+    ["Mink"]    = CFrame.new(29020.66, 14889.42, -379.26),
+    ["Fishman"] = CFrame.new(28224.05, 14889.42, -210.58),
+    ["Shark"]   = CFrame.new(28224.05, 14889.42, -210.58),
     ["Cyborg"]  = CFrame.new(28492.41, 14894.42, -422.11),
     ["Skypiea"] = CFrame.new(28967.40, 14918.07, 234.31),
     ["Angel"]   = CFrame.new(28967.40, 14918.07, 234.31),
@@ -88,6 +88,16 @@ local function BypassToTemple()
             stash["Temple of Time"].Parent = workspace.Map
         end
     end)
+    task.wait(0.5)
+    
+    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if hrp and (hrp.Position - Vector3.new(28286, 14895, 102)).Magnitude > 1000 then
+        -- Dịch chuyển qua cổng Great Tree để không bị kick
+        pcall(function()
+            CommF_:InvokeServer("requestEntrance", Vector3.new(-12538.421875, 340.893585, -7817.070801))
+        end)
+        task.wait(1.5)
+    end
 end
 
 local function TweenTo(targetCFrame, speed)
@@ -101,9 +111,20 @@ local function TweenTo(targetCFrame, speed)
         return 
     end
     
+    local bv = hrp:FindFirstChild("BodyClip")
+    if not bv then
+        bv = Instance.new("BodyVelocity")
+        bv.Name = "BodyClip"
+        bv.MaxForce = Vector3.new(100000, 100000, 100000)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = hrp
+    end
+    
     local ts = TweenService:Create(hrp, TweenInfo.new(dist/speed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
     ts:Play()
     ts.Completed:Wait()
+    
+    if bv then bv:Destroy() end
 end
 
 local function FastAttack(target)
@@ -339,7 +360,7 @@ local function MainLoop()
 
         BypassToTemple()
         local doorPos = RaceDoors[MyState.Race]
-        if doorPos then hrp.CFrame = doorPos end
+        if doorPos then TweenTo(doorPos) end
 
         local syncData = ReadSync()
         local helpsAtDoor = 0
@@ -390,7 +411,7 @@ local function HelpLoop()
     local doorPos = RaceDoors[MyState.Race]
     if doorPos then
         if (hrp.Position - doorPos.Position).Magnitude > 5 then
-            hrp.CFrame = doorPos
+            TweenTo(doorPos)
         end
         UpdatePhase("AtDoor")
     end
