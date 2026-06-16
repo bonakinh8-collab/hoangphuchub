@@ -139,7 +139,8 @@ local function TweenTo(cframe, speed)
 end
 
 local function BypassToTemple()
-    CommF_:InvokeServer("requestEntrance", TEMPLE_ENTRANCE)
+    -- Bypass teleport to Temple of Time
+    CommF_:InvokeServer("requestEntrance", Vector3.new(-12538.42, 340.89, -7817.07))
 end
 
 local function AutoTrial()
@@ -279,52 +280,68 @@ local function HelpLoop()
 
         if IsInPvP() then
             UpdatePhase("InPvP")
-            -- Đợi Active Main xuất hiện ở phòng PvP
-            local mainPlayer = Players:FindFirstChild(activeMain)
-            if mainPlayer and mainPlayer.Character and mainPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (mainPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-                if dist < 200 then
-                    print("🔪 Thấy Main trong PvP -> Tự sát!")
-                    lp.Character:BreakJoints()
-                    if lp.Character:FindFirstChild("Humanoid") then
-                        lp.Character.Humanoid.Health = 0
+            local activeMain = GetActiveMain()
+            if activeMain then
+                -- Đợi Active Main xuất hiện ở phòng PvP
+                local mainPlayer = Players:FindFirstChild(activeMain)
+                if mainPlayer and mainPlayer.Character and mainPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (mainPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+                    if dist < 200 then
+                        print("🔪 Thấy Main trong PvP -> Tự sát!")
+                        lp.Character:BreakJoints()
+                        if lp.Character:FindFirstChild("Humanoid") then
+                            lp.Character.Humanoid.Health = 0
+                        end
+                        UpdatePhase("Dead")
+                        task.wait(5)
                     end
-                    UpdatePhase("Dead")
-                    task.wait(5)
                 end
             end
             continue
         end
 
-        -- Nếu đang sống và không ở PvP
-        if mainStatus.Phase == "WaitingForMoon" or mainStatus.Phase == "AtDoor" or mainStatus.Phase == "InTrial" then
-            
-            -- Nếu Main đang trong Trial, Help cũng tự vượt ải của mình
-            if mainStatus.Phase == "InTrial" then
-                UpdatePhase("InTrial")
-                AutoTrial()
-                continue
+        -- Kệ mẹ Main có hay không, cứ bypass lên Temple và tới đứng trước cửa Trial của mình
+        local doorPos = RaceDoors[MyState.Race]
+        if hrp and doorPos then
+            -- Nếu cách cửa quá xa (> 500 stud), tức là chưa ở trong Đền
+            if (hrp.Position - doorPos.Position).Magnitude > 500 then
+                BypassToTemple()
+                task.wait(1.5) -- Chờ server teleport
+                -- Dịch chuyển thẳng tới trước cửa Tộc của mình
+                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                    lp.Character.HumanoidRootPart.CFrame = doorPos
+                end
+            else
+                -- Nếu đã ở gần cửa rồi thì ráng chui vô đứng cho chuẩn
+                if (hrp.Position - doorPos.Position).Magnitude > 10 then
+                    lp.Character.HumanoidRootPart.CFrame = doorPos
+                end
             end
-            
-            BypassToTemple()
-            task.wait(1)
-            local doorPos = RaceDoors[MyState.Race]
-            if doorPos then
-                TweenTo(doorPos)
-                UpdatePhase("AtDoor")
-            end
-            
+        end
+        UpdatePhase("AtDoor")
+
+        -- Check Main để phối hợp bấm V3
+        local activeMain = GetActiveMain()
+        if not activeMain then
+            continue
+        end
+
+        local mainStatus = ReadStatus(activeMain)
+        if not mainStatus then continue end
+
+        -- Nếu Main đang ở cửa hoặc đang trong trial
+        if mainStatus.Phase == "AtDoor" or mainStatus.Phase == "InTrial" then
             -- Đồng bộ bật V3
             if mainStatus.Phase == "AtDoor" and isFullMoon() then
                 -- Đợi tí để khớp nhịp
                 task.wait(math.random() * 0.5) 
                 PressV3()
             end
-        else
-            UpdatePhase("Waiting")
-            -- Nếu Main đi farm, help đứng im
-            if (hrp.Position - TEMPLE_ENTRANCE).Magnitude > 500 then
-                BypassToTemple()
+            
+            -- Nếu Main đang trong Trial, Help cũng tự vượt ải của mình
+            if mainStatus.Phase == "InTrial" then
+                UpdatePhase("InTrial")
+                AutoTrial()
             end
         end
     end
@@ -383,10 +400,12 @@ local function MainLoop()
 
             -- Chờ Full Moon và vào Trial
             BypassToTemple()
-            task.wait(1)
+            task.wait(1.5)
             local doorPos = RaceDoors[MyState.Race]
             if doorPos then
-                TweenTo(doorPos)
+                if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+                    lp.Character.HumanoidRootPart.CFrame = doorPos
+                end
             end
             
             -- Check 2 Help đã ở cửa chưa
