@@ -91,10 +91,9 @@ local function BypassToTemple()
     task.wait(0.5)
     
     local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
-    if hrp and (hrp.Position - Vector3.new(28286, 14895, 102)).Magnitude > 1000 then
-        -- Dịch chuyển qua cổng Great Tree để không bị kick
+    if hrp and (hrp.Position - Vector3.new(28286, 14895, 102)).Magnitude > 3000 then
         pcall(function()
-            CommF_:InvokeServer("requestEntrance", Vector3.new(-12538.421875, 340.893585, -7817.070801))
+            CommF_:InvokeServer("requestEntrance", Vector3.new(28282.57, 14896.85, 105.10))
         end)
         task.wait(1.5)
     end
@@ -360,7 +359,13 @@ local function MainLoop()
 
         BypassToTemple()
         local doorPos = RaceDoors[MyState.Race]
-        if doorPos then TweenTo(doorPos) end
+        if doorPos then 
+            if (hrp.Position - doorPos.Position).Magnitude < 3000 then
+                hrp.CFrame = doorPos
+            else
+                TweenTo(doorPos)
+            end
+        end
 
         local syncData = ReadSync()
         local helpsAtDoor = 0
@@ -411,7 +416,11 @@ local function HelpLoop()
     local doorPos = RaceDoors[MyState.Race]
     if doorPos then
         if (hrp.Position - doorPos.Position).Magnitude > 5 then
-            TweenTo(doorPos)
+            if (hrp.Position - doorPos.Position).Magnitude < 3000 then
+                hrp.CFrame = doorPos
+            else
+                TweenTo(doorPos)
+            end
         end
         UpdatePhase("AtDoor")
     end
