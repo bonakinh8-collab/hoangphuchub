@@ -234,8 +234,9 @@ end
 local function IsInPvP()
     local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
-    local ancientOnePos = Vector3.new(28981, 14888, -120)
-    return (hrp.Position - ancientOnePos).Magnitude < 300
+    -- PvP Arena is the Ancient Clock room
+    local ancientClockPos = Vector3.new(29549, 15069, -88)
+    return (hrp.Position - ancientClockPos).Magnitude < 300
 end
 
 local function SelfDestruct()
@@ -359,13 +360,7 @@ local function MainLoop()
 
         BypassToTemple()
         local doorPos = RaceDoors[MyState.Race]
-        if doorPos then 
-            if (hrp.Position - doorPos.Position).Magnitude < 3000 then
-                hrp.CFrame = doorPos
-            else
-                TweenTo(doorPos)
-            end
-        end
+        if doorPos then TweenTo(doorPos) end
 
         local syncData = ReadSync()
         local helpsAtDoor = 0
@@ -416,11 +411,7 @@ local function HelpLoop()
     local doorPos = RaceDoors[MyState.Race]
     if doorPos then
         if (hrp.Position - doorPos.Position).Magnitude > 5 then
-            if (hrp.Position - doorPos.Position).Magnitude < 3000 then
-                hrp.CFrame = doorPos
-            else
-                TweenTo(doorPos)
-            end
+            TweenTo(doorPos)
         end
         UpdatePhase("AtDoor")
     end
